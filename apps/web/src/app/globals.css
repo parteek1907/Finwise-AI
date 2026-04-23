@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Core Colors */
+  --color-primary-bg: #F7F5F2;
+  --color-surface-bg: #FDFCF9;
+  --color-card-bg: #FFFFFF;
+  
+  /* Text Colors */
+  --color-text-primary: #141414;
+  --color-text-secondary: #5F6772;
+  
+  /* Borders */
+  --color-border: #E6E2DB;
+  
+  /* Accents */
+  --color-accent-green: #255C49;
+  --color-accent-gold: #C19A5B;
+  --color-accent-blue: #4D78C8;
+  --color-accent-red: #C25A52;
+
+  /* Typography */
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-heading: var(--font-geist-sans), var(--font-sans);
+  --font-display: var(--font-instrument-serif), Georgia, serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Dark Section overrides (for alternating backgrounds) */
+.dark-section {
+  --color-primary-bg: #0C1210;
+  --color-surface-bg: #151E1A;
+  --color-card-bg: #1C2621;
+  
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #A3ACA7;
+  
+  --color-border: #2A3630;
+  
+  background-color: var(--color-primary-bg);
+  color: var(--color-text-primary);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: var(--color-primary-bg);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Premium Typography Utilities */
+.display-text {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+}
