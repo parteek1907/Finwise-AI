@@ -3,7 +3,7 @@ import styles from './Button.module.css';
 
 export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg'; /* md is default from spec, large by default */
   icon?: React.ReactNode;
 }
 
@@ -15,7 +15,8 @@ export function Button({
   className = '',
   ...props 
 }: ButtonProps) {
-  const buttonClass = `${styles.button} ${styles[variant]} ${styles[size]} ${className}`;
+  const sizeClass = size === 'md' ? '' : styles[size];
+  const buttonClass = `${styles.button} ${styles[variant]} ${sizeClass} ${className}`.trim();
   
   return (
     <button className={buttonClass} {...props}>

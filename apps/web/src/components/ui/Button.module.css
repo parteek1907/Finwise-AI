@@ -4,13 +4,21 @@
   justify-content: center;
   gap: 0.5rem;
   font-family: var(--font-sans);
-  font-weight: 500;
-  border-radius: 9999px; /* Fully rounded pill shape */
+  
+  /* Typography */
+  font-size: 18px;
+  font-weight: 500; /* Medium */
+  line-height: 1.2;
+
+  /* Metric layout */
+  border-radius: var(--radius-button); /* 16px */
+  
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  /* Motion: 300-500ms easeInOut */
+  transition: transform 300ms ease-in-out, background-color 300ms ease-in-out, opacity 300ms ease-in-out;
   border: 1px solid transparent;
   outline: none;
-  line-height: 1;
 }
 
 .button:disabled {
@@ -18,72 +26,63 @@
   cursor: not-allowed;
 }
 
-.button:active:not(:disabled) {
-  transform: scale(0.98);
+/* Hover: Lift 3px */
+.button:hover:not(:disabled) {
+  transform: translateY(-3px);
 }
 
-/* Variants */
+/* VARIANTS */
+
+/* primary: bg green, text white */
 .primary {
-  background-color: var(--color-text-primary);
-  color: var(--color-card-bg);
+  background-color: var(--color-accent-primary);
+  color: #FFFFFF;
+  padding: 16px 32px;
 }
-
 .primary:hover:not(:disabled) {
-  background-color: #333333;
+  background-color: #1a4234; /* slightly darker green */
 }
 
-/* For primary buttons inside dark sections, we need to invert */
-:global(.dark-section) .primary {
-  background-color: var(--color-text-primary); /* which is white in dark mode */
-  color: var(--color-card-bg); /* which is dark green in dark mode */
-}
-:global(.dark-section) .primary:hover:not(:disabled) {
-  background-color: #e0e0e0;
-}
-
+/* secondary: bg white, dark border */
 .secondary {
-  background-color: var(--color-surface-bg);
+  background-color: #FFFFFF;
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
+  padding: 16px 32px;
 }
-
 .secondary:hover:not(:disabled) {
-  background-color: var(--color-border);
+  background-color: #F9F9F9;
 }
 
+/* outline: same as secondary but transparent bg initially */
 .outline {
   background-color: transparent;
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
-}
-
-.outline:hover:not(:disabled) {
-  background-color: var(--color-surface-bg);
+  padding: 16px 32px;
 }
 
 .ghost {
   background-color: transparent;
   color: var(--color-text-primary);
+  padding: 16px 32px;
 }
-
 .ghost:hover:not(:disabled) {
-  background-color: var(--color-surface-bg);
+  background-color: rgba(0,0,0,0.05);
 }
 
-/* Sizes */
+/* SIZES */
 .sm {
-  padding: 0.5rem 1rem;
-  font-size: 0.875rem;
+  padding: 10px 20px;
+  font-size: 16px;
 }
-
 .md {
-  padding: 0.75rem 1.5rem;
-  font-size: 0.95rem;
+  padding: 16px 32px;
+  font-size: 18px;
 }
-
 .lg {
-  padding: 1rem 2rem;
-  font-size: 1.05rem;
+  padding: 20px 40px;
+  font-size: 20px;
 }
 
 .icon {

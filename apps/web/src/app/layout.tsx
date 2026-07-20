@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
+import { Geist, Inter } from "next/font/google";
 import "./globals.css";
 
 const geist = Geist({
@@ -9,17 +9,6 @@ const geist = Geist({
 
 const inter = Inter({
   variable: "--font-inter",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument",
-  weight: "400",
   subsets: ["latin"],
 });
 
@@ -36,7 +25,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
+        className={`${inter.variable} ${geist.variable} ${inter.className}`}
       >
         {children}
       </body>

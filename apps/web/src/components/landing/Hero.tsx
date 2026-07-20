@@ -1,114 +1,80 @@
 "use client";
-
 import React from 'react';
 import Link from 'next/link';
-import { Button } from '@/components/ui/Button';
-import { Pill } from '@/components/ui/Pill';
-import { TreeOfWealth } from '@/components/3d/TreeOfWealth';
-import { Canvas } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
-import { ArrowRight, ShieldCheck, Target, TrendingUp } from 'lucide-react';
+import { ShieldCheck, Brain, LineChart, AlertTriangle, Fingerprint } from 'lucide-react';
 import styles from './Landing.module.css';
+import { Button } from '@/components/ui/Button';
+import { ScrollReveal, ParallaxSection } from './ScrollAnimations';
 
 export function Hero() {
   return (
-    <section className={`${styles.section} ${styles.heroSection} dark-section`}>
-      <div className={styles.container}>
-        
-        {/* Navigation - Built into Hero for seamless Dark theme blending */}
-        <nav className={styles.nav}>
-          <div className={styles.logo}>
-            <span className={styles.logoIcon}></span>
-            FinWise
-          </div>
-          <div className={styles.navLinks}>
-            <Link href="#problem">The Problem</Link>
-            <Link href="#demo">How it Works</Link>
-            <Link href="#pricing">Pricing</Link>
-          </div>
-          <div className={styles.navActions}>
-            <Link href="/auth">Log In</Link>
-            <Link href="/dashboard">
-              <Button size="sm" variant="primary">Start Learning</Button>
-            </Link>
-          </div>
-        </nav>
-
-        <div className={styles.heroContent}>
-          {/* Left: Copy */}
+    <section className={`${styles.editorialSection} ${styles.hero}`}>
+      <div className={styles.editorialContainer}>
+        <div className={styles.heroGrid}>
+          
           <div className={styles.heroLeft}>
-            <Pill label="The Future of Financial Literacy" />
-            <h1 className={styles.heroTitle}>
-              Your Gateway to Financial Independence
-            </h1>
-            <p className={styles.heroSubtitle}>
-              Master your money with AI-driven insights, behavioral psychology, and institutional-grade financial education.
-            </p>
-            <div className={styles.heroActions}>
-              <Link href="/dashboard">
-                <Button size="lg" variant="primary">Start Your Journey</Button>
-              </Link>
-              <Link href="#demo">
-                <Button size="lg" variant="secondary" icon={<ArrowRight size={18} />}>Explore the Platform</Button>
-              </Link>
-            </div>
+            <ScrollReveal delay={100} distance={40}>
+              <span className="section-label">Financial Education, Reimagined</span>
+            </ScrollReveal>
+            <ScrollReveal delay={200} distance={50}>
+              <h1 className="headline-display">
+                Master wealth with a mind, not just math.
+              </h1>
+            </ScrollReveal>
+            <ScrollReveal delay={350} distance={40}>
+              <p className="body-large" style={{ color: 'var(--color-text-secondary)' }}>
+                Finwise AI is the premium financial education platform that combines behavioral psychology with institutional-grade AI to build your lasting financial confidence.
+              </p>
+            </ScrollReveal>
             
-            <div className={styles.trustIndicators}>
-              <div className={styles.trustItem}>
-                <ShieldCheck size={20} />
-                <span>Bank-level Security</span>
+            <ScrollReveal delay={500} distance={30}>
+              <div className={styles.heroActions}>
+                <Link href="/auth">
+                  <Button variant="primary">Start Your Journey</Button>
+                </Link>
+                <Link href="#how-it-works">
+                  <Button variant="secondary">See How It Works</Button>
+                </Link>
               </div>
-              <div className={styles.trustItem}>
-                <Target size={20} />
-                <span>Personalized Paths</span>
+            </ScrollReveal>
+            
+            <ScrollReveal delay={650} distance={20}>
+              <div className={styles.trustBadges}>
+                <div className={styles.badge}><Brain size={16} /> AI Powered</div>
+                <div className={styles.badge}><ShieldCheck size={16} /> 100% Educational</div>
+                <div className={styles.badge}><AlertTriangle size={16} /> No Financial Advice</div>
               </div>
-            </div>
+            </ScrollReveal>
           </div>
-
-          {/* Right: UI Preview & 3D */}
-          <div className={styles.heroRight}>
-            <div className={styles.mockupContainer}>
-              {/* Product UI Mockup */}
-              <div className={styles.mockupCard}>
-                <div className={styles.mockupHeader}>
-                  <div className={styles.mockupDots}>
-                    <span></span><span></span><span></span>
-                  </div>
-                  <span className={styles.mockupTitle}>Dashboard</span>
+          
+          <ScrollReveal direction="right" delay={400} distance={100}>
+            <ParallaxSection speed={0.05}>
+              <div className={styles.heroRight}>
+                <div className={styles.heroMockupPlaceholder}>
+                  [ Dashboard Mockup ]
                 </div>
-                <div className={styles.mockupBody}>
-                  <div className={styles.mockupStatRow}>
-                    <div className={styles.mockupStat}>
-                      <span className={styles.mockupLabel}>Health Score</span>
-                      <span className={styles.mockupValue}>85</span>
-                    </div>
-                    <div className={styles.mockupStat}>
-                      <span className={styles.mockupLabel}>Net Worth</span>
-                      <span className={styles.mockupValue}>$42k</span>
-                    </div>
-                  </div>
-                  <div className={styles.mockupChart}>
-                    <div className={styles.mockupLine}></div>
-                    <TrendingUp size={24} className={styles.mockupTrend} />
-                  </div>
+                <div className={`${styles.floatingCallout} ${styles.callout1}`}>
+                  <LineChart size={18} color="var(--color-accent-primary)" />
+                  Financial Health Score
+                </div>
+                <div className={`${styles.floatingCallout} ${styles.callout2}`}>
+                  <Brain size={18} color="var(--color-accent-primary)" />
+                  AI Mentor
+                </div>
+                <div className={`${styles.floatingCallout} ${styles.callout3}`}>
+                  <ShieldCheck size={18} color="var(--color-error)" />
+                  Scam Detector
+                </div>
+                <div className={`${styles.floatingCallout} ${styles.callout4}`}>
+                  <Fingerprint size={18} color="var(--color-accent-secondary)" />
+                  Personality Report
                 </div>
               </div>
-              
-              {/* 3D Element overlapping */}
-              <div className={styles.hero3D}>
-                <Canvas camera={{ position: [0, 0, 5], fov: 45 }}>
-                  <Environment preset="city" />
-                  <ambientLight intensity={0.5} />
-                  <TreeOfWealth growthStage={100} />
-                </Canvas>
-              </div>
-            </div>
-          </div>
+            </ParallaxSection>
+          </ScrollReveal>
+          
         </div>
       </div>
-      
-      {/* Curved separation (abstracted with CSS pseudo-element in module) */}
-      <div className={styles.heroBottomCurve}></div>
     </section>
   );
 }
