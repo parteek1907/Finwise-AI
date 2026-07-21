@@ -11,6 +11,7 @@ import {
 import styles from './Dashboard.module.css';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { Gauge } from '@/components/ui/gauge';
 
 // Static Data for Dashboard
 const INSIGHTS = [
@@ -88,12 +89,21 @@ export default function DashboardPage() {
                 </div>
               </div>
               
-              <div className={styles.balanceContainer}>
-                <h2 className={styles.mainBalance}>{user.healthScore}<span style={{fontSize: '1.25rem', color: 'var(--color-text-secondary)', marginLeft: '4px'}}>/100</span></h2>
-                <div className={styles.growthBadge}>
-                  <ArrowUpRight size={14} />
-                  <span>5 pts</span>
-                  <span className={styles.growthText}>than last month</span>
+              <div className={styles.balanceContainer} style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <Gauge 
+                  value={user.healthScore} 
+                  size={120} 
+                  primary="success" 
+                  showValue={true} 
+                  strokeWidth={8} 
+                />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <h2 className={styles.mainBalance}>{user.healthScore}<span style={{fontSize: '1.25rem', color: 'var(--color-text-secondary)', marginLeft: '4px'}}>/100</span></h2>
+                  <div className={styles.growthBadge}>
+                    <ArrowUpRight size={14} />
+                    <span>5 pts</span>
+                    <span className={styles.growthText}>than last month</span>
+                  </div>
                 </div>
               </div>
 

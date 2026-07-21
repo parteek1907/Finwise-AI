@@ -14,25 +14,33 @@ import { PricingSection } from '@/components/landing/PricingSection';
 import { FAQ } from '@/components/landing/FAQ';
 import { FinalCTA } from '@/components/landing/FinalCTA';
 import { SmoothScrollProvider } from '@/components/landing/ScrollAnimations';
+import { ScrollTransition } from '@/components/landing/ScrollTransition';
 import styles from '@/components/landing/Landing.module.css';
 
 export default function LandingPage() {
   return (
     <SmoothScrollProvider>
       <div className={styles.pageWrapper}>
-        <Hero />
-        <TheProblem />
-        <HowItWorks />
-        <ProductShowcase />
-        <MoneyPersonality />
-        <AIMentor />
-        <ScamDetection />
-        <HealthScore />
-        <InteractiveLearning />
-        <Testimonials />
-        <PricingSection />
-        <FAQ />
-        <FinalCTA />
+        <ScrollTransition
+          heroContent={<Hero />}
+          darkContent={
+            <div className="dark-section" style={{ minHeight: '100vh' }}>
+              {/* All sections rendered in dark universe */}
+              <TheProblem />
+              <HowItWorks />
+              <ProductShowcase />
+              <MoneyPersonality />
+              <AIMentor />
+              <ScamDetection />
+              <HealthScore />
+              <InteractiveLearning />
+              <Testimonials />
+              <PricingSection />
+              <FAQ />
+              <FinalCTA />
+            </div>
+          }
+        />
       </div>
     </SmoothScrollProvider>
   );

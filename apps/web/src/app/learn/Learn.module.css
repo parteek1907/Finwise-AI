@@ -81,7 +81,8 @@
 .categories {
   display: flex;
   gap: 0.5rem;
-  overflow-x: auto;
+  overflow: visible;
+  flex-wrap: wrap;
 }
 
 .categoryBtn {

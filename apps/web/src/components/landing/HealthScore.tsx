@@ -3,6 +3,7 @@ import React from 'react';
 import { TrendingUp, Target, BookOpen } from 'lucide-react';
 import styles from './Landing.module.css';
 import { ScrollReveal, StaggerReveal, ParallaxSection } from './ScrollAnimations';
+import { Gauge } from '@/components/ui/gauge';
 
 export function HealthScore() {
   return (
@@ -19,11 +20,18 @@ export function HealthScore() {
           <ParallaxSection speed={0.06}>
             <ScrollReveal direction="left" distance={80}>
               <div className={styles.healthVisual}>
-                <div className={styles.circularScore}>
-                  <div className={styles.circularScoreInner}>
-                    <span className={styles.scoreValue}>78</span>
-                    <span className={styles.scoreLabel}>Out of 100</span>
-                    <div style={{marginTop: '16px', color: 'var(--color-accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600}}>
+                <div style={{ position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                  <Gauge 
+                    value={78} 
+                    size={280} 
+                    primary="success" 
+                    showValue={false} 
+                    strokeWidth={8} 
+                  />
+                  <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                    <span style={{ fontSize: '64px', fontWeight: '700', lineHeight: '1', color: 'var(--color-text-primary)', fontFamily: 'var(--font-heading)' }}>78</span>
+                    <span style={{ fontSize: '14px', color: 'var(--color-text-secondary)', fontWeight: '500' }}>Out of 100</span>
+                    <div style={{marginTop: '4px', color: 'var(--color-accent-primary)', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                       <TrendingUp size={16}/> +12 this month
                     </div>
                   </div>

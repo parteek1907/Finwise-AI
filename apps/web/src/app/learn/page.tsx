@@ -7,6 +7,7 @@ import { Search, Filter, Play, CheckCircle2, Lock, Bookmark, Clock, Award, BookO
 import styles from './Learn.module.css';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { Tabs } from '@/components/ui/vercel-tabs';
 
 const CATEGORIES = ['All', 'Behavior', 'Saving', 'Investing', 'Credit', 'Taxes', 'Retirement'];
 
@@ -60,16 +61,12 @@ export default function LearnPage() {
 
           {/* Filters & Search */}
           <div className={styles.controlsBar}>
-            <div className={styles.categories}>
-              {CATEGORIES.map(cat => (
-                <button 
-                  key={cat}
-                  className={`${styles.categoryBtn} ${activeCategory === cat ? styles.activeCategory : ''}`}
-                  onClick={() => setActiveCategory(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
+            <div className={styles.categories} style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '2px' }}>
+              <Tabs 
+                tabs={CATEGORIES.map(cat => ({ id: cat, label: cat }))}
+                activeTab={activeCategory}
+                onTabChange={setActiveCategory}
+              />
             </div>
 
             <div className={styles.searchActions}>

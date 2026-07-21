@@ -1,80 +1,99 @@
 "use client";
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, Brain, LineChart, AlertTriangle, Fingerprint } from 'lucide-react';
+import { ShieldCheck, Brain, AlertTriangle, Sparkles, TrendingUp, Globe } from 'lucide-react';
 import styles from './Landing.module.css';
-import { Button } from '@/components/ui/Button';
-import { ScrollReveal, ParallaxSection } from './ScrollAnimations';
+import { EarthGlobe } from './EarthGlobe';
 
 export function Hero() {
   return (
-    <section className={`${styles.editorialSection} ${styles.hero}`}>
-      <div className={styles.editorialContainer}>
-        <div className={styles.heroGrid}>
-          
-          <div className={styles.heroLeft}>
-            <ScrollReveal delay={100} distance={40}>
-              <span className="section-label">Financial Education, Reimagined</span>
-            </ScrollReveal>
-            <ScrollReveal delay={200} distance={50}>
-              <h1 className="headline-display">
-                Master wealth with a mind, not just math.
-              </h1>
-            </ScrollReveal>
-            <ScrollReveal delay={350} distance={40}>
-              <p className="body-large" style={{ color: 'var(--color-text-secondary)' }}>
-                Finwise AI is the premium financial education platform that combines behavioral psychology with institutional-grade AI to build your lasting financial confidence.
-              </p>
-            </ScrollReveal>
-            
-            <ScrollReveal delay={500} distance={30}>
-              <div className={styles.heroActions}>
-                <Link href="/auth">
-                  <Button variant="primary">Start Your Journey</Button>
-                </Link>
-                <Link href="#how-it-works">
-                  <Button variant="secondary">See How It Works</Button>
-                </Link>
-              </div>
-            </ScrollReveal>
-            
-            <ScrollReveal delay={650} distance={20}>
-              <div className={styles.trustBadges}>
-                <div className={styles.badge}><Brain size={16} /> AI Powered</div>
-                <div className={styles.badge}><ShieldCheck size={16} /> 100% Educational</div>
-                <div className={styles.badge}><AlertTriangle size={16} /> No Financial Advice</div>
-              </div>
-            </ScrollReveal>
-          </div>
-          
-          <ScrollReveal direction="right" delay={400} distance={100}>
-            <ParallaxSection speed={0.05}>
-              <div className={styles.heroRight}>
-                <div className={styles.heroMockupPlaceholder}>
-                  [ Dashboard Mockup ]
-                </div>
-                <div className={`${styles.floatingCallout} ${styles.callout1}`}>
-                  <LineChart size={18} color="var(--color-accent-primary)" />
-                  Financial Health Score
-                </div>
-                <div className={`${styles.floatingCallout} ${styles.callout2}`}>
-                  <Brain size={18} color="var(--color-accent-primary)" />
-                  AI Mentor
-                </div>
-                <div className={`${styles.floatingCallout} ${styles.callout3}`}>
-                  <ShieldCheck size={18} color="var(--color-error)" />
-                  Scam Detector
-                </div>
-                <div className={`${styles.floatingCallout} ${styles.callout4}`}>
-                  <Fingerprint size={18} color="var(--color-accent-secondary)" />
-                  Personality Report
-                </div>
-              </div>
-            </ParallaxSection>
-          </ScrollReveal>
-          
-        </div>
+    <section className={`${styles.hero} ${styles.heroDark}`}>
+
+      {/* ── Earth Globe (full-bleed background canvas) ── */}
+      <div className={styles.earthWrapper}>
+        <EarthGlobe />
       </div>
+
+      {/* ── Radial vignette: darkens edges, focuses center ── */}
+      <div className={styles.heroVignette} />
+
+      {/* ── Vertical grid lines (like reference) ── */}
+      <div className={styles.heroGridLines} />
+
+      {/* ── Hero Content (centered, on top) ── */}
+      <div className={styles.heroContent}>
+
+        {/* Pill label */}
+        <div className={styles.heroPillWrap}>
+          <span className={styles.heroPillDark}>
+            <Globe size={12} />
+            Daily Finances
+          </span>
+        </div>
+
+        {/* Headline */}
+        <h1 className={styles.heroDarkHeadline}>
+          Master Wealth with<br />
+          <span className={styles.heroDarkAccent}>a Mind</span>, Not Just Math.
+        </h1>
+
+        {/* Subtitle */}
+        <p className={styles.heroDarkSubtitle}>
+          Finwise AI combines behavioral psychology with institutional-grade AI<br />
+          to build your lasting financial confidence — with zero jargon.
+        </p>
+
+        {/* CTAs */}
+        <div className={styles.heroDarkActions}>
+          <Link href="/auth">
+            <button className={styles.heroDarkCTAPrimary}>
+              Start Your Journey
+              <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                <path d="M2 7.5h11M9 3.5l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </Link>
+          <Link href="#how-it-works">
+            <button className={styles.heroDarkCTASecondary}>
+              Explore Features
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                <path d="M2 7h10M7 3l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+          </Link>
+        </div>
+
+        {/* Trust badges */}
+        <div className={styles.heroDarkBadges}>
+          <span className={styles.heroDarkBadge}><Brain size={14} /> AI Powered</span>
+          <span className={styles.badgeDot} />
+          <span className={styles.heroDarkBadge}><ShieldCheck size={14} /> 100% Educational</span>
+          <span className={styles.badgeDot} />
+          <span className={styles.heroDarkBadge}><AlertTriangle size={14} /> No Financial Advice</span>
+        </div>
+
+        {/* Live stats row */}
+        <div className={styles.heroDarkStats}>
+          <div className={styles.heroDarkStat}>
+            <span className={styles.statBig}>10K+</span>
+            <span className={styles.statSmall}>Active learners</span>
+          </div>
+          <div className={styles.heroDarkStatDivider} />
+          <div className={styles.heroDarkStat}>
+            <span className={styles.statBig}>₹2.4Cr</span>
+            <span className={styles.statSmall}>Avg. wealth built</span>
+          </div>
+          <div className={styles.heroDarkStatDivider} />
+          <div className={styles.heroDarkStat}>
+            <span className={styles.statBig}>94%</span>
+            <span className={styles.statSmall}>Scams detected</span>
+          </div>
+        </div>
+
+      </div>
+
+
+
     </section>
   );
 }

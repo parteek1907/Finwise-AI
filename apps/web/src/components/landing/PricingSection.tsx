@@ -5,52 +5,64 @@ import styles from './Landing.module.css';
 
 const demoPlans = [
   {
-    name: "FREE",
+    name: "FOUNDATION",
     price: "0",
     yearlyPrice: "0",
     period: "forever",
     features: [
-      "Access to AI Mentor",
+      "Money Personality Test",
       "Basic Financial Health Score",
-      "Scam Detection (5/day)",
-      "Explorer Archetype Profile",
+      "5 AI Mentor Questions per day",
+      "5 Scam Scans per day",
+      "3 Introductory Learning Modules",
+      "Basic Goal Tracking",
+      "Community Support",
     ],
-    description: "Perfect for students beginning their journey.",
+    description: "Perfect for exploring Finwise before upgrading.",
     buttonText: "Start Free",
     href: "/auth",
     isPopular: false,
   },
   {
     name: "PREMIUM",
-    price: "29",
-    yearlyPrice: "19",
-    period: "per month",
+    price: "299",
+    yearlyPrice: "2799",
+    period: "month",
     features: [
-      "Unlimited AI Mentor Access",
-      "Dynamic Health Score Tracking",
+      "Unlimited AI Mentor",
       "Unlimited Scam Detection",
-      "Full Story-Based Simulations",
-      "Advanced Goal Tracking",
+      "Emotion Analysis",
+      "Advanced Financial Health Score",
+      "Unlimited Learning Modules",
+      "Story-Based Financial Simulations",
+      "Unlimited Virtual Stock Market",
+      "AI Goal Planning",
+      "Personalized Learning Paths",
+      "Premium Reports & Insights",
       "Priority Support",
+      "Early Access to New Features",
     ],
-    description: "The complete ecosystem to build lasting wealth.",
+    description: "The complete ecosystem to build lasting financial confidence.",
     buttonText: "Get Premium",
     href: "/auth",
     isPopular: true,
   },
   {
     name: "STUDENT",
-    price: "9",
-    yearlyPrice: "5",
-    period: "per month",
+    price: "149",
+    yearlyPrice: "1399",
+    period: "month",
     features: [
       "Everything in Free",
-      "Full Story-Based Simulations",
-      "Discounted Premium Tools",
+      "Unlimited Learning Modules",
+      "Story-Based Simulations",
       "Student Community Access",
-      ".edu email required",
+      "Discounted Premium Features",
+      "Campus Challenges",
+      "Learning Certificates",
+      "Student Progress Dashboard",
     ],
-    description: "Special pricing for verified university students.",
+    description: "Built specifically for university students learning personal finance.",
     buttonText: "Verify Student Status",
     href: "/auth",
     isPopular: false,
@@ -59,8 +71,8 @@ const demoPlans = [
 
 export function PricingSection() {
   return (
-    <section className={`${styles.editorialSection} dark-section`} style={{borderRadius: '48px 48px 0 0', marginTop: '-48px', zIndex: 10}}>
-      <Pricing 
+    <section className={`${styles.editorialSection} dark-section`} style={{ borderRadius: '48px 48px 0 0', marginTop: '-48px', zIndex: 10 }}>
+      <Pricing
         plans={demoPlans}
         title="Simple, Transparent Pricing"
         description="Choose the plan that works for you. All plans include access to our AI Mentor and basic scam detection."

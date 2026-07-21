@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useState, useRef } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@number-flow/react";
+import { useToast } from "@/components/ui/toast";
 
 interface PricingPlan {
   name: string;
@@ -34,6 +35,7 @@ export function Pricing({
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
   const switchRef = useRef<HTMLButtonElement>(null);
+  const { toast } = useToast();
 
   const handleToggle = (checked: boolean) => {
     setIsMonthly(!checked);
@@ -101,8 +103,8 @@ export function Pricing({
           />
         </Label>
         <span style={{ fontWeight: 600, fontSize: "16px" }}>
-          Annual billing{" "}
-          <span style={{ color: "#fff" }}>(Save 20%)</span>
+          Yearly{" "}
+          <span style={{ color: "#fff" }}>(Save 22%)</span>
         </span>
       </div>
 
@@ -186,7 +188,7 @@ export function Pricing({
                     value={isMonthly ? Number(plan.price) : Number(plan.yearlyPrice)}
                     format={{
                       style: "currency",
-                      currency: "USD",
+                      currency: "INR",
                       minimumFractionDigits: 0,
                       maximumFractionDigits: 0,
                     }}
@@ -200,7 +202,7 @@ export function Pricing({
                     color: "#a3a3a3",
                     marginLeft: "4px",
                   }}>
-                    / {plan.period}
+                    / {isMonthly ? plan.period : "year"}
                   </span>
                 )}
               </div>
@@ -211,6 +213,7 @@ export function Pricing({
                 fontSize: "13px",
                 color: "#a3a3a3",
                 marginBottom: "28px",
+                visibility: plan.period === "forever" ? "hidden" : "visible",
               }}>
                 {isMonthly ? "billed monthly" : "billed annually"}
               </p>
@@ -247,8 +250,14 @@ export function Pricing({
               }} />
 
               {/* CTA Button */}
-              <Link
-                href={plan.href}
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  toast({
+                    title: "Early Access Beta",
+                    description: `Our ${plan.name} plan is currently in closed beta. We've noted your interest and will notify you when spots open up!`,
+                  });
+                }}
                 style={{
                   display: "flex",
                   alignItems: "center",
@@ -258,7 +267,7 @@ export function Pricing({
                   borderRadius: "12px",
                   fontSize: "16px",
                   fontWeight: 600,
-                  textDecoration: "none",
+                  cursor: "pointer",
                   transition: "all 200ms ease",
                   backgroundColor: isCenter ? "#fff" : "transparent",
                   color: isCenter ? "#000" : "#fff",
@@ -266,7 +275,7 @@ export function Pricing({
                 }}
               >
                 {plan.buttonText}
-              </Link>
+              </button>
 
               {/* Description */}
               <p style={{
