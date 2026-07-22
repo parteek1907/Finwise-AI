@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Inter } from "next/font/google";
+import { Geist, Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
 
@@ -11,6 +11,12 @@ const geist = Geist({
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
+});
+
+const dmSerif = DM_Serif_Display({
+  variable: "--font-serif-display",
+  subsets: ["latin"],
+  weight: "400",
 });
 
 export const metadata: Metadata = {
@@ -26,7 +32,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${inter.variable} ${geist.variable} ${inter.className}`}
+        className={`${inter.variable} ${geist.variable} ${dmSerif.variable} ${inter.className}`}
       >
         <ToastProvider>
           {children}

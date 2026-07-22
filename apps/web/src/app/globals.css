@@ -1,58 +1,103 @@
 @import "tailwindcss";
 
 :root {
-  /* Finwise AI — Luxury Editorial Palette */
-  --color-bg-primary: #F7F5F2;
-  --color-bg-dark: #0F0F0F;
-  --color-card-bg: #FFFFFF;
+  /* ═══ Crypto.in-Inspired Palette ═══ */
+  --color-bg-primary: #DDD7C9;
+  --color-bg-dark: #303A3C;
+  --color-bg-cream: #E8E0CC;
+  --color-card-bg: #D4CCB7;
 
-  --color-text-primary: #121212;
-  --color-text-secondary: #626974;
-  --color-text-inverse: #FFFFFF;
+  --color-text-primary: #303A3C;
+  --color-text-secondary: #5A6460;
+  --color-text-inverse: #DDD7C9;
+  --color-text-muted: #7A8178;
 
-  --color-border: #E6E3DD;
-  --color-border-light: rgba(0,0,0,0.06);
+  --color-border: #C4B896;
+  --color-border-light: rgba(48,58,60,0.10);
 
-  --color-accent-primary: #255C49;
-  --color-accent-secondary: #C79A5A;
-  --color-accent-blue: #5078D1;
+  --color-accent-primary: #303A3C;
+  --color-accent-secondary: #C4B896;
+  --color-accent-highlight: #5A6460;
   --color-error: #C65353;
 
   /* Typography */
   --font-sans: var(--font-inter), system-ui, sans-serif;
-  --font-heading: var(--font-geist), system-ui, sans-serif;
+  --font-heading: var(--font-serif-display), Georgia, serif;
+  --font-mono: var(--font-geist), monospace;
 
   /* Radii */
-  --radius-button: 16px;
-  --radius-card: 24px;
-  --radius-panel: 32px;
-  --radius-hero-image: 40px;
-  --radius-section: 48px;
+  --radius-button: 100px;
+  --radius-card: 8px;
+  --radius-panel: 16px;
 
   /* Shadows */
-  --shadow-soft: 0 10px 30px rgba(0,0,0,.04);
-  --shadow-card: 0 1px 3px rgba(0,0,0,.03), 0 8px 24px rgba(0,0,0,.04);
-  --shadow-elevated: 0 20px 60px rgba(0,0,0,.08);
+  --shadow-soft: 0 4px 16px rgba(48,58,60,.06);
+  --shadow-card: 0 2px 8px rgba(48,58,60,.05);
+  --shadow-elevated: 0 8px 32px rgba(48,58,60,.10);
 
   /* Easing */
   --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Map legacy tokens */
+  /* Legacy tokens */
   --color-primary-bg: var(--color-bg-primary);
   --color-surface-bg: var(--color-card-bg);
+
+  /* Shadcn Tailwind V4 Integration */
+  --background: var(--color-bg-primary);
+  --foreground: var(--color-text-primary);
+  --card: var(--color-card-bg);
+  --card-foreground: var(--color-text-primary);
+  --popover: var(--color-card-bg);
+  --popover-foreground: var(--color-text-primary);
+  --primary: var(--color-bg-dark);
+  --primary-foreground: var(--color-text-inverse);
+  --secondary: var(--color-bg-cream);
+  --secondary-foreground: var(--color-text-primary);
+  --muted: var(--color-bg-cream);
+  --muted-foreground: var(--color-text-secondary);
+  --accent: var(--color-bg-cream);
+  --accent-foreground: var(--color-text-primary);
+  --destructive: var(--color-error);
+  --destructive-foreground: #ffffff;
+  --border: var(--color-border);
+  --input: var(--color-border-light);
+  --ring: var(--color-accent-primary);
+  --radius: 8px;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
 }
 
 /* ─── Dark Section Theme ─── */
 .dark-section {
   --color-bg-primary: var(--color-bg-dark);
-  --color-card-bg: #191919;
-  --color-text-primary: #FFFFFF;
-  --color-text-secondary: #999;
-  --color-border: rgba(255,255,255,0.08);
-  --color-border-light: rgba(255,255,255,0.04);
-  --shadow-soft: 0 10px 30px rgba(0,0,0,.3);
-  --shadow-card: 0 1px 3px rgba(0,0,0,.2), 0 8px 24px rgba(0,0,0,.3);
+  --color-card-bg: #3A4648;
+  --color-text-primary: #DDD7C9;
+  --color-text-secondary: #A8AD9E;
+  --color-border: rgba(221,215,201,0.15);
+  --color-border-light: rgba(221,215,201,0.06);
+  --shadow-soft: 0 4px 16px rgba(0,0,0,.15);
+  --shadow-card: 0 2px 8px rgba(0,0,0,.12);
 
   background-color: var(--color-bg-primary);
   color: var(--color-text-primary);
@@ -77,40 +122,42 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   line-height: 1.7;
-  font-size: 18px;
+  font-size: 16px;
   overflow-x: hidden;
 }
 
 /* ─── Typography ─── */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  font-weight: 600;
+  font-weight: 400;
   color: var(--color-text-primary);
-  line-height: 1.15;
+  line-height: 1.1;
 }
 
 h1, .headline-display {
-  font-size: clamp(64px, 7vw, 88px);
-  letter-spacing: -0.03em;
+  font-size: clamp(56px, 7vw, 96px);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 h2, .headline-heading {
-  font-size: clamp(40px, 4.5vw, 56px);
-  letter-spacing: -0.02em;
+  font-size: clamp(36px, 4.5vw, 56px);
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
 }
 
 p.body-large {
-  font-size: 20px;
-  line-height: 1.7;
-}
-
-p, .body-main {
   font-size: 18px;
   line-height: 1.7;
 }
 
+p, .body-main {
+  font-size: 16px;
+  line-height: 1.7;
+}
+
 .caption {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
 }
 
@@ -123,7 +170,7 @@ button {
   font-family: inherit;
 }
 
-/* ─── Luxury Accent Line ─── */
+/* ─── Accent Lines ─── */
 .accent-line {
   width: 48px;
   height: 2px;
@@ -142,13 +189,14 @@ button {
 
 /* ─── Section Label ─── */
 .section-label {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--color-accent-primary);
+  color: var(--color-text-secondary);
   margin-bottom: 16px;
   display: inline-block;
+  font-family: var(--font-sans);
 }
 
 .dark-section .section-label {
@@ -168,4 +216,17 @@ button {
 .editorial-card:hover {
   transform: translateY(-4px);
   box-shadow: var(--shadow-elevated);
+}
+
+/* ─── Feature Grid Responsive ─── */
+@media (max-width: 1024px) {
+  .feature-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .feature-grid {
+    grid-template-columns: 1fr !important;
+  }
 }
