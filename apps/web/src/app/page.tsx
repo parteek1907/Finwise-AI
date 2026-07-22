@@ -1,46 +1,34 @@
 "use client";
 import React from 'react';
+import { Header } from '@/components/ui/header-2';
+import { MarketTicker } from '@/components/landing/MarketTicker';
 import { Hero } from '@/components/landing/Hero';
-import { TheProblem } from '@/components/landing/TheProblem';
+import { StatsBar } from '@/components/landing/StatsBar';
 import { HowItWorks } from '@/components/landing/HowItWorks';
-import { ProductShowcase } from '@/components/landing/ProductShowcase';
-import { MoneyPersonality } from '@/components/landing/MoneyPersonality';
-import { AIMentor } from '@/components/landing/AIMentor';
-import { ScamDetection } from '@/components/landing/ScamDetection';
-import { HealthScore } from '@/components/landing/HealthScore';
-import { InteractiveLearning } from '@/components/landing/InteractiveLearning';
-import { Testimonials } from '@/components/landing/Testimonials';
+import { Resources } from '@/components/landing/Resources';
+import { Community } from '@/components/landing/Community';
 import { PricingSection } from '@/components/landing/PricingSection';
 import { FAQ } from '@/components/landing/FAQ';
 import { FinalCTA } from '@/components/landing/FinalCTA';
+import { Footer } from '@/components/landing/Footer';
 import { SmoothScrollProvider } from '@/components/landing/ScrollAnimations';
-import { ScrollTransition } from '@/components/landing/ScrollTransition';
 import styles from '@/components/landing/Landing.module.css';
 
 export default function LandingPage() {
   return (
     <SmoothScrollProvider>
       <div className={styles.pageWrapper}>
-        <ScrollTransition
-          heroContent={<Hero />}
-          darkContent={
-            <div className="dark-section" style={{ minHeight: '100vh' }}>
-              {/* All sections rendered in dark universe */}
-              <TheProblem />
-              <HowItWorks />
-              <ProductShowcase />
-              <MoneyPersonality />
-              <AIMentor />
-              <ScamDetection />
-              <HealthScore />
-              <InteractiveLearning />
-              <Testimonials />
-              <PricingSection />
-              <FAQ />
-              <FinalCTA />
-            </div>
-          }
-        />
+        <Header />
+        <MarketTicker />
+        <Hero />
+        <StatsBar />
+        <HowItWorks />
+        <Resources />
+        <Community />
+        <PricingSection />
+        <FAQ />
+        <FinalCTA />
+        <Footer />
       </div>
     </SmoothScrollProvider>
   );
