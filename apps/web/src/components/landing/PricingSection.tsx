@@ -71,7 +71,7 @@ const demoPlans = [
 
 export function PricingSection() {
   return (
-    <section className={`${styles.editorialSection} dark-section`} style={{ borderRadius: '48px 48px 0 0', marginTop: '-48px', zIndex: 10 }}>
+    <section className={styles.pricingSection} id="pricing">
       <Pricing
         plans={demoPlans}
         title="Simple, Transparent Pricing"

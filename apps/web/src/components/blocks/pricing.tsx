@@ -47,7 +47,7 @@ export function Pricing({
         particleCount: 50,
         spread: 60,
         origin: { x: x / window.innerWidth, y: y / window.innerHeight },
-        colors: ["#ffffff", "#a3a3a3", "#525252"],
+        colors: ["#DDD7C9", "#C4B896", "#6B7560"],
         ticks: 200,
         gravity: 1.2,
         decay: 0.94,
@@ -63,22 +63,24 @@ export function Pricing({
       maxWidth: "1200px",
       margin: "0 auto",
       padding: "80px 24px",
-      color: "#fff",
+      color: "#DDD7C9",
     }}>
       {/* Header */}
       <div style={{ textAlign: "center", marginBottom: "32px" }}>
         <h2 style={{
           fontSize: "clamp(36px, 5vw, 52px)",
-          fontWeight: 700,
-          letterSpacing: "-0.02em",
+          fontWeight: 400,
+          fontFamily: "var(--font-heading)",
+          letterSpacing: "-0.01em",
           marginBottom: "16px",
-          color: "#fff",
+          color: "#DDD7C9",
+          textTransform: "uppercase",
         }}>
           {title}
         </h2>
         <p style={{
           fontSize: "18px",
-          color: "#a3a3a3",
+          color: "#A8AD9E",
           maxWidth: "600px",
           margin: "0 auto",
           lineHeight: 1.6,
@@ -104,7 +106,7 @@ export function Pricing({
         </Label>
         <span style={{ fontWeight: 600, fontSize: "16px" }}>
           Yearly{" "}
-          <span style={{ color: "#fff" }}>(Save 22%)</span>
+          <span style={{ color: "#C4B896" }}>(Save 22%)</span>
         </span>
       </div>
 
@@ -124,8 +126,8 @@ export function Pricing({
               key={index}
               style={{
                 position: "relative",
-                backgroundColor: isCenter ? "#0a0a0a" : "#0a0a0a",
-                border: isCenter ? "2px solid rgba(255,255,255,0.9)" : "1px solid #262626",
+                backgroundColor: isCenter ? "#3A4648" : "#3A4648",
+                border: isCenter ? "2px solid #C4B896" : "1px solid rgba(221,213,192,0.15)",
                 borderRadius: "20px",
                 padding: isCenter ? "48px 32px" : "40px 28px",
                 display: "flex",
@@ -133,8 +135,8 @@ export function Pricing({
                 zIndex: isCenter ? 20 : 10,
                 transform: isCenter ? "scale(1.05)" : "scale(1)",
                 boxShadow: isCenter
-                  ? "0 25px 60px rgba(0,0,0,0.5)"
-                  : "0 8px 30px rgba(0,0,0,0.2)",
+                  ? "0 25px 60px rgba(0,0,0,0.3)"
+                  : "0 8px 30px rgba(0,0,0,0.15)",
                 minHeight: isCenter ? "620px" : "560px",
               }}
             >
@@ -144,8 +146,8 @@ export function Pricing({
                   position: "absolute",
                   top: 0,
                   right: 0,
-                  backgroundColor: "#fff",
-                  color: "#000",
+                  backgroundColor: "#C4B896",
+                  color: "#303A3C",
                   padding: "4px 14px",
                   borderBottomLeftRadius: "12px",
                   borderTopRightRadius: "18px",
@@ -164,7 +166,7 @@ export function Pricing({
               <p style={{
                 fontSize: "14px",
                 fontWeight: 600,
-                color: "#a3a3a3",
+                color: "#A8AD9E",
                 textTransform: "uppercase",
                 letterSpacing: "0.15em",
                 textAlign: "center",
@@ -181,7 +183,7 @@ export function Pricing({
                 <span style={{
                   fontSize: "52px",
                   fontWeight: 700,
-                  color: "#fff",
+                  color: "#DDD7C9",
                   letterSpacing: "-0.02em",
                 }}>
                   <NumberFlow
@@ -199,7 +201,7 @@ export function Pricing({
                 {plan.period !== "forever" && (
                   <span style={{
                     fontSize: "16px",
-                    color: "#a3a3a3",
+                    color: "#A8AD9E",
                     marginLeft: "4px",
                   }}>
                     / {isMonthly ? plan.period : "year"}
@@ -211,7 +213,7 @@ export function Pricing({
               <p style={{
                 textAlign: "center",
                 fontSize: "13px",
-                color: "#a3a3a3",
+                color: "#A8AD9E",
                 marginBottom: "28px",
                 visibility: plan.period === "forever" ? "hidden" : "visible",
               }}>
@@ -234,8 +236,8 @@ export function Pricing({
                     alignItems: "flex-start",
                     gap: "10px",
                   }}>
-                    <Check size={16} style={{ color: "#fff", marginTop: "3px", flexShrink: 0 }} />
-                    <span style={{ fontSize: "15px", color: "#d4d4d4", lineHeight: 1.5 }}>
+                    <Check size={16} style={{ color: "#C4B896", marginTop: "3px", flexShrink: 0 }} />
+                    <span style={{ fontSize: "15px", color: "#C8C4B8", lineHeight: 1.5 }}>
                       {feature}
                     </span>
                   </li>
@@ -245,7 +247,7 @@ export function Pricing({
               {/* Divider */}
               <hr style={{
                 border: "none",
-                borderTop: "1px solid #262626",
+                borderTop: "1px solid rgba(221,213,192,0.15)",
                 margin: "24px 0",
               }} />
 
@@ -269,9 +271,9 @@ export function Pricing({
                   fontWeight: 600,
                   cursor: "pointer",
                   transition: "all 200ms ease",
-                  backgroundColor: isCenter ? "#fff" : "transparent",
-                  color: isCenter ? "#000" : "#fff",
-                  border: isCenter ? "none" : "1px solid #333",
+                  backgroundColor: isCenter ? "#DDD7C9" : "transparent",
+                  color: isCenter ? "#303A3C" : "#DDD7C9",
+                  border: isCenter ? "none" : "1px solid rgba(221,213,192,0.25)",
                 }}
               >
                 {plan.buttonText}
@@ -281,7 +283,7 @@ export function Pricing({
               <p style={{
                 textAlign: "center",
                 fontSize: "12px",
-                color: "#737373",
+                color: "#8A8E7F",
                 marginTop: "16px",
                 lineHeight: 1.5,
               }}>
