@@ -26,7 +26,7 @@ export function Footer({
   return (
     <footer className="w-full py-20 lg:py-32">
       <div className="w-full">
-        <div className="flex flex-col lg:flex-row justify-between items-start gap-16 lg:gap-24">
+        <div className="flex flex-col lg:flex-row justify-between lg:items-center items-start gap-16 lg:gap-24">
           
           {/* Left Side: Brand Name & Copyright */}
           <div className="flex flex-col space-y-8 max-w-sm">

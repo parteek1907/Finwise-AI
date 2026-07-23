@@ -11,14 +11,18 @@ const termsText = (
   <>
     By creating an account, you agree to our{" "}
     <a
-      href="#"
+      href="/terms"
+      target="_blank"
+      rel="noopener noreferrer"
       className="font-medium text-[#303A3C] underline underline-offset-4 hover:text-[#8A9080]"
     >
       Terms and Services
     </a>{" "}
     and{" "}
     <a
-      href="#"
+      href="/privacy"
+      target="_blank"
+      rel="noopener noreferrer"
       className="font-medium text-[#303A3C] underline underline-offset-4 hover:text-[#8A9080]"
     >
       Privacy Policy
