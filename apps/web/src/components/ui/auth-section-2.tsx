@@ -2,20 +2,9 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { ArrowRight, LineChart } from "lucide-react";
+import Link from "next/link";
 
-const images = [
-  "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1579225663317-c020947604be?q=80&w=1200&auto=format&fit=crop",
-  "https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1200&auto=format&fit=crop",
-];
-
-const prompts = [
-  "Master the psychology of investing and avoid emotional decisions during market volatility.",
-  "Learn how to spot and avoid common financial scams and predatory investment schemes.",
-  "Build a resilient, long-term portfolio tailored to your unique financial goals.",
-  "Understand complex financial metrics and read between the lines of corporate reports.",
-];
+import { AuthCanvasBackground } from "./auth-canvas-background";
 
 const termsText = (
   <>
@@ -37,91 +26,13 @@ const termsText = (
 );
 
 export default function AuthSectionTwo() {
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      setActiveIndex((current) => (current + 1) % images.length);
-    }, 4000);
-
-    return () => window.clearInterval(interval);
-  }, []);
 
   return (
     <section className="min-h-screen bg-[#DDD7C9] p-4 md:p-8 text-[#303A3C] antialiased font-inter flex items-center justify-center">
       <div className="w-full max-w-[1400px] grid min-h-[calc(100vh-4rem)] gap-8 lg:grid-cols-[0.95fr_1.05fr] items-center">
         
-        {/* LEFT PANEL */}
-        <div className="flex h-full min-h-[600px] justify-center overflow-hidden rounded-[24px] bg-[#303A3C] px-8 py-12 text-[#DDD7C9] sm:px-12 lg:py-16 shadow-2xl">
-          <div className="flex w-full max-w-[480px] flex-col items-center h-full justify-between">
-            
-            {/* Logo */}
-            <div className="flex items-center gap-3 text-2xl font-bold font-heading text-[#DDD7C9]">
-              <LineChart className="size-8" />
-              FinWise AI
-            </div>
-
-            {/* Images Grid */}
-            <div className="relative mt-10 grid w-full grid-cols-[1.55fr_1fr] gap-2.5 rounded-md">
-              <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-16 bg-gradient-to-b from-[#303A3C] to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-20 bg-gradient-to-t from-[#303A3C] to-transparent" />
-              <ImageTile
-                src={images[0]}
-                active={activeIndex === 0}
-                className="row-span-2 h-[240px]"
-              />
-              <ImageTile
-                src={images[1]}
-                active={activeIndex === 1}
-                className="h-[115px]"
-              />
-              <ImageTile
-                src={images[3]}
-                active={activeIndex === 3}
-                className="h-[115px]"
-              />
-              <ImageTile
-                src={images[2]}
-                active={activeIndex === 2}
-                className="col-span-2 h-[115px]"
-              />
-            </div>
-
-            {/* Insight Card */}
-            <div className="mt-10 w-full rounded-[16px] border border-dashed border-[#DDD7C9]/20 p-5 bg-[#303A3C]/60 backdrop-blur-sm">
-              <div className="flex items-end gap-4">
-                <p className="line-clamp-3 flex-1 text-[13px] leading-relaxed text-[#DDD7C9]/80">
-                  <span className="font-bold text-[#8A9080] uppercase tracking-wider text-[10px] block mb-1.5">/insight</span>
-                  {prompts[activeIndex]}
-                </p>
-                <button className="grid size-9 shrink-0 place-items-center rounded-full bg-[#DDD7C9]/10 text-[#DDD7C9] transition-colors hover:bg-[#DDD7C9]/20">
-                  <ArrowRight className="size-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Quote */}
-            <div className="mt-10 max-w-[320px] text-center text-[20px] font-medium leading-snug text-[#DDD7C9]">
-              Build confidence before you build wealth.
-            </div>
-
-            {/* Pagination Dots */}
-            <div className="mt-10 flex gap-2.5 pb-4">
-              {prompts.map((_, index) => (
-                <button
-                  key={index}
-                  type="button"
-                  onClick={() => setActiveIndex(index)}
-                  className={
-                    activeIndex === index
-                      ? "h-1.5 w-10 rounded-full bg-[#8A9080]"
-                      : "h-1.5 w-3.5 rounded-full bg-[#DDD7C9]/30"
-                  }
-                  aria-label={`Show prompt ${index + 1}`}
-                />
-              ))}
-            </div>
-          </div>
+        <div className="flex h-full min-h-[600px] w-full">
+          <AuthCanvasBackground />
         </div>
 
         {/* RIGHT PANEL - AUTH FORM CONTAINER */}
@@ -133,84 +44,56 @@ export default function AuthSectionTwo() {
   );
 }
 
-function ImageTile({
-  src,
-  active,
-  className,
-}: {
-  src: string;
-  active: boolean;
-  className: string;
-}) {
-  return (
-    <div
-      className={`${className} relative overflow-hidden rounded-[12px] ${active ? "z-10" : "z-0"}`}
-    >
-      <img
-        src={src}
-        alt="Financial insight"
-        className={`h-full w-full rounded-[12px] object-cover transition-all duration-700 ${active ? "opacity-100 scale-100" : "opacity-40 scale-105"}`}
-      />
-      <FocusCorners active={active} />
-    </div>
-  );
-}
 
-function FocusCorners({ active }: { active: boolean }) {
-  const baseClass = `pointer-events-none absolute h-4 w-4 border-[#8A9080] transition-all duration-500 ease-out ${active ? "translate-x-0 translate-y-0 opacity-100" : "opacity-0 scale-150"}`;
-
-  return (
-    <>
-      <div className={`${baseClass} -left-2 -top-2 border-l-2 border-t-2 ${active ? "" : "-translate-x-2 -translate-y-2"}`} />
-      <div className={`${baseClass} -right-2 -top-2 border-r-2 border-t-2 ${active ? "" : "translate-x-2 -translate-y-2"}`} />
-      <div className={`${baseClass} -bottom-2 -left-2 border-b-2 border-l-2 ${active ? "" : "-translate-x-2 translate-y-2"}`} />
-      <div className={`${baseClass} -bottom-2 -right-2 border-b-2 border-r-2 ${active ? "" : "translate-x-2 translate-y-2"}`} />
-    </>
-  );
-}
 
 function AuthForm() {
   return (
-    <div className="w-full max-w-[520px] text-left flex flex-col justify-center px-2 sm:px-6">
+    <div className="w-full text-left flex flex-col" style={{ maxWidth: 480, padding: '0 8px' }}>
       
       {/* Title & Subtitle */}
       <div>
-        <div className="text-[18px] sm:text-[20px] font-bold tracking-tight text-[#303A3C] whitespace-nowrap">
+        <h1 style={{ fontSize: 26, fontWeight: 700, letterSpacing: '-0.02em', color: '#303A3C', whiteSpace: 'nowrap', lineHeight: 1.1 }}>
           Create an account
-        </div>
-        <p className="mt-1 text-[13px] font-medium text-[#303A3C]/60">
+        </h1>
+        <p style={{ marginTop: 2, fontSize: 14, fontWeight: 400, color: 'rgba(48,58,60,0.5)', lineHeight: 1.5 }}>
           Start your financial journey with FinWise.
         </p>
       </div>
 
       {/* Social SSO Buttons */}
-      <div className="mt-8 grid gap-6 sm:grid-cols-2">
+      <div className="grid sm:grid-cols-2" style={{ marginTop: 16, gap: 10 }}>
         <SocialButton icon={<GoogleIcon />} label="Sign up with Google" />
         <SocialButton icon={<AppleIcon />} label="Sign up with Apple" />
       </div>
 
       {/* Divider */}
-      <div className="my-8 flex items-center gap-4 text-[11px] font-bold tracking-[0.2em] uppercase text-[#303A3C]/35">
+      <div className="flex items-center text-[11px] font-bold tracking-[0.2em] uppercase" style={{ marginTop: 12, marginBottom: 12, gap: 12, color: 'rgba(48,58,60,0.3)' }}>
         <div className="h-px flex-1 bg-[#303A3C]/15" />
         OR
         <div className="h-px flex-1 bg-[#303A3C]/15" />
       </div>
 
       {/* Form Fields */}
-      <form className="flex flex-col space-y-6" onSubmit={(e) => { e.preventDefault(); window.location.href='/dashboard'; }}>
+      <form className="flex flex-col" onSubmit={(e) => { e.preventDefault(); window.location.href='/dashboard'; }}>
         
         {/* First & Last Name */}
-        <div className="grid gap-6 sm:grid-cols-2">
+        <div className="grid sm:grid-cols-2" style={{ gap: 10 }}>
           <InputField placeholder="First Name" type="text" id="first-name" />
           <InputField placeholder="Last Name" type="text" id="last-name" />
         </div>
 
-        {/* Email & Password */}
-        <InputField placeholder="Email" type="email" id="email" />
-        <InputField placeholder="Password" type="password" id="password" />
+        {/* Email */}
+        <div style={{ marginTop: 10 }}>
+          <InputField placeholder="Email" type="email" id="email" />
+        </div>
+
+        {/* Password */}
+        <div style={{ marginTop: 10 }}>
+          <InputField placeholder="Password" type="password" id="password" />
+        </div>
 
         {/* Checkbox Section */}
-        <div className="pt-2 space-y-4 text-[14px] leading-relaxed text-[#303A3C]/80">
+        <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13, lineHeight: 1.6, color: 'rgba(48,58,60,0.6)' }}>
           <CheckboxLine id="opt-out">
             I don&apos;t want to receive product updates.
           </CheckboxLine>
@@ -222,11 +105,20 @@ function AuthForm() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="mt-8 h-[48px] w-full items-center justify-center rounded-[12px] bg-[#303A3C] text-[15px] font-semibold text-[#DDD7C9] transition-all hover:bg-[#232a2c] active:scale-[0.99] shadow-md hover:shadow-lg"
+          className="w-full items-center justify-center bg-[#303A3C] font-semibold text-[#DDD7C9] transition-all hover:bg-[#232a2c] active:scale-[0.99] shadow-md hover:shadow-lg"
+          style={{ marginTop: 16, height: 46, borderRadius: 12, fontSize: 15 }}
         >
-          Submit
+          Create Account
         </button>
       </form>
+
+      {/* Switch to Sign In */}
+      <div style={{ marginTop: 24, textAlign: 'center', fontSize: 14, color: 'rgba(48,58,60,0.6)' }}>
+        Already have an account?{' '}
+        <Link href="/signin" className="font-semibold text-[#303A3C] hover:underline underline-offset-4">
+          Sign in
+        </Link>
+      </div>
     </div>
   );
 }
@@ -235,7 +127,8 @@ function SocialButton({ icon, label }: { icon: ReactNode; label: string }) {
   return (
     <button
       type="button"
-      className="flex h-[48px] w-full items-center justify-center gap-3 rounded-[12px] border border-[#303A3C]/20 bg-transparent px-6 text-[14px] font-semibold text-[#303A3C] transition-all hover:bg-[#303A3C]/5 hover:border-[#303A3C]/40"
+      className="flex w-full items-center justify-center gap-3 rounded-[12px] border border-[#303A3C]/20 bg-transparent text-[14px] font-semibold text-[#303A3C] transition-all hover:bg-[#303A3C]/5 hover:border-[#303A3C]/40"
+      style={{ height: 44, paddingLeft: 24, paddingRight: 24 }}
     >
       <span className="shrink-0">{icon}</span>
       <span className="whitespace-nowrap">{label}</span>
@@ -259,7 +152,8 @@ function InputField({
         type={type}
         placeholder={placeholder}
         aria-label={placeholder}
-        className="h-[48px] w-full rounded-[12px] border border-[#303A3C]/20 bg-transparent px-7 text-[14px] text-[#303A3C] font-medium transition-all placeholder:text-[#303A3C]/50 focus:border-[#303A3C] focus:bg-[#303A3C]/5 focus:outline-none focus:ring-1 focus:ring-[#303A3C]"
+        className="w-full border border-[#303A3C]/20 bg-transparent text-[14px] text-[#303A3C] font-medium transition-all placeholder:text-[#303A3C]/45 focus:border-[#303A3C] focus:bg-[#303A3C]/5 focus:outline-none focus:ring-1 focus:ring-[#303A3C]"
+        style={{ height: 46, borderRadius: 12, paddingLeft: 20, paddingRight: 20 }}
       />
     </div>
   );
@@ -267,7 +161,7 @@ function InputField({
 
 function CheckboxLine({ id, children }: { id: string; children: ReactNode }) {
   return (
-    <label htmlFor={id} className="flex items-start gap-3.5 cursor-pointer group">
+    <label htmlFor={id} className="flex items-start gap-3 cursor-pointer group">
       <span className="relative mt-0.5 size-[18px] shrink-0">
         <input
           id={id}
@@ -289,7 +183,7 @@ function CheckboxLine({ id, children }: { id: string; children: ReactNode }) {
           />
         </svg>
       </span>
-      <span className="select-none leading-snug">{children}</span>
+      <span className="select-none leading-relaxed">{children}</span>
     </label>
   );
 }
