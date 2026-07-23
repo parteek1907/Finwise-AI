@@ -1,6 +1,7 @@
 "use client";
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { Users } from 'lucide-react';
 import styles from './Landing.module.css';
 import { ScrollReveal } from './ScrollAnimations';
@@ -19,10 +20,10 @@ export function Community() {
               community is always helpful in providing information and perspectives, making your
               financial journey easier so you can still manage your finances with confidence.
             </p>
-            <button className={styles.communityButton}>
+            <Link href="/auth" className={styles.communityButton}>
               <Users size={16} />
               Join Community
-            </button>
+            </Link>
           </div>
           <Image
             src="/community.png"
