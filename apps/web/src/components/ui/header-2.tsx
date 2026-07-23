@@ -65,7 +65,7 @@ export function Header() {
 				
 				{/* Right: Sign In CTA */}
 				<div className="hidden md:flex items-center absolute right-0 top-1/2 -translate-y-1/2">
-					<Link href="/auth">
+					<Link href="/signin">
 						<Button 
 							variant="outline" 
 							className="group relative h-10 overflow-hidden rounded-full border-primary/20 text-sm font-semibold tracking-wide text-foreground transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] hover:border-primary active:scale-[0.98] cursor-pointer"
@@ -116,9 +116,11 @@ export function Header() {
 						))}
 					</div>
 					<div className="flex flex-col gap-3 mt-4 pt-4 border-t border-border">
-						<Button variant="outline" className="w-full h-11 rounded-full border-primary/20">
-							Sign In
-						</Button>
+						<Link href="/signin" className="w-full">
+							<Button variant="outline" className="w-full h-11 rounded-full border-primary/20">
+								Sign In
+							</Button>
+						</Link>
 					</div>
 				</div>
 			</div>
