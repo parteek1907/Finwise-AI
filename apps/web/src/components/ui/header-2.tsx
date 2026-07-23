@@ -124,7 +124,7 @@ export function Header() {
 				</nav>
 
 				{/* Center: Logo (Absolutely Centered) */}
-				<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2.5">
+				<Link href="/" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2.5 cursor-pointer">
 					<Image 
 						src="/logo.png" 
 						alt="FinWise AI Logo" 
@@ -133,7 +133,7 @@ export function Header() {
 						className="object-contain"
 					/>
 					<span className="text-[20px] font-bold text-foreground tracking-tight leading-none pt-1">FinWise AI</span>
-				</div>
+				</Link>
 				
 				{/* Right: Sign In CTA */}
 				<div className="hidden md:flex items-center absolute right-0 top-1/2 -translate-y-1/2">

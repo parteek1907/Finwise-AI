@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/shadcn-button"
+import Link from "next/link"
 
 interface FooterProps {
   brandName: string
@@ -29,9 +30,9 @@ export function Footer({
           
           {/* Left Side: Brand Name & Copyright */}
           <div className="flex flex-col space-y-8 max-w-sm">
-            <a href="/" className="font-bold text-2xl font-heading tracking-tight text-white hover:opacity-80 transition-opacity">
+            <Link href="/" className="font-bold text-2xl font-heading tracking-tight text-white hover:opacity-80 transition-opacity">
               {brandName}
-            </a>
+            </Link>
             <div className="text-sm leading-relaxed text-[#DDD7C9]/50">
               <div>{copyright.text}</div>
               {copyright.license && <div>{copyright.license}</div>}
@@ -47,12 +48,12 @@ export function Footer({
               <ul className="list-none flex flex-col gap-4">
                 {mainLinks.map((link, i) => (
                   <li key={i}>
-                    <a
+                    <Link
                       href={link.href}
                       className="text-sm text-[#DDD7C9] hover:text-white transition-colors"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -64,12 +65,12 @@ export function Footer({
               <ul className="list-none flex flex-col gap-4">
                 {legalLinks.map((link, i) => (
                   <li key={i}>
-                    <a
+                    <Link
                       href={link.href}
                       className="text-sm text-[#DDD7C9]/70 hover:text-white transition-colors"
                     >
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 ))}
               </ul>

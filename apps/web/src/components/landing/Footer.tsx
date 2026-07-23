@@ -10,10 +10,10 @@ export function Footer() {
         <UIFooter
           brandName="FinWise AI"
           mainLinks={[
-            { href: "/dashboard", label: "Dashboard" },
-            { href: "/simulator", label: "Simulator" },
-            { href: "/learn", label: "Education Library" },
-            { href: "/mentor", label: "AI Mentor" },
+            { href: "/auth", label: "Dashboard" },
+            { href: "/auth", label: "Simulator" },
+            { href: "/auth", label: "Education Library" },
+            { href: "/auth", label: "AI Mentor" },
           ]}
           legalLinks={[
             { href: "/privacy", label: "Privacy Policy" },

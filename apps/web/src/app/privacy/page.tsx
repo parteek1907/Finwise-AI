@@ -6,21 +6,21 @@ export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen flex flex-col bg-[#DDD7C9]">
       <Header />
-      <main className="flex-grow pt-32 pb-24 px-6 md:px-12">
-        <div className="max-w-4xl mx-auto space-y-8 text-[#303A3C]">
+      <main className="flex-grow px-6 md:px-12" style={{ paddingTop: '160px', paddingBottom: '100px' }}>
+        <div className="mx-auto text-[#303A3C] flex flex-col gap-12" style={{ maxWidth: '800px', margin: '0 auto' }}>
           <div className="text-center mb-12">
             <h1 className="text-3xl md:text-4xl font-bold font-sans !normal-case mb-4" style={{ fontSize: '2.5rem' }}>Privacy Policy</h1>
             <p className="text-sm opacity-60 uppercase tracking-widest font-semibold">Last Updated: July 23, 2026</p>
           </div>
           
-          <section className="space-y-4">
+          <section className="flex flex-col gap-4">
             <h2 className="font-bold font-sans !normal-case" style={{ fontSize: '1.5rem' }}>1. Introduction</h2>
             <p className="leading-relaxed opacity-90">
               Welcome to FinWise AI. We respect your privacy and are committed to protecting your personal data. This privacy policy will inform you as to how we look after your personal data when you visit our website (regardless of where you visit it from) and tell you about your privacy rights and how the law protects you.
             </p>
           </section>
 
-          <section className="space-y-4">
+          <section className="flex flex-col gap-4">
             <h2 className="font-bold font-sans !normal-case" style={{ fontSize: '1.5rem' }}>2. The Data We Collect About You</h2>
             <p className="leading-relaxed opacity-90">
               Personal data, or personal information, means any information about an individual from which that person can be identified. We may collect, use, store and transfer different kinds of personal data about you which we have grouped together as follows:
@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
             </ul>
           </section>
 
-          <section className="space-y-4">
+          <section className="flex flex-col gap-4">
             <h2 className="font-bold font-sans !normal-case" style={{ fontSize: '1.5rem' }}>3. How We Use Your Personal Data</h2>
             <p className="leading-relaxed opacity-90">
               We will only use your personal data when the law allows us to. Most commonly, we will use your personal data in the following circumstances:
@@ -47,14 +47,14 @@ export default function PrivacyPolicy() {
             </ul>
           </section>
 
-          <section className="space-y-4">
+          <section className="flex flex-col gap-4">
             <h2 className="font-bold font-sans !normal-case" style={{ fontSize: '1.5rem' }}>4. Data Security</h2>
             <p className="leading-relaxed opacity-90">
               We have put in place appropriate security measures to prevent your personal data from being accidentally lost, used or accessed in an unauthorised way, altered or disclosed. In addition, we limit access to your personal data to those employees, agents, contractors and other third parties who have a business need to know.
             </p>
           </section>
 
-          <section className="space-y-4">
+          <section className="flex flex-col gap-4">
             <h2 className="font-bold font-sans !normal-case" style={{ fontSize: '1.5rem' }}>5. Your Legal Rights</h2>
             <p className="leading-relaxed opacity-90">
               Under certain circumstances, you have rights under data protection laws in relation to your personal data, including the right to request access, correction, erasure, restriction, transfer, to object to processing, to portability of data and (where the lawful ground of processing is consent) to withdraw consent.

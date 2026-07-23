@@ -14,18 +14,18 @@ export function Resources() {
             <div style={{
               width: '100%',
               height: '280px',
-              background: 'linear-gradient(135deg, #4A5240 0%, #3B4332 50%, #555D4A 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '40px',
+              position: 'relative',
+              overflow: 'hidden'
             }}>
-              <div style={{ textAlign: 'center' }}>
-                <BookOpen size={48} style={{ color: '#C4B896', marginBottom: '16px' }} />
-                <p style={{ color: '#A8AD9E', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-                  Featured Guide
-                </p>
-              </div>
+              <img 
+                src="/featured-guide-cover.png" 
+                alt="Minimizing Risk in Personal Finance"
+                style={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover'
+                }}
+              />
             </div>
             <div className={styles.featuredArticleContent}>
               <span className={styles.featuredArticleTag}>Financial Literacy</span>
