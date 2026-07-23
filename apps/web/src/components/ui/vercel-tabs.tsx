@@ -82,7 +82,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
               position: 'absolute',
               height: '30px',
               transition: 'all 300ms ease-out',
-              backgroundColor: 'rgba(14, 15, 17, 0.05)',
+              backgroundColor: 'var(--tab-hover-bg, rgba(14, 15, 17, 0.05))',
               borderRadius: '6px',
               display: 'flex',
               alignItems: 'center',
@@ -97,14 +97,14 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
               position: 'absolute',
               bottom: '-6px',
               height: '2px',
-              backgroundColor: '#0e0f11',
+              backgroundColor: 'var(--tab-indicator-bg, #0e0f11)',
               transition: 'all 300ms ease-out',
               ...activeStyle
             }}
           />
 
           {/* Tabs */}
-          <div style={{ position: 'relative', display: 'flex', gap: '6px', alignItems: 'center' }}>
+          <div style={{ position: 'relative', display: 'flex', gap: 'var(--tab-gap, 6px)', alignItems: 'center' }}>
             {tabs.map((tab, index) => (
               <div
                 key={tab.id}
@@ -114,7 +114,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
                   cursor: 'pointer',
                   transition: 'color 300ms',
                   height: '30px',
-                  color: index === activeIndex ? '#0e0e10' : 'rgba(14, 15, 17, 0.6)'
+                  color: index === activeIndex ? 'var(--tab-active-color, #0e0e10)' : 'var(--tab-inactive-color, rgba(14, 15, 17, 0.6))'
                 }}
                 onMouseEnter={() => setHoveredIndex(index)}
                 onMouseLeave={() => setHoveredIndex(null)}

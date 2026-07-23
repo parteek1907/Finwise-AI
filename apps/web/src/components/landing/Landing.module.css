@@ -8,7 +8,7 @@
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #DDD7C9;
+  background-color: #303A3C;
   padding-top: 96px; /* 56px header + ~40px ticker */
 }
 
@@ -270,7 +270,7 @@
    HERO SECTION — Exact Crypto.in Replica
 ═══════════════════════════════════════════════ */
 .hero {
-  min-height: 75vh;
+  min-height: calc(100vh - 96px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -461,6 +461,8 @@
 .howItWorksSection {
   padding: 100px 60px;
   background-color: #DDD7C9;
+  border-radius: 48px;
+  overflow: hidden;
 }
 
 .howItWorksSectionInner {
@@ -536,6 +538,7 @@
 .resourcesSection {
   padding: 100px 60px;
   background: #303A3C;
+  overflow: hidden;
 }
 
 .resourcesContainer {
@@ -675,6 +678,8 @@
 .communitySection {
   padding: 100px 60px;
   background: #DDD7C9;
+  border-radius: 48px;
+  overflow: hidden;
 }
 
 .communityContainer {
@@ -744,6 +749,8 @@
 .faqSection {
   padding: 100px 60px;
   background-color: #DDD7C9;
+  border-radius: 48px;
+  overflow: hidden;
 }
 
 .faqContainer {
@@ -836,7 +843,6 @@
 .finalCtaSection {
   padding: 100px 60px;
   background: #303A3C;
-  position: relative;
   overflow: hidden;
 }
 
@@ -894,6 +900,7 @@
 .pricingSection {
   padding: 0;
   background: #303A3C;
+  overflow: hidden;
 }
 
 /* ═══════════════════════════════════════════════

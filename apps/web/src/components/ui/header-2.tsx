@@ -5,26 +5,53 @@ import { Button, buttonVariants } from '@/components/ui/shadcn-button';
 import { cn } from '@/lib/utils';
 import { MenuToggleIcon } from '@/components/ui/menu-toggle-icon';
 import { useScroll } from '@/components/ui/use-scroll';
-import { LineChart } from 'lucide-react';
+import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { Tabs } from '@/components/ui/vercel-tabs';
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
 	const scrolled = useScroll(10);
+	const [activeSection, setActiveSection] = React.useState('');
 
 	const links = [
-		{
-			label: 'Features',
-			href: '#',
-		},
-		{
-			label: 'Pricing',
-			href: '#',
-		},
-		{
-			label: 'About',
-			href: '#',
-		},
+		{ label: 'Features', href: '#how-it-works' },
+		{ label: 'Resources', href: '#resources' },
+		{ label: 'Community', href: '#community' },
+		{ label: 'Pricing', href: '#pricing' },
+		{ label: 'FAQ', href: '#faq' },
 	];
+
+	React.useEffect(() => {
+		const handleScroll = () => {
+			const sections = links.map(link => link.href.substring(1));
+			const scrollPosition = window.scrollY + window.innerHeight / 3;
+
+			let current = '';
+			for (let i = sections.length - 1; i >= 0; i--) {
+				const section = document.getElementById(sections[i]);
+				if (section && section.offsetTop <= scrollPosition) {
+					current = sections[i];
+					break;
+				}
+			}
+			setActiveSection(current);
+		};
+
+		window.addEventListener('scroll', handleScroll, { passive: true });
+		handleScroll(); // initial check
+		return () => window.removeEventListener('scroll', handleScroll);
+	}, []);
+
+	const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+		e.preventDefault();
+		const targetId = href.substring(1);
+		const targetElement = document.getElementById(targetId);
+		if (targetElement) {
+			targetElement.scrollIntoView({ behavior: 'smooth' });
+			setOpen(false);
+		}
+	};
 
 	React.useEffect(() => {
 		if (open) {
@@ -49,18 +76,63 @@ export function Header() {
 		>
 			<div className="mx-auto h-14 w-full max-w-[1440px] relative">
 				{/* Left: Navigation Links */}
-				<nav className="hidden md:flex items-center gap-8 absolute left-8 md:left-16 top-1/2 -translate-y-1/2">
-					{links.map((link, i) => (
-						<a key={i} className="text-sm font-medium text-foreground hover:text-foreground/70 transition-colors" href={link.href}>
-							{link.label}
-						</a>
-					))}
+				<nav className="hidden md:flex items-center absolute left-8 md:left-16 top-1/2 -translate-y-1/2">
+					<Tabs
+						tabs={links.map((link) => ({ id: link.href.substring(1), label: link.label }))}
+						activeTab={activeSection}
+						onTabChange={(id) => {
+							const targetElement = document.getElementById(id);
+							if (targetElement) {
+								const lenisInstance = (window as any).__lenis;
+								if (lenisInstance && typeof lenisInstance.scrollTo === 'function') {
+									lenisInstance.scrollTo(targetElement, {
+										offset: -80, // Offset for navbar
+										duration: 1.8,
+										easing: (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t))
+									});
+								} else {
+									// Premium fallback if Lenis is unavailable
+									const start = window.pageYOffset;
+									const targetPosition = targetElement.getBoundingClientRect().top + start - 80;
+									const distance = targetPosition - start;
+									const duration = 1500;
+									let startTime: number | null = null;
+									
+									const ease = (t: number) => Math.min(1, 1.001 - Math.pow(2, -10 * t));
+									
+									const animation = (currentTime: number) => {
+										if (startTime === null) startTime = currentTime;
+										const timeElapsed = currentTime - startTime;
+										const progress = Math.min(timeElapsed / duration, 1);
+										window.scrollTo(0, start + distance * ease(progress));
+										if (timeElapsed < duration) {
+											requestAnimationFrame(animation);
+										}
+									};
+									requestAnimationFrame(animation);
+								}
+							}
+						}}
+						style={{
+							'--tab-gap': '24px',
+							'--tab-active-color': 'currentColor',
+							'--tab-inactive-color': 'color-mix(in srgb, currentColor 60%, transparent)',
+							'--tab-indicator-bg': 'currentColor',
+							'--tab-hover-bg': 'color-mix(in srgb, currentColor 5%, transparent)',
+						} as React.CSSProperties}
+					/>
 				</nav>
 
 				{/* Center: Logo (Absolutely Centered) */}
-				<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2">
-					<LineChart className="h-5 w-5 text-primary" />
-					<span className="text-lg font-bold text-foreground tracking-tight">FinWise AI</span>
+				<div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center gap-2.5">
+					<Image 
+						src="/logo.png" 
+						alt="FinWise AI Logo" 
+						width={40} 
+						height={40} 
+						className="object-contain"
+					/>
+					<span className="text-[20px] font-bold text-foreground tracking-tight leading-none pt-1">FinWise AI</span>
 				</div>
 				
 				{/* Right: Sign In CTA */}
@@ -110,6 +182,7 @@ export function Header() {
 									className: 'justify-start',
 								})}
 								href={link.href}
+								onClick={(e) => handleLinkClick(e, link.href)}
 							>
 								{link.label}
 							</a>

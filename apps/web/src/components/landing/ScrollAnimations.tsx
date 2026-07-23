@@ -12,6 +12,9 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
       touchMultiplier: 1.5,
       infinite: false,
     });
+    
+    // Expose lenis globally for imperative smooth scrolling using a private key to avoid conflicts
+    (window as any).__lenis = lenis;
 
     function raf(time: number) {
       lenis.raf(time);
@@ -19,7 +22,10 @@ export function SmoothScrollProvider({ children }: { children: ReactNode }) {
     }
     requestAnimationFrame(raf);
 
-    return () => lenis.destroy();
+    return () => {
+      lenis.destroy();
+      delete (window as any).__lenis;
+    };
   }, []);
 
   return <>{children}</>;

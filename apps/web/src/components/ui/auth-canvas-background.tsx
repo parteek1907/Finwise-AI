@@ -1,5 +1,5 @@
 import React from "react";
-import { LineChart } from "lucide-react";
+import Image from "next/image";
 
 export function AuthCanvasBackground() {
   return (
@@ -15,11 +15,15 @@ export function AuthCanvasBackground() {
         <div className="absolute top-0 left-[20%] right-[20%] h-[1px] bg-gradient-to-r from-transparent via-[#8A9080]/40 to-transparent" />
 
         {/* Logo Section */}
-        <div className="flex items-center gap-3.5 mb-8">
-          <div className="flex size-11 items-center justify-center rounded-2xl bg-[#DDD7C9]/[0.03] border border-[#DDD7C9]/[0.05] shadow-inner">
-            <LineChart className="size-5 text-[#8A9080]" />
-          </div>
-          <span className="text-2xl font-bold font-heading text-[#DDD7C9] tracking-tight">
+        <div className="flex items-center gap-4 mb-8">
+          <Image 
+            src="/logo.png" 
+            alt="FinWise AI Logo" 
+            width={56} 
+            height={56} 
+            className="object-contain"
+          />
+          <span className="text-3xl font-bold font-heading text-[#DDD7C9] tracking-tight leading-none pt-2">
             FinWise AI
           </span>
         </div>

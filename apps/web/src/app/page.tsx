@@ -3,7 +3,6 @@ import React from 'react';
 import { Header } from '@/components/ui/header-2';
 import { MarketTicker } from '@/components/landing/MarketTicker';
 import { Hero } from '@/components/landing/Hero';
-import { StatsBar } from '@/components/landing/StatsBar';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { Resources } from '@/components/landing/Resources';
 import { Community } from '@/components/landing/Community';
@@ -21,7 +20,6 @@ export default function LandingPage() {
         <Header />
         <MarketTicker />
         <Hero />
-        <StatsBar />
         <HowItWorks />
         <Resources />
         <Community />
