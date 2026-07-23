@@ -252,32 +252,56 @@ export function Pricing({
               }} />
 
               {/* CTA Button */}
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  toast({
-                    title: "Early Access Beta",
-                    description: `Our ${plan.name} plan is currently in closed beta. We've noted your interest and will notify you when spots open up!`,
-                  });
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: "100%",
-                  padding: "14px 0",
-                  borderRadius: "12px",
-                  fontSize: "16px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all 200ms ease",
-                  backgroundColor: isCenter ? "#DDD7C9" : "transparent",
-                  color: isCenter ? "#303A3C" : "#DDD7C9",
-                  border: isCenter ? "none" : "1px solid rgba(221,213,192,0.25)",
-                }}
-              >
-                {plan.buttonText}
-              </button>
+              {plan.name === "FOUNDATION" ? (
+                <Link
+                  href={plan.href}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    padding: "14px 0",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 200ms ease",
+                    backgroundColor: isCenter ? "#DDD7C9" : "transparent",
+                    color: isCenter ? "#303A3C" : "#DDD7C9",
+                    border: isCenter ? "none" : "1px solid rgba(221,213,192,0.25)",
+                    textDecoration: "none",
+                  }}
+                >
+                  {plan.buttonText}
+                </Link>
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toast({
+                      title: "Early Access Beta",
+                      description: `Our ${plan.name} plan is currently in closed beta. We've noted your interest and will notify you when spots open up!`,
+                    });
+                  }}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "100%",
+                    padding: "14px 0",
+                    borderRadius: "12px",
+                    fontSize: "16px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    transition: "all 200ms ease",
+                    backgroundColor: isCenter ? "#DDD7C9" : "transparent",
+                    color: isCenter ? "#303A3C" : "#DDD7C9",
+                    border: isCenter ? "none" : "1px solid rgba(221,213,192,0.25)",
+                  }}
+                >
+                  {plan.buttonText}
+                </button>
+              )}
 
               {/* Description */}
               <p style={{

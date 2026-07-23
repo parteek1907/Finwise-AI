@@ -47,10 +47,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95, transition: { duration: 0.2 } }}
               style={{
-                background: 'rgba(10, 10, 10, 0.7)',
+                background: 'rgba(58, 70, 72, 0.9)',
                 backdropFilter: 'blur(24px)',
                 WebkitBackdropFilter: 'blur(24px)',
-                border: '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid rgba(221, 215, 201, 0.15)',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
                 borderRadius: '12px',
                 padding: '16px 20px',
@@ -58,23 +58,23 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 alignItems: 'flex-start',
                 gap: '12px',
                 width: '320px',
-                color: 'white',
+                color: '#DDD7C9',
               }}
             >
-              <div style={{ color: 'var(--color-accent-primary, #10b981)', marginTop: '2px' }}>
+              <div style={{ color: '#C4B896', marginTop: '2px' }}>
                 <Sparkles size={18} />
               </div>
               <div style={{ flex: 1 }}>
-                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600 }}>{t.title}</h4>
+                <h4 style={{ margin: 0, fontSize: '14px', fontWeight: 600, color: '#DDD7C9' }}>{t.title}</h4>
                 {t.description && (
-                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#a3a3a3', lineHeight: 1.4 }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#A8AD9E', lineHeight: 1.4 }}>
                     {t.description}
                   </p>
                 )}
               </div>
               <button 
                 onClick={() => setToasts(prev => prev.filter(toast => toast.id !== t.id))}
-                style={{ background: 'none', border: 'none', color: '#a3a3a3', cursor: 'pointer', padding: 0 }}
+                style={{ background: 'none', border: 'none', color: '#8A9080', cursor: 'pointer', padding: 0 }}
               >
                 <X size={16} />
               </button>
