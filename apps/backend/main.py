@@ -79,7 +79,7 @@ def register_user(request: AuthRegisterRequest):
 
 @app.post("/api/auth/login")
 def login_user(request: AuthLoginRequest):
-    api_key = os.getenv("FIREBASE_WEB_API_KEY")
+    api_key = "AIzaSyAsb_Q0OIJK5_sqf3Hkbe3n26Mq41hFAig"
     if not api_key:
         raise HTTPException(status_code=500, detail="FIREBASE_WEB_API_KEY not configured on backend")
     
