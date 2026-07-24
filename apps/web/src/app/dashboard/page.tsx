@@ -163,7 +163,7 @@ export default function DashboardPage() {
               <span>Mentor Sessions</span>
               <div className={styles.metricIcon}><MessageSquare size={14} color="#19533B" /></div>
             </div>
-            <div className={styles.metricValue}><NumberFlow value={showNumbers ? mentorHistory.length : 0} /></div>
+            <div className={styles.metricValue}><NumberFlow value={showNumbers ? chats.length : 0} /></div>
             <div className={styles.metricChange}>
               <span className={styles.metricChangeBadge}><ArrowUpRight size={10} /> 5</span>
               <span className={styles.metricChangeText}>Insights generated</span>
