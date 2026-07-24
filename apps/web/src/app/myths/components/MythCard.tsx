@@ -24,7 +24,7 @@ interface MythCardProps {
   direction: number;
 }
 
-const cardVariants = {
+const cardVariants: any = {
   enter: (direction: number) => ({
     opacity: 0,
     scale: 1.02,
