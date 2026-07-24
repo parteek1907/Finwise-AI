@@ -43,7 +43,7 @@ export function ProductShowcase() {
               <h2 className={styles.showcaseTitle}>{feature.title}</h2>
               <p className={styles.showcaseDesc}>{feature.description}</p>
               <div style={{marginTop: '16px'}}>
-                <Button variant={feature.dark ? "primary" : "secondary"} icon={<ArrowRight size={16}/>}>
+                <Button variant={feature.dark ? "default" : "secondary"} icon={<ArrowRight size={16}/>}>
                   Explore Feature
                 </Button>
               </div>
