@@ -39,17 +39,29 @@ export interface MentorMessage {
   actionRequired?: boolean;
 }
 
+export interface ChatSession {
+  id: string;
+  title: string;
+  messages: MentorMessage[];
+  updatedAt: string;
+}
+
 export interface AppState {
   user: User;
   goals: Goal[];
   lessons: Lesson[];
-  mentorHistory: MentorMessage[];
+  chats: ChatSession[];
+  activeChatId: string;
   
   // Actions
   addXP: (amount: number) => void;
+  addGoal: (goal: Omit<Goal, 'id' | 'current' | 'status'>) => void;
   updateGoal: (id: string, amount: number) => void;
   completeLesson: (id: string) => void;
-  addMessage: (message: Omit<MentorMessage, 'id' | 'timestamp'>) => void;
+  addMessage: (chatId: string, message: Omit<MentorMessage, 'id' | 'timestamp'>) => void;
+  createNewChat: (title?: string) => string;
+  setActiveChat: (id: string) => void;
+  updateChatTitle: (id: string, title: string) => void;
 }
 
 // Initial Mock Data
@@ -84,15 +96,64 @@ const INITIAL_MESSAGES: MentorMessage[] = [
   { id: 'm3', sender: 'ai', text: 'That is a great goal. However, based on your active goals, you still have $800 in credit card debt. Mathematically, paying off high-interest debt yields a better guaranteed return than the market.', timestamp: new Date(Date.now() - 2900000).toISOString(), actionRequired: true },
 ];
 
+const INITIAL_CHATS: ChatSession[] = [
+  {
+    id: 'chat_live',
+    title: 'Current Session',
+    updatedAt: new Date().toISOString(),
+    messages: INITIAL_MESSAGES
+  },
+  {
+    id: 'chat_mock_1',
+    title: 'Discussing Emergency Fund',
+    updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    messages: [
+      { id: 'm1_1', sender: 'user', text: 'How much should I really have in my emergency fund?', timestamp: new Date(Date.now() - 86400000 * 2).toISOString() },
+      { id: 'm1_2', sender: 'ai', text: 'A good rule of thumb is 3-6 months of essential living expenses. For your current lifestyle, that would be around $9,000 to $18,000. You currently have $2,400 saved, which is a fantastic start!', timestamp: new Date(Date.now() - 86400000 * 2 + 1000).toISOString() }
+    ]
+  },
+  {
+    id: 'chat_mock_2',
+    title: 'Psychology of Debt Lesson',
+    updatedAt: new Date(Date.now() - 86400000 * 4).toISOString(),
+    messages: [
+      { id: 'm2_1', sender: 'user', text: 'I feel stressed every time I look at my credit card balance. How do I stop this cycle?', timestamp: new Date(Date.now() - 86400000 * 4).toISOString() },
+      { id: 'm2_2', sender: 'ai', text: 'It\'s completely normal to feel that way. The first step is acknowledging the emotional weight of debt. I recommend trying the "Snowball Method" to build momentum. Let\'s review your balances and pick the smallest one to attack first.', timestamp: new Date(Date.now() - 86400000 * 4 + 1000).toISOString() }
+    ]
+  },
+  {
+    id: 'chat_mock_3',
+    title: 'Setting up first goals',
+    updatedAt: new Date(Date.now() - 86400000 * 15).toISOString(),
+    messages: [
+      { id: 'm3_1', sender: 'user', text: 'I want to buy a car next year, where do I start?', timestamp: new Date(Date.now() - 86400000 * 15).toISOString() },
+      { id: 'm3_2', sender: 'ai', text: 'Let\'s set up a specific Vehicle Goal. If you want to buy a car in 12 months, we need to determine your target downpayment. Do you have a specific car in mind or a total budget?', timestamp: new Date(Date.now() - 86400000 * 15 + 1000).toISOString() },
+      { id: 'm3_3', sender: 'user', text: 'I think $8,000 for a downpayment is good.', timestamp: new Date(Date.now() - 86400000 * 15 + 2000).toISOString() },
+      { id: 'm3_4', sender: 'ai', text: 'Great! I\'ve created a "Vehicle Downpayment" goal for $8,000. You\'ll need to save roughly $667 per month to hit that target by next year.', timestamp: new Date(Date.now() - 86400000 * 15 + 3000).toISOString() }
+    ]
+  }
+];
+
 export const useAppStore = create<AppState>((set) => ({
   user: INITIAL_USER,
   goals: INITIAL_GOALS,
   lessons: INITIAL_LESSONS,
-  mentorHistory: INITIAL_MESSAGES,
+  chats: INITIAL_CHATS,
+  activeChatId: 'chat_live',
 
   addXP: (amount) => set((state) => ({ 
     user: { ...state.user, xp: state.user.xp + amount } 
   })),
+
+  addGoal: (goalData) => set((state) => {
+    const newGoal: Goal = {
+      ...goalData,
+      id: `g${Date.now()}`,
+      current: 0,
+      status: 'Planning'
+    };
+    return { goals: [...state.goals, newGoal] };
+  }),
 
   updateGoal: (id, amount) => set((state) => ({
     goals: state.goals.map(g => g.id === id ? { ...g, current: Math.min(g.target, g.current + amount) } : g)
@@ -108,11 +169,39 @@ export const useAppStore = create<AppState>((set) => ({
     };
   }),
 
-  addMessage: (message) => set((state) => ({
-    mentorHistory: [...state.mentorHistory, {
-      ...message,
-      id: `m${Date.now()}`,
-      timestamp: new Date().toISOString()
-    }]
+  addMessage: (chatId, message) => set((state) => ({
+    chats: state.chats.map(chat => {
+      if (chat.id === chatId) {
+        return {
+          ...chat,
+          updatedAt: new Date().toISOString(),
+          messages: [...chat.messages, { ...message, id: `m${Date.now()}`, timestamp: new Date().toISOString() }]
+        };
+      }
+      return chat;
+    })
   })),
+
+  createNewChat: (title = 'New Chat') => {
+    const newChatId = `chat_${Date.now()}`;
+    set((state) => ({
+      chats: [
+        {
+          id: newChatId,
+          title,
+          messages: [],
+          updatedAt: new Date().toISOString()
+        },
+        ...state.chats
+      ],
+      activeChatId: newChatId
+    }));
+    return newChatId;
+  },
+
+  setActiveChat: (id) => set({ activeChatId: id }),
+
+  updateChatTitle: (id, title) => set((state) => ({
+    chats: state.chats.map(chat => chat.id === id ? { ...chat, title } : chat)
+  }))
 }));

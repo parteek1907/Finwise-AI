@@ -3,3 +3,6 @@ uvicorn
 firebase-admin
 python-dotenv
 pydantic
+groq
+google-genai
+requests

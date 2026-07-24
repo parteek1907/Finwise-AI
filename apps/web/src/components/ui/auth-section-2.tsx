@@ -5,6 +5,8 @@ import { ArrowRight, LineChart, Info, Copy, Check } from "lucide-react";
 import Link from "next/link";
 
 import { AuthCanvasBackground } from "./auth-canvas-background";
+import { auth } from "@/lib/firebase";
+import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { useToast } from "@/components/ui/toast";
 
 const termsText = (
@@ -75,8 +77,26 @@ function AuthForm() {
 
       {/* Social SSO Buttons */}
       <div className="grid sm:grid-cols-2" style={{ marginTop: 16, gap: 10 }}>
-        <SocialButton icon={<GoogleIcon />} label="Sign up with Google" onClick={() => toast({ title: "Access Denied", description: "Social signup is disabled for this private prototype. Please use the team login on the Sign In page." })} />
-        <SocialButton icon={<AppleIcon />} label="Sign up with Apple" onClick={() => toast({ title: "Access Denied", description: "Social signup is disabled for this private prototype. Please use the team login on the Sign In page." })} />
+        <SocialButton icon={<GoogleIcon />} label="Sign up with Google" onClick={async () => {
+          try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+            toast({ title: "Success", description: "Successfully signed up with Google!" });
+            window.location.href = '/dashboard';
+          } catch (error: any) {
+            toast({ title: "Sign Up Failed", description: error.message });
+          }
+        }} />
+        <SocialButton icon={<AppleIcon />} label="Sign up with Apple" onClick={async () => {
+          try {
+            const provider = new OAuthProvider('apple.com');
+            await signInWithPopup(auth, provider);
+            toast({ title: "Success", description: "Successfully signed up with Apple!" });
+            window.location.href = '/dashboard';
+          } catch (error: any) {
+            toast({ title: "Sign Up Failed", description: error.message });
+          }
+        }} />
       </div>
 
       {/* Divider */}
@@ -87,17 +107,19 @@ function AuthForm() {
       </div>
 
       {/* Form Fields */}
-      <form className="flex flex-col" onSubmit={(e) => { 
+      <form className="flex flex-col" onSubmit={async (e) => { 
         e.preventDefault(); 
         const email = (document.getElementById('email') as HTMLInputElement).value;
         const password = (document.getElementById('password') as HTMLInputElement).value;
         
-        if (email === 'team@finwise.ai' && password === 'password123') {
-          window.location.href='/dashboard';
-        } else {
+        try {
+          await createUserWithEmailAndPassword(auth, email, password);
+          toast({ title: "Success", description: "Account created successfully!" });
+          window.location.href = '/dashboard';
+        } catch (error: any) {
           toast({ 
-            title: "Authentication Failed", 
-            description: "Signups are currently disabled. Access is restricted to authorized team members only."
+            title: "Sign Up Failed", 
+            description: error.message || "Failed to create account."
           });
         }
       }}>

@@ -21,9 +21,44 @@ interface MythCardProps {
   onNext: () => void;
   onPrev: () => void;
   index: number;
+  direction: number;
 }
 
-export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProps) {
+const cardVariants = {
+  enter: (direction: number) => ({
+    opacity: 0,
+    scale: 1.02,
+    rotate: direction > 0 ? 4 : -4,
+    y: 30,
+    filter: 'blur(8px)',
+  }),
+  center: (index: number) => ({
+    opacity: index === 0 ? 1 : Math.max(1 - index * 0.15, 0),
+    scale: index === 0 ? 1 : Math.max(1 - index * 0.04, 0.8),
+    rotate: 0,
+    y: index * 16,
+    filter: 'blur(0px)',
+    transition: {
+      type: 'spring',
+      stiffness: 400,
+      damping: 30,
+      mass: 0.8,
+    }
+  }),
+  exit: (direction: number) => ({
+    opacity: 0,
+    scale: 0.96,
+    rotate: direction > 0 ? -4 : 4,
+    y: -20,
+    filter: 'blur(8px)',
+    transition: {
+      duration: 0.3,
+      ease: [0.32, 0.72, 0, 1]
+    }
+  })
+};
+
+export function MythCard({ data, isActive, onNext, onPrev, index, direction }: MythCardProps) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [showXP, setShowXP] = useState(false);
 
@@ -73,13 +108,11 @@ export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProp
       style={{
         zIndex: isActive ? 10 : 5 - index,
       }}
-      initial={{ scale: 0.9, opacity: 0, y: 30 }}
-      animate={{ 
-        scale: isActive ? 1 : 1 - index * 0.04, 
-        opacity: isActive ? 1 : 1 - index * 0.15, 
-        y: isActive ? 0 : index * 16,
-      }}
-      transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+      custom={direction}
+      variants={cardVariants}
+      initial="enter"
+      animate="center"
+      exit="exit"
     >
       <motion.div
         className={styles.card}
@@ -93,8 +126,8 @@ export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProp
         }}
         transition={{
           type: "spring",
-          stiffness: 80,
-          damping: 20,
+          stiffness: 120,
+          damping: 24,
           mass: 1,
         }}
         whileTap={{ scale: 0.98 }}
@@ -105,7 +138,6 @@ export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProp
             {getCategoryIcon(data.category)}
             <span style={{ marginLeft: 6 }}>{data.category}</span>
           </div>
-          <div className={styles.cardType}>MYTH</div>
           <h3 className={styles.statement}>"{data.myth}"</h3>
           
           <div className={styles.swipeIndicator}>
@@ -122,8 +154,8 @@ export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProp
 
         {/* Back of Card: FACT */}
         <div className={`${styles.cardFace} ${styles.cardBack}`}>
-          <div className={styles.badge}>
-            <span style={{ marginLeft: 6, color: '#4ade80' }}>REALITY</span>
+          <div className={`${styles.badge} ${styles.badgeFact}`}>
+            <span style={{ marginLeft: 6 }}>REALITY</span>
           </div>
           <h3 className={`${styles.statement} ${styles.factStatement}`}>{data.fact}</h3>
           <p className={styles.factExplanation}>{data.insight}</p>
@@ -132,8 +164,8 @@ export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProp
             {isFlipped && (
               <motion.div 
                 className={styles.aiInsight}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 20 }}
               >
                 <div className={styles.insightIcon}>
@@ -154,9 +186,9 @@ export function MythCard({ data, isActive, onNext, onPrev, index }: MythCardProp
         {showXP && (
           <motion.div
             className={styles.xpToast}
-            initial={{ opacity: 0, y: 0 }}
-            animate={{ opacity: 1, y: -20 }}
-            exit={{ opacity: 0, y: -40 }}
+            initial={{ opacity: 0, scale: 0.9, y: 0 }}
+            animate={{ opacity: 1, scale: 1, y: -20 }}
+            exit={{ opacity: 0, scale: 0.9, y: -40 }}
             transition={{ duration: 0.4 }}
           >
             <Sparkles size={14} />

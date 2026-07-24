@@ -65,7 +65,7 @@ export default function DashboardPage() {
   const user = useAppStore(state => state.user);
   const goals = useAppStore(state => state.goals);
   const lessons = useAppStore(state => state.lessons);
-  const mentorHistory = useAppStore(state => state.mentorHistory);
+  const chats = useAppStore(state => state.chats);
 
   useEffect(() => {
     setMounted(true);
