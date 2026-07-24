@@ -108,7 +108,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
             {tabs.map((tab, index) => (
               <div
                 key={tab.id}
-                ref={(el) => (tabRefs.current[index] = el)}
+                ref={(el) => { tabRefs.current[index] = el; }}
                 style={{
                   padding: '4px 12px',
                   cursor: 'pointer',
