@@ -8,12 +8,14 @@ import { useAppStore } from '@/store/useAppStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function MentorPage() {
-  const history = useAppStore(state => state.mentorHistory);
-  const addMessage = useAppStore(state => state.addMessage);
-  const user = useAppStore(state => state.user);
+  const { chats, activeChatId, addMessage, createNewChat, setActiveChat, updateChatTitle, user, goals, updateGoal } = useAppStore();
+  
+  const activeChat = chats.find(c => c.id === activeChatId) || chats[0];
+  const history = activeChat ? activeChat.messages : [];
   
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [appliedActions, setAppliedActions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -22,24 +24,79 @@ export default function MentorPage() {
 
   useEffect(() => {
     scrollToBottom();
+    console.log("Mentor page initialized with live Groq AI");
   }, [history, isTyping]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!inputValue.trim()) return;
     
+    const userMessage = inputValue;
+    const currentChatId = activeChatId;
+    const isFirstMessage = history.length === 0;
+
     // Add User Message
-    addMessage({ sender: 'user', text: inputValue });
+    addMessage(currentChatId, { sender: 'user', text: userMessage });
     setInputValue('');
     setIsTyping(true);
 
-    // Simulate AI Response
-    setTimeout(() => {
-      setIsTyping(false);
-      addMessage({ 
-        sender: 'ai', 
-        text: "That's a great question. Based on your financial archetype (The Guardian), I recommend prioritizing stability. Let's look at how we can adjust your emergency fund goal to reach it 2 months faster." 
+    try {
+      if (isFirstMessage) {
+        // Generate title in background
+        fetch('http://localhost:8000/api/chat-title', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage }),
+        }).then(res => res.json()).then(data => {
+          if (data.title) {
+            updateChatTitle(currentChatId, data.title);
+          }
+        }).catch(e => console.error("Title generation error", e));
+      }
+
+      // Prepare messages payload for backend
+      const apiMessages = history.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : 'assistant',
+        content: msg.text
+      }));
+      apiMessages.push({ role: 'user', content: userMessage });
+
+      const response = await fetch('http://localhost:8000/api/mentor', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ messages: apiMessages, goals }),
       });
-    }, 1500);
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch from API');
+      }
+
+      const data = await response.json();
+      
+      setIsTyping(false);
+      addMessage(currentChatId, { 
+        sender: 'ai', 
+        text: data.content || "I'm having trouble thinking right now."
+      });
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      setIsTyping(false);
+      addMessage(currentChatId, { 
+        sender: 'ai', 
+        text: "Sorry, I'm having trouble connecting right now. Please try again later." 
+      });
+    }
+  };
+
+  const handleApplyChange = (msgId: string) => {
+    // Hardcoded logic for the specific mock message
+    updateGoal('g2', 200);
+    setAppliedActions(prev => [...prev, msgId]);
+    addMessage(activeChatId, {
+      sender: 'ai',
+      text: "✅ I've successfully reallocated $200 towards your Credit Card Debt. Your goals have been updated!"
+    });
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -64,28 +121,21 @@ export default function MentorPage() {
           
           {/* Left: Chat History */}
           <aside className={styles.historySidebar}>
-            <button className={styles.newChatBtn}>
+            <button className={styles.newChatBtn} onClick={() => createNewChat('New Chat')}>
               <Plus size={16} /> New Chat
             </button>
             <div className={styles.historyList}>
-              <span className={styles.historyLabel}>Previous 7 Days</span>
-              <button className={styles.historyItem}>
-                <MessageSquare size={14} /> Discussing Emergency Fund
-              </button>
-              <button className={styles.historyItem}>
-                <MessageSquare size={14} /> Psychology of Debt Lesson
-              </button>
-              <button className={styles.historyItem}>
-                <MessageSquare size={14} /> Weekend Budget Review
-              </button>
-              
-              <span className={styles.historyLabel} style={{marginTop: '1rem'}}>Previous 30 Days</span>
-              <button className={styles.historyItem}>
-                <MessageSquare size={14} /> Setting up first goals
-              </button>
-              <button className={styles.historyItem}>
-                <MessageSquare size={14} /> Onboarding results
-              </button>
+              <span className={styles.historyLabel}>Recent Chats</span>
+              {chats.map(chat => (
+                <button 
+                  key={chat.id}
+                  className={styles.historyItem}
+                  onClick={() => setActiveChat(chat.id)}
+                  style={chat.id === activeChatId ? { backgroundColor: 'var(--color-surface-bg)', color: 'var(--color-text-primary)' } : {}}
+                >
+                  <MessageSquare size={14} /> {chat.title}
+                </button>
+              ))}
             </div>
           </aside>
 
@@ -112,7 +162,12 @@ export default function MentorPage() {
                         <div className={styles.actionCard}>
                           <strong>Action Recommended</strong>
                           <p>Reallocate $200 from checking to Credit Card Debt.</p>
-                          <button>Apply Changes</button>
+                          <button 
+                            onClick={() => handleApplyChange(msg.id)}
+                            disabled={appliedActions.includes(msg.id)}
+                          >
+                            {appliedActions.includes(msg.id) ? 'Applied ✅' : 'Apply Changes'}
+                          </button>
                         </div>
                       )}
                     </div>
@@ -126,7 +181,7 @@ export default function MentorPage() {
                 ))}
                 
                 {isTyping && (
-                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={`${styles.messageWrapper} ${styles.wrapperAi}`}>
+                  <motion.div key="typing" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0, scale: 0.9 }} className={`${styles.messageWrapper} ${styles.wrapperAi}`}>
                     <div className={styles.aiAvatar}><Sparkles size={16} /></div>
                     <div className={`${styles.messageBubble} ${styles.bubbleAi}`}>
                       <div className={styles.typingIndicator}>

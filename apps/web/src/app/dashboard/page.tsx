@@ -50,7 +50,7 @@ export default function DashboardPage() {
   const user = useAppStore(state => state.user);
   const goals = useAppStore(state => state.goals);
   const lessons = useAppStore(state => state.lessons);
-  const mentorHistory = useAppStore(state => state.mentorHistory);
+  const chats = useAppStore(state => state.chats);
 
   // Derived Data
   const completedLessons = lessons.filter(l => l.status === 'Completed').length;
@@ -58,7 +58,7 @@ export default function DashboardPage() {
   const activeGoals = goals.filter(g => g.status !== 'Planning');
 
   const METRICS = [
-    { id: 'mentor', title: 'Mentor Sessions', value: mentorHistory.length.toString(), change: '+ 3', icon: MessageSquare, active: true },
+    { id: 'mentor', title: 'Mentor Sessions', value: chats.length.toString(), change: '+ 3', icon: MessageSquare, active: true },
     { id: 'modules', title: 'Modules Completed', value: completedLessons.toString(), change: '+ 1', icon: BookOpen, active: false },
     { id: 'goals', title: 'Goals on Track', value: activeGoals.length.toString(), change: '0', icon: Target, active: false },
     { id: 'scams', title: 'Scams Avoided', value: '3', change: '+ 1', icon: ShieldCheck, active: false },

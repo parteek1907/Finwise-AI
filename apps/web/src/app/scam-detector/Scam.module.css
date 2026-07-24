@@ -215,6 +215,44 @@
   font-weight: 600;
 }
 
+.safeHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: #22c55e;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.safeHeader h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+}
+
+.safeHeader span {
+  font-weight: 600;
+}
+
+.safeHeader {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  color: #22c55e;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.safeHeader h2 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.75rem;
+}
+
+.safeHeader span {
+  font-weight: 600;
+}
+
 .analysisSection h3 {
   margin: 0 0 1rem 0;
   font-size: 1.1rem;
@@ -296,4 +334,65 @@
 .safeBtn {
   background-color: var(--color-surface-bg);
   color: var(--color-text-secondary);
+}
+
+/* Saved Reports Section */
+.savedReportsSection {
+  margin-top: 4rem;
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
+}
+
+.savedReportsSection h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1.5rem;
+  color: var(--color-text-primary);
+}
+
+.reportsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.reportCard {
+  background-color: var(--color-card-bg);
+  border-radius: 16px;
+  padding: 1.5rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  border: 1px solid var(--color-border);
+}
+
+.reportCard:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 25px rgba(0,0,0,0.05);
+}
+
+.reportHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.reportDate {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.reportRisk {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.reportLesson {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  line-height: 1.4;
 }
