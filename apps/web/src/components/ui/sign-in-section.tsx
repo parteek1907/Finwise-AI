@@ -5,6 +5,8 @@ import { ArrowRight, LineChart, Info, Copy, Check } from "lucide-react";
 import Link from "next/link";
 
 import { AuthCanvasBackground } from "./auth-canvas-background";
+import { auth } from "@/lib/firebase";
+import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { useToast } from "@/components/ui/toast";
 
 export default function SignInSection() {
@@ -52,8 +54,26 @@ function AuthForm() {
 
       {/* Social SSO Buttons */}
       <div className="grid sm:grid-cols-2" style={{ marginTop: 16, gap: 10 }}>
-        <SocialButton icon={<GoogleIcon />} label="Sign in with Google" onClick={() => toast({ title: "Access Denied", description: "Social login is disabled for this private prototype. Please use the team login." })} />
-        <SocialButton icon={<AppleIcon />} label="Sign in with Apple" onClick={() => toast({ title: "Access Denied", description: "Social login is disabled for this private prototype. Please use the team login." })} />
+        <SocialButton icon={<GoogleIcon />} label="Sign in with Google" onClick={async () => {
+          try {
+            const provider = new GoogleAuthProvider();
+            await signInWithPopup(auth, provider);
+            toast({ title: "Success", description: "Successfully signed in with Google!" });
+            window.location.href = '/dashboard';
+          } catch (error: any) {
+            toast({ title: "Authentication Failed", description: error.message });
+          }
+        }} />
+        <SocialButton icon={<AppleIcon />} label="Sign in with Apple" onClick={async () => {
+          try {
+            const provider = new OAuthProvider('apple.com');
+            await signInWithPopup(auth, provider);
+            toast({ title: "Success", description: "Successfully signed in with Apple!" });
+            window.location.href = '/dashboard';
+          } catch (error: any) {
+            toast({ title: "Authentication Failed", description: error.message });
+          }
+        }} />
       </div>
 
       {/* Divider */}
@@ -64,17 +84,19 @@ function AuthForm() {
       </div>
 
       {/* Form Fields */}
-      <form className="flex flex-col" onSubmit={(e) => { 
+      <form className="flex flex-col" onSubmit={async (e) => { 
         e.preventDefault(); 
         const email = (document.getElementById('email') as HTMLInputElement).value;
         const password = (document.getElementById('password') as HTMLInputElement).value;
         
-        if (email === 'team@finwise.ai' && password === 'password123') {
-          window.location.href='/dashboard';
-        } else {
+        try {
+          await signInWithEmailAndPassword(auth, email, password);
+          toast({ title: "Success", description: "Successfully signed in!" });
+          window.location.href = '/dashboard';
+        } catch (error: any) {
           toast({ 
             title: "Authentication Failed", 
-            description: "Invalid credentials. Access is restricted to authorized team members only."
+            description: error.message || "Invalid credentials."
           });
         }
       }}>

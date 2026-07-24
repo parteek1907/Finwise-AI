@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -30,14 +30,17 @@ import base64
 # Load environment variables
 load_dotenv(".env.local")
 
+from firebase_admin import auth as firebase_admin_auth
+from auth_utils import get_current_user, login_with_email_password
+
 # Initialize Groq client
 client = Groq(
-    api_key=os.environ.get("GROQ_API_KEY"),
+    api_key=os.getenv("GROQ_API_KEY"),
 )
 
 # Initialize Gemini client
 gemini_client = genai.Client(
-    api_key=os.environ.get("GEMINI_API_KEY"),
+    api_key=os.getenv("GEMINI_API_KEY"),
 )
 
 class Message(BaseModel):
@@ -48,9 +51,52 @@ class ChatRequest(BaseModel):
     messages: List[Message]
     goals: Optional[List[Dict]] = None
 
+class AuthRegisterRequest(BaseModel):
+    email: str
+    password: str
+
+class AuthLoginRequest(BaseModel):
+    email: str
+    password: str
+
+class SocialAuthRequest(BaseModel):
+    id_token: str
+
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "message": "Finwise AI Backend is running"}
+
+@app.post("/api/auth/register")
+def register_user(request: AuthRegisterRequest):
+    try:
+        user = firebase_admin_auth.create_user(
+            email=request.email,
+            password=request.password
+        )
+        return {"uid": user.uid, "email": user.email, "message": "User created successfully"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/auth/login")
+def login_user(request: AuthLoginRequest):
+    api_key = os.getenv("FIREBASE_WEB_API_KEY")
+    if not api_key:
+        raise HTTPException(status_code=500, detail="FIREBASE_WEB_API_KEY not configured on backend")
+    
+    return login_with_email_password(request.email, request.password, api_key)
+
+@app.post("/api/auth/social")
+def verify_social_token(request: SocialAuthRequest):
+    try:
+        decoded_token = firebase_admin_auth.verify_id_token(request.id_token)
+        return {
+            "uid": decoded_token.get("uid"),
+            "email": decoded_token.get("email"),
+            "name": decoded_token.get("name"),
+            "message": "Token verified successfully"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
 
 @app.post("/api/mentor")
 def mentor_endpoint(request: ChatRequest):
