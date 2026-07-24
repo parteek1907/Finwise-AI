@@ -60,7 +60,12 @@ export default function MentorPage() {
     <AppLayout>
       <div className={styles.workspace}>
         {/* Mentor 3-Column Layout */}
-        <div className={styles.mentorLayout}>
+        <motion.div 
+          className={styles.mentorLayout}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
           
           {/* Left: Chat History */}
           <aside className={styles.historySidebar}>
@@ -190,7 +195,7 @@ export default function MentorPage() {
             </div>
 
           </aside>
-        </div>
+        </motion.div>
       </div>
     </AppLayout>
   );

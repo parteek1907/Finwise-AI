@@ -1,50 +1,65 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
+import { useAppStore } from '@/store/useAppStore';
+import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
+import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
+import { motion } from 'framer-motion';
+import NumberFlow from "@number-flow/react";
 import { 
-  ArrowUpRight, ArrowDownRight, MessageSquare, 
-  BookOpen, Target, ShieldCheck, Play, ArrowRight,
-  Search, Filter, Info, Sun, Sparkles
+  ArrowUpRight, 
+  MessageSquare,
+  BookOpen,
+  Target,
+  ShieldCheck,
+  Video, 
+  Play, 
+  Pause,
+  AlertCircle,
+  TrendingUp,
+  Award,
+  Sparkles,
+  ArrowRight
 } from 'lucide-react';
 import styles from './Dashboard.module.css';
-import { motion } from 'framer-motion';
-import { useAppStore } from '@/store/useAppStore';
-import { Gauge } from '@/components/ui/gauge';
 
-// Static Data for Dashboard
-const INSIGHTS = [
-  { id: 'INS_001', type: 'Warning', desc: 'Detected lifestyle creep in dining out (+15% this month)', status: 'Action Needed', date: '17 Apr, 2026', iconColor: '#ef4444' },
-  { id: 'INS_002', type: 'Insight', desc: 'You are saving more on weekdays than weekends.', status: 'Review', date: '15 Apr, 2026', iconColor: '#3b82f6' },
-  { id: 'INS_003', type: 'Milestone', desc: 'Emergency fund reached 50% completion!', status: 'Achieved', date: '15 Apr, 2026', iconColor: '#22c55e' },
-  { id: 'INS_004', type: 'Security', desc: 'Suspicious crypto investment text detected and blocked.', status: 'Protected', date: '14 Apr, 2026', iconColor: '#8b5cf6' },
-  { id: 'INS_005', type: 'Module', desc: 'Finished "The Psychology of Debt" lesson.', status: 'Completed', date: '10 Apr, 2026', iconColor: '#eab308' },
-];
+// Generate 30 days of denser data for a more professional look
+const HEALTH_TREND = Array.from({ length: 30 }).map((_, i) => {
+  const date = new Date();
+  date.setDate(date.getDate() - (29 - i));
+  return {
+    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    score: Math.floor(65 + (i * 0.8) + (Math.random() * 10 - 5))
+  };
+});
 
-const HEALTH_TREND = [
-  { month: 'Jan', score: 65 },
-  { month: 'Feb', score: 68 },
-  { month: 'Mar', score: 70 },
-  { month: 'Apr', score: 75 },
-  { month: 'May', score: 74 },
-  { month: 'Jun', score: 80 },
-  { month: 'Jul', score: 82 },
-  { month: 'Aug', score: 85 },
-];
+const chartConfig = {
+  score: {
+    label: "Health Score",
+    color: "#19533B",
+  },
+} satisfies ChartConfig;
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.08 }
+  }
 };
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
 export default function DashboardPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+  const [showNumbers, setShowNumbers] = useState(false);
+  const [chartData, setChartData] = useState(HEALTH_TREND.map(d => ({ ...d, score: 0 })));
   
   // Connect to Zustand Store
   const user = useAppStore(state => state.user);
@@ -52,284 +67,308 @@ export default function DashboardPage() {
   const lessons = useAppStore(state => state.lessons);
   const mentorHistory = useAppStore(state => state.mentorHistory);
 
+  useEffect(() => {
+    setMounted(true);
+    // Trigger NumberFlow animations very quickly after mount for snappy feel
+    const timer = setTimeout(() => setShowNumbers(true), 150); 
+    return () => clearTimeout(timer);
+  }, []);
+
+  useEffect(() => {
+    if (showNumbers) {
+      let currentIdx = 0;
+      // Stagger the bars growing one by one from left to right (oldest to latest)
+      const interval = setInterval(() => {
+        setChartData(prev => {
+          const next = [...prev];
+          next[currentIdx] = HEALTH_TREND[currentIdx];
+          return next;
+        });
+        currentIdx++;
+        if (currentIdx >= HEALTH_TREND.length) clearInterval(interval);
+      }, 15); // very fast wave
+      return () => clearInterval(interval);
+    }
+  }, [showNumbers]);
+
   // Derived Data
   const completedLessons = lessons.filter(l => l.status === 'Completed').length;
   const inProgressLesson = lessons.find(l => l.status === 'In Progress') || lessons[0];
   const activeGoals = goals.filter(g => g.status !== 'Planning');
 
-  const METRICS = [
-    { id: 'mentor', title: 'Mentor Sessions', value: mentorHistory.length.toString(), change: '+ 3', icon: MessageSquare, active: true },
-    { id: 'modules', title: 'Modules Completed', value: completedLessons.toString(), change: '+ 1', icon: BookOpen, active: false },
-    { id: 'goals', title: 'Goals on Track', value: activeGoals.length.toString(), change: '0', icon: Target, active: false },
-    { id: 'scams', title: 'Scams Avoided', value: '3', change: '+ 1', icon: ShieldCheck, active: false },
-  ];
+  const radius = 40;
+  const circumference = 2 * Math.PI * radius;
+  const semiCircumference = circumference / 2;
+  const scorePercent = mounted ? (user.healthScore / 100) * semiCircumference : 0;
+
+  if (!mounted) return null; // Avoid hydration mismatch on initial render
 
   return (
     <AppLayout>
       <div className={styles.workspace}>
         {/* Header */}
-        <header className={styles.header}>
-          <div className={styles.greetingHeader}>
-            <Sun size={24} className={styles.greetingIcon} />
-            <h1 className={styles.greeting}>Good morning, {user.name.split(' ')[0]}</h1>
+        <motion.header 
+          className={styles.header}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className={styles.headerLeft}>
+            <h1 className={styles.title}>Good morning, {user.name.split(' ')[0]}</h1>
+            <p className={styles.subtitle}>Welcome back. Let's continue building your financial foundation.</p>
           </div>
-          <p className={styles.subtitle}>Welcome back. Let's continue building your financial foundation.</p>
-        </header>
-
-        <motion.div className={styles.grid} variants={containerVariants} initial="hidden" animate="show">
-          {/* LEFT COLUMN */}
-          <div className={styles.leftColumn}>
-            
-            {/* Financial Health Score */}
-            <motion.div variants={itemVariants} className={styles.card}>
-              <div className={styles.cardHeaderFlex}>
-                <span className={styles.cardLabel}>Financial Health Score</span>
-                <div className={styles.currencySelector}>
-                  <span>Excellent</span>
-                </div>
-              </div>
-              
-              <div className={styles.balanceContainer} style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <Gauge 
-                  value={user.healthScore} 
-                  size={120} 
-                  primary="success" 
-                  showValue={true} 
-                  strokeWidth={8} 
-                />
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <h2 className={styles.mainBalance}>{user.healthScore}<span style={{fontSize: '1.25rem', color: 'var(--color-text-secondary)', marginLeft: '4px'}}>/100</span></h2>
-                  <div className={styles.growthBadge}>
-                    <ArrowUpRight size={14} />
-                    <span>5 pts</span>
-                    <span className={styles.growthText}>than last month</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className={styles.actionButtons}>
-                <button className={`${styles.actionBtn} ${styles.primaryBtn}`} onClick={() => router.push('/mentor')}>
-                  <Sparkles size={16} /> Talk to Mentor
-                </button>
-                <button className={`${styles.actionBtn} ${styles.secondaryBtn}`} onClick={() => router.push('/learn')}>
-                  <Play size={16} /> Resume Learning
-                </button>
-              </div>
-
-              {/* Active Milestones */}
-              <div className={styles.walletsSection}>
-                <div className={styles.walletsHeader}>
-                  <span className={styles.cardLabel}>Active Milestones | Total {goals.length} goals</span>
-                </div>
-                <div className={styles.walletList}>
-                  {goals.map(m => (
-                    <div key={m.id} className={styles.walletItem} onClick={() => router.push(`/goals`)} style={{ cursor: 'pointer' }}>
-                      <div className={styles.walletTop}>
-                        <div className={styles.walletCurrency}>
-                          <Target size={14} />
-                          <span>{m.name}</span>
-                        </div>
-                      </div>
-                      <div className={styles.walletBalance}>${m.current.toLocaleString()}</div>
-                      <div className={styles.walletLimit}>Target is ${m.target.toLocaleString()}</div>
-                      <div className={`${styles.walletStatus} ${m.status === 'On Track' || m.status === 'Ahead' ? styles.statusActive : styles.statusInactive}`}>
-                        {m.status}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Current Module Progress */}
-            <motion.div variants={itemVariants} className={styles.card} onClick={() => router.push(`/learn/${inProgressLesson.id}`)} style={{ cursor: 'pointer' }}>
-              <div className={styles.cardHeaderFlex}>
-                <h3 className={styles.cardTitle}>Module: {inProgressLesson.title}</h3>
-                <span className={styles.cardSubtitle}>{inProgressLesson.duration}</span>
-              </div>
-              <div className={styles.spendingBarContainer}>
-                <motion.div 
-                  className={styles.spendingBarFill}
-                  initial={{ width: 0 }}
-                  animate={{ width: '40%' }}
-                  transition={{ duration: 1, delay: 0.5 }}
-                />
-              </div>
-              <div className={styles.spendingLabels}>
-                <span>In Progress</span>
-                <span>40%</span>
-              </div>
-            </motion.div>
-
-            {/* Action Items */}
-            <motion.div variants={itemVariants} className={styles.card}>
-              <div className={styles.cardHeaderFlex}>
-                <h3 className={styles.cardTitle}>Upcoming Action Items</h3>
-              </div>
-              <div className={styles.cardsContainer}>
-                <div className={`${styles.creditCard} ${styles.cardDark}`} onClick={() => router.push('/mentor')} style={{ cursor: 'pointer' }}>
-                  <div className={styles.cardTopRow}>
-                    <div className={styles.nfcIcon}><MessageSquare size={20} opacity={0.5}/></div>
-                    <span className={styles.cardStatus}>AI Mentor</span>
-                  </div>
-                  <div className={styles.cardBottomRow}>
-                    <div className={styles.cardData}>
-                      <span>Action Required</span>
-                      <strong>Review Weekend Budget</strong>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className={`${styles.creditCard} ${styles.cardGreen}`} onClick={() => router.push('/learn')} style={{ cursor: 'pointer' }}>
-                  <div className={styles.cardTopRow}>
-                    <div className={styles.nfcIcon}><BookOpen size={20} opacity={0.5}/></div>
-                    <span className={styles.cardStatus}>Education</span>
-                  </div>
-                  <div className={styles.cardBottomRow}>
-                    <div className={styles.cardData}>
-                      <span>Up Next</span>
-                      <strong>Delay Discounting Trap</strong>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          <div className={styles.headerActions}>
+            <button className={styles.btnPrimary} onClick={() => router.push('/mentor')}>
+              <Sparkles size={16} /> AI Mentor
+            </button>
+            <button className={styles.btnSecondary} onClick={() => router.push('/learn')}>
+              Resume Learning
+            </button>
           </div>
+        </motion.header>
 
-          {/* RIGHT COLUMN */}
-          <div className={styles.rightColumn}>
-            
-            {/* Top Row: Metrics & Chart */}
-            <div className={styles.metricsChartRow}>
-              
-              {/* 2x2 Metrics Grid */}
-              <div className={styles.metricsGrid}>
-                {METRICS.map(m => (
-                  <motion.div key={m.id} variants={itemVariants} className={`${styles.metricCard} ${m.active ? styles.metricActive : ''}`}>
-                    <div className={styles.metricHeader}>
-                      <span className={styles.cardLabel}>{m.title}</span>
-                      <div className={styles.metricIconBox}>
-                        <m.icon size={16} />
-                      </div>
-                    </div>
-                    <h3 className={styles.metricValue}>{m.value}</h3>
-                    <div className={styles.metricGrowth}>
-                      <span className={`${styles.badge} ${m.change.includes('+') ? styles.badgeGreen : styles.badgeRed}`}>
-                        {m.change.includes('+') ? <ArrowUpRight size={12} /> : m.change === '0' ? <ArrowRight size={12}/> : <ArrowDownRight size={12} />}
-                        {m.change.replace('+', '').replace('-', '')}
-                      </span>
-                      <span className={styles.growthText}>This month</span>
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-
-              {/* Financial Health Trend Chart */}
-              <motion.div variants={itemVariants} className={styles.card}>
-                <div className={styles.cardHeaderFlex}>
-                  <div>
-                    <h3 className={styles.cardTitle}>Financial Health Trend</h3>
-                    <p className={styles.cardSubtitle}>Your AI-calculated health score over time</p>
-                  </div>
-                </div>
-                <div className={styles.chartLegend}>
-                  <span className={styles.legendTitle}>Performance</span>
-                  <div className={styles.legendItems}>
-                    <span className={styles.legendItem}><div className={styles.dotGreen}></div> Score</span>
-                  </div>
-                </div>
-                <div className={styles.chartArea}>
-                  {/* Y Axis */}
-                  <div className={styles.yAxis}>
-                    <span>100</span>
-                    <span>80</span>
-                    <span>60</span>
-                    <span>40</span>
-                    <span>20</span>
-                    <span>0</span>
-                  </div>
-                  {/* Chart Bars */}
-                  <div className={styles.chartBars}>
-                    {HEALTH_TREND.map((data, i) => (
-                      <div key={i} className={styles.barGroup}>
-                        <div className={styles.barContainer}>
-                          <motion.div 
-                            className={styles.barProfit}
-                            style={{ height: `${data.score}%`, bottom: 0, width: '100%', position: 'absolute' }}
-                            initial={{ height: 0 }}
-                            animate={{ height: `${data.score}%` }}
-                            transition={{ duration: 1, delay: 0.5 + i * 0.05 }}
-                          />
-                        </div>
-                        <span className={styles.xAxisLabel}>{data.month}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </motion.div>
+        {/* Top Metrics Row */}
+        <motion.div 
+          className={styles.topMetrics}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          <div className={`${styles.metricCard} ${styles.metricCardDark}`}>
+            <div className={styles.metricHeader}>
+              <span>Goals on Track</span>
+              <div className={styles.metricIcon}><Target size={14} /></div>
             </div>
+            <div className={styles.metricValue}><NumberFlow value={showNumbers ? activeGoals.length : 0} /></div>
+            <div className={styles.metricChange}>
+              <span className={styles.metricChangeBadge}><ArrowUpRight size={10} /> 1</span>
+              <span>New goal this month</span>
+            </div>
+          </div>
+          
+          <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <span>Modules Completed</span>
+              <div className={styles.metricIcon}><BookOpen size={14} color="#19533B" /></div>
+            </div>
+            <div className={styles.metricValue}><NumberFlow value={showNumbers ? completedLessons : 0} /></div>
+            <div className={styles.metricChange}>
+              <span className={styles.metricChangeBadge}><ArrowUpRight size={10} /> 2</span>
+              <span className={styles.metricChangeText}>Finished this week</span>
+            </div>
+          </div>
 
-            {/* Bottom Row: Recent Mentor Insights */}
-            <motion.div variants={itemVariants} className={`${styles.card} ${styles.activitiesCard}`}>
-              <div className={styles.cardHeaderFlex}>
-                <h3 className={styles.cardTitle}>Recent Mentor Insights</h3>
-                <div className={styles.tableActions}>
-                  <div className={styles.searchBox}>
-                    <Search size={16} />
-                    <input type="text" placeholder="Search insights..." />
-                  </div>
-                  <button className={styles.filterBtn}>
-                    Filter <Filter size={14} />
-                  </button>
-                </div>
-              </div>
-              
-              <div className={styles.tableContainer}>
-                <table className={styles.table}>
-                  <thead>
-                    <tr>
-                      <th><input type="checkbox" /></th>
-                      <th>Ref ID</th>
-                      <th>Category</th>
-                      <th>Insight / Description</th>
-                      <th>Status</th>
-                      <th>Date</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {INSIGHTS.map((act, i) => (
-                      <tr key={i}>
-                        <td><input type="checkbox" defaultChecked={i === 0} /></td>
-                        <td className={styles.cellMuted}>{act.id}</td>
-                        <td>
-                          <div className={styles.activityNameCell}>
-                            <div className={styles.activityIcon} style={{backgroundColor: `${act.iconColor}20`, color: act.iconColor}}>
-                              <Info size={14} />
-                            </div>
-                            <span>{act.type}</span>
-                          </div>
-                        </td>
-                        <td className={styles.cellBold}>{act.desc}</td>
-                        <td>
-                          <span className={styles.statusCell}>
-                            <div className={styles.statusDot} style={{
-                              backgroundColor: act.status === 'Achieved' || act.status === 'Protected' || act.status === 'Completed' ? '#22c55e' : act.status === 'Action Needed' ? '#ef4444' : '#3b82f6'
-                            }}></div>
-                            {act.status}
-                          </span>
-                        </td>
-                        <td className={styles.cellMuted}>{act.date}</td>
-                        <td><button className={styles.moreBtn} onClick={() => router.push('/mentor')}><ArrowRight size={16} /></button></td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </motion.div>
+          <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <span>Mentor Sessions</span>
+              <div className={styles.metricIcon}><MessageSquare size={14} color="#19533B" /></div>
+            </div>
+            <div className={styles.metricValue}><NumberFlow value={showNumbers ? mentorHistory.length : 0} /></div>
+            <div className={styles.metricChange}>
+              <span className={styles.metricChangeBadge}><ArrowUpRight size={10} /> 5</span>
+              <span className={styles.metricChangeText}>Insights generated</span>
+            </div>
+          </div>
 
+          <div className={styles.metricCard}>
+            <div className={styles.metricHeader}>
+              <span>Scams Avoided</span>
+              <div className={styles.metricIcon}><ShieldCheck size={14} color="#19533B" /></div>
+            </div>
+            <div className={styles.metricValue}><NumberFlow value={showNumbers ? 3 : 0} /></div>
+            <div className={styles.metricChange}>
+              <span className={styles.metricChangeText}>Protected successfully</span>
+            </div>
           </div>
         </motion.div>
+
+        {/* Middle Row */}
+        <motion.div 
+          className={styles.middleRow}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Financial Health Trend */}
+          <div className={styles.card}>
+            <h3 className={styles.cardTitle}>Financial Health Trend</h3>
+            <ChartContainer config={chartConfig} className="aspect-auto h-[180px] w-full mt-4">
+              <AreaChart accessibilityLayer data={chartData} margin={{ top: 10, left: -20, right: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#19533B" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#19533B" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" strokeOpacity={0.4} />
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  minTickGap={24}
+                  fontSize={11}
+                  stroke="#9CA3AF"
+                />
+                <ChartTooltip 
+                  cursor={false} 
+                  content={<ChartTooltipContent hideLabel className="bg-white border-[#E5E7EB] shadow-lg rounded-xl text-black font-sans" />} 
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="score" 
+                  stroke="#19533B" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorScore)" 
+                  isAnimationActive={false}
+                />
+              </AreaChart>
+            </ChartContainer>
+          </div>
+
+          {/* Action Item */}
+          <div className={`${styles.card} ${styles.reminderCard}`}>
+            <h3 className={styles.cardTitle}>Upcoming Action</h3>
+            <h4 className={styles.reminderTitle}>Review Weekend<br/>Budget</h4>
+            <span className={styles.reminderTime}>Detected 15% increase in dining</span>
+            <button className={styles.reminderBtn} onClick={() => router.push('/mentor')}>
+              <MessageSquare size={16} /> Ask AI Mentor
+            </button>
+          </div>
+
+          {/* Active Milestones */}
+          <div className={styles.card}>
+            <h3 className={styles.cardTitle}>
+              Active Goals <button className={styles.btnSmallOutline} onClick={() => router.push('/goals')}>+ New</button>
+            </h3>
+            <div className={styles.projectList}>
+              {goals.slice(0, 4).map((goal, idx) => {
+                const colors = [
+                  { bg: '#EEF2FF', text: '#4F46E5' },
+                  { bg: '#ECFDF5', text: '#10B981' },
+                  { bg: '#FEF3C7', text: '#F59E0B' },
+                  { bg: '#FCE7F3', text: '#DB2777' },
+                ];
+                const c = colors[idx % colors.length];
+                return (
+                  <div key={goal.id} className={styles.projectItem}>
+                    <div className={styles.projectIcon} style={{ background: c.bg, color: c.text }}><Target size={16} /></div>
+                    <div className={styles.projectInfo}>
+                      <span className={styles.projectName}>{goal.name}</span>
+                      <span className={styles.projectDate}>
+                        <NumberFlow value={showNumbers ? goal.current : 0} format={{ style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }} /> / <NumberFlow value={showNumbers ? goal.target : 0} format={{ style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }} />
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Bottom Row */}
+        <motion.div 
+          className={styles.bottomRow}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.3, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {/* Recent Mentor Insights */}
+          <div className={styles.card}>
+            <h3 className={styles.cardTitle}>
+              Recent Insights <button className={styles.btnSmallOutline} onClick={() => router.push('/mentor')}>View All</button>
+            </h3>
+            <div className={styles.teamList}>
+              <div className={styles.teamItem}>
+                <div className={styles.teamAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FEF2F2', color: '#EF4444' }}>
+                  <AlertCircle size={18} />
+                </div>
+                <div className={styles.teamInfo}>
+                  <span className={styles.teamName}>Action Needed</span>
+                  <span className={styles.teamTask}>Detected <b>lifestyle creep</b> in dining</span>
+                </div>
+                <span className={styles.sleekBadge} style={{ color: '#EF4444' }}><div className={styles.dot} style={{background: '#EF4444'}}></div> Warning</span>
+              </div>
+              <div className={styles.teamItem}>
+                <div className={styles.teamAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#ECFCCB', color: '#65A30D' }}>
+                  <TrendingUp size={18} />
+                </div>
+                <div className={styles.teamInfo}>
+                  <span className={styles.teamName}>Saving Insight</span>
+                  <span className={styles.teamTask}>Saving more on <b>weekdays</b></span>
+                </div>
+                <span className={styles.sleekBadge} style={{ color: '#19533B' }}><div className={styles.dot} style={{background: '#19533B'}}></div> Review</span>
+              </div>
+              <div className={styles.teamItem}>
+                <div className={styles.teamAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#E0E7FF', color: '#4F46E5' }}>
+                  <Award size={18} />
+                </div>
+                <div className={styles.teamInfo}>
+                  <span className={styles.teamName}>Milestone</span>
+                  <span className={styles.teamTask}>Emergency fund <b>50% complete</b></span>
+                </div>
+                <span className={styles.sleekBadge} style={{ color: '#4F46E5' }}><div className={styles.dot} style={{background: '#4F46E5'}}></div> Achieved</span>
+              </div>
+              <div className={styles.teamItem}>
+                <div className={styles.teamAvatar} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#FAF5FF', color: '#9333EA' }}>
+                  <ShieldCheck size={18} />
+                </div>
+                <div className={styles.teamInfo}>
+                  <span className={styles.teamName}>Security</span>
+                  <span className={styles.teamTask}>Suspicious <b>crypto text</b> blocked</span>
+                </div>
+                <span className={styles.sleekBadge} style={{ color: '#9333EA' }}><div className={styles.dot} style={{background: '#9333EA'}}></div> Protected</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Health Score */}
+          <div className={styles.card}>
+            <h3 className={styles.cardTitle}>Health Score</h3>
+            <div className={styles.donutContainer}>
+              <svg viewBox="0 0 100 50" className={styles.donutSvg}>
+                {/* Background path */}
+                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#F3F4F6" strokeWidth="6" strokeLinecap="round" />
+                {/* Foreground path (Score) */}
+                <motion.path 
+                  d="M 10 50 A 40 40 0 0 1 90 50" 
+                  fill="none" 
+                  stroke="#19533B" 
+                  strokeWidth="6" 
+                  strokeLinecap="round" 
+                  strokeDasharray={semiCircumference} 
+                  initial={{ strokeDashoffset: semiCircumference }}
+                  animate={{ strokeDashoffset: semiCircumference - scorePercent }}
+                  transition={{ duration: 1.0, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+                />
+              </svg>
+              <div className={styles.donutValue}>
+                <NumberFlow value={showNumbers ? user.healthScore : 0} />
+                <span className={styles.donutLabel}>Excellent</span>
+              </div>
+            </div>
+            <div className={styles.donutLegend}>
+              <div className={styles.legendItem}><div className={styles.legendDot} style={{ background: '#19533B' }}></div> Score</div>
+              <div className={styles.legendItem}><div className={styles.legendDot} style={{ background: '#F3F4F6' }}></div> Target</div>
+            </div>
+          </div>
+
+          {/* Next Module Tracker */}
+          <div className={`${styles.card} ${styles.timeTrackerCard}`}>
+            <div className={styles.timeTrackerWave}></div>
+            <div className={styles.timeTrackerContent}>
+              <div className={styles.timeTrackerTitle}>Up Next: {inProgressLesson.title}</div>
+              <div className={styles.timeTrackerValue}>{inProgressLesson.duration}</div>
+              <div className={styles.timeTrackerControls}>
+                <button className={styles.trackerBtn} onClick={() => router.push(`/learn/${inProgressLesson.id}`)}>
+                  <Play size={18} fill="currentColor" />
+                </button>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
       </div>
     </AppLayout>
   );
