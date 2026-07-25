@@ -80,14 +80,30 @@ export default function MentorPage() {
     setIsTyping(true);
 
     try {
-      // Backend integration logic
+      const isFirstMessage = history.length === 0;
+
+      if (isFirstMessage) {
+        // Generate title in background
+        const apiUrl = '/api';
+        fetch(`${apiUrl}/chat-title`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: userMessage }),
+        }).then(res => res.json()).then(data => {
+          if (data.title) {
+            updateChatTitle(currentChatId, data.title);
+          }
+        }).catch(e => console.error("Title generation error", e));
+      }
+
+      // Prepare messages payload for backend
       const apiMessages = history.map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
       }));
       apiMessages.push({ role: 'user', content: userMessage });
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const apiUrl = '/api';
       const response = await fetch(`${apiUrl}/mentor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
