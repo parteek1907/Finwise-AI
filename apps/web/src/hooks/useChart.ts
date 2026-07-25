@@ -78,11 +78,13 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
             volume: 100 // dummy volume increment
           });
           
+          const prevClose = prev.price - prev.change;
+          
           return {
             ...prev, 
             price: newPrice,
-            change: newPrice - prev.previousClose,
-            changePercent: ((newPrice - prev.previousClose) / prev.previousClose) * 100
+            change: newPrice - prevClose,
+            changePercent: ((newPrice - prevClose) / prevClose) * 100
           };
         });
       }, 1000); // every 1 second
