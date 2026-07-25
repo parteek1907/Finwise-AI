@@ -23,36 +23,42 @@ export async function POST(req: Request) {
 
     let aiPreferencesContext = "";
     if (aiSettings) {
-      const level = aiSettings.knowledgeLevel || 'Intermediate';
+      const mode = aiSettings.mode || 'Advisor';
       const len = aiSettings.responseLength || 'Balanced';
-      const personality = aiSettings.aiPersonality || 'Friendly';
+      const personality = aiSettings.personality || aiSettings.aiPersonality || 'Encouraging';
 
-      const levelInstruction = level === 'Beginner' 
-        ? 'Explain financial terms in simple, everyday language without complex jargon.' 
-        : level === 'Advanced' 
-        ? 'Use concise, advanced financial metrics and technical data.' 
-        : 'Provide balanced financial guidance with clear explanations.';
+      const modeInstruction = mode === 'Coach'
+        ? 'Act as an energetic financial coach focusing on habits, motivation, budgeting milestones, and personal accountability.'
+        : mode === 'Analyst'
+        ? 'Act as a quantitative financial analyst focusing strictly on numerical precision, metrics, data tables, ROI, and mathematical trade-offs.'
+        : mode === 'Tutor'
+        ? 'Act as an empathetic financial tutor explaining core financial concepts step-by-step using clear, simple analogies.'
+        : 'Act as a strategic wealth advisor focusing on long-term portfolio growth, risk management, and structured planning.';
 
-      const lengthInstruction = len === 'Short' 
-        ? 'Keep responses very brief and to the point (1-2 short paragraphs).' 
+      const lengthInstruction = len === 'Concise' 
+        ? 'CRITICAL: Keep your response extremely brief, punchy, and to the point. Maximum 2-3 short sentences or bullet points (under 80 words total).' 
         : len === 'Detailed' 
-        ? 'Provide thorough and comprehensive financial explanations.' 
-        : 'Keep responses concise (2-3 short paragraphs).';
+        ? 'Provide a thorough, comprehensive breakdown with step-by-step calculations, sub-headings, and detailed pros/cons.' 
+        : 'Keep your response balanced and structured (2-3 short scannable paragraphs with key takeaways).';
 
-      const personalityInstruction = personality === 'Professional' 
-        ? 'Maintain a structured, direct, executive-level tone.' 
-        : 'Maintain a warm, encouraging, supportive coaching tone.';
+      const personalityInstruction = personality === 'Direct' 
+        ? 'Be sharp, direct, concise, and no-nonsense. Zero filler or unnecessary fluff.' 
+        : personality === 'Analytical' 
+        ? 'Use objective, data-centric, logical language focused strictly on facts and statistics.' 
+        : personality === 'Socratic' 
+        ? 'Use the Socratic method: explain the core idea, then ask 1-2 thoughtful guiding questions at the end to help the user evaluate their options.' 
+        : 'Maintain a warm, encouraging, positive coaching tone with supportive reinforcement.';
 
-      aiPreferencesContext = `\n\nUser AI Preferences:\n- Knowledge Level: ${level} (${levelInstruction})\n- Response Length: ${len} (${lengthInstruction})\n- Tone: ${personality} (${personalityInstruction})\n`;
+      aiPreferencesContext = `\n\nUser AI Settings & Persona Controls:\n- Mode: ${mode} (${modeInstruction})\n- Response Length: ${len} (${lengthInstruction})\n- Personality: ${personality} (${personalityInstruction})\n`;
     }
 
     const nameToUse = userName || "Alex";
-    const systemPrompt = `You are ${nameToUse}'s personalized Financial AI Mentor. Your job is to help the user manage their money, reach their financial goals, and provide actionable, mathematically sound advice. You are highly intelligent, conversational, and emotionally aware.${goalsContext}${marketContext}${aiPreferencesContext}
+    const systemPrompt = `You are ${nameToUse}'s personalized Financial AI Mentor. Your job is to help the user manage their money, reach their financial goals, and provide actionable, mathematically sound advice. You are highly intelligent, conversational, and adaptable.${goalsContext}${marketContext}${aiPreferencesContext}
 
 Guidelines for your responses:
-1. Tone: Warm, supportive, articulate, direct, and pragmatic. If the user expresses gratitude, celebrate their progress or respond naturally.
+1. Adhere strictly to the requested Mode, Length, and Personality guidelines above.
 2. Structure (CRITICAL): Break down complex ideas using scannable bullet points and markdown headers if needed.
-3. Conversational Flow: If the user makes a casual remark or just says thanks, respond naturally.`;
+3. Conversational Flow: Respond naturally while staying aligned with your assigned financial persona.`;
 
     const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
 
