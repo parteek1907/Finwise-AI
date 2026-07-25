@@ -37,8 +37,17 @@ export default function MentorPage() {
     { label: "Generate a step-by-step plan to buy a house", icon: Home },
     { label: "Analyze my current portfolio for improvements", icon: LineChart },
     { label: "How to build a $10k emergency fund", icon: ShieldCheck },
-    { label: "How does tax loss harvesting work?", icon: BookOpen }
+    { label: "How does tax loss harvesting work?", icon: BookOpen },
+    { label: "What is dollar-cost averaging?", icon: LineChart },
+    { label: "Help me create a monthly budget", icon: BookOpen }
   ];
+
+  const [randomPrompts, setRandomPrompts] = useState<typeof SUGGESTED_PROMPTS>([]);
+
+  useEffect(() => {
+    const shuffled = [...SUGGESTED_PROMPTS].sort(() => 0.5 - Math.random());
+    setRandomPrompts(shuffled.slice(0, 3));
+  }, []);
 
   const handleVoiceInput = () => {
     if (!('webkitSpeechRecognition' in window)) {
@@ -272,7 +281,7 @@ export default function MentorPage() {
                   >
                     <p className={styles.examplesTitle}>Examples of queries:</p>
                     <div className={styles.examplesList}>
-                      {SUGGESTED_PROMPTS.map((prompt, i) => {
+                      {randomPrompts.map((prompt, i) => {
                         const IconComponent = prompt.icon;
                         return (
                           <motion.button 

@@ -286,18 +286,7 @@
 }
 
 .welcomeIcon::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  width: 140px;
-  height: 140px;
-  background: radial-gradient(circle, rgba(245, 190, 80, 0.55) 0%, rgba(25, 83, 59, 0.12) 50%, rgba(255,255,255,0) 75%);
-  transform: translate(-50%, -50%);
-  z-index: -1;
-  pointer-events: none;
-  filter: blur(20px);
-  border-radius: 50%;
+  display: none;
 }
 
 .emptyState h1 {
@@ -510,29 +499,23 @@
 }
 
 .exampleBtn {
-  background-color: #FFFFFF;
-  border: 1px solid #F3F4F6;
-  padding: 0.75rem 1.1rem;
-  border-radius: 9999px;
+  background-color: transparent;
+  border: none;
+  padding: 0.5rem 0;
   font-size: 0.88rem;
-  font-weight: 500;
-  color: #374151;
+  font-weight: 400;
+  color: #6b7280;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   width: 100%;
   text-align: left;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease;
 }
 
 .exampleBtn:hover {
-  background-color: #FFFFFF;
-  border-color: #19533B;
   color: #19533B;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(25, 83, 59, 0.06);
 }
 
 .exampleBtnLeft {

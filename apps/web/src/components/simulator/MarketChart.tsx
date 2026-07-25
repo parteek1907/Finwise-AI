@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
+import { formatCurrency } from "@/utils/formatters";
 
 export function MarketChart() {
   // Generate mock price data (random walk)
@@ -42,7 +43,7 @@ export function MarketChart() {
         <div>
           <h2 className="text-sm uppercase tracking-wider text-muted font-medium mb-1">FWZ Index</h2>
           <div className="text-4xl font-heading font-medium text-foreground">
-            ${data[data.length - 1].toFixed(2)}
+            {formatCurrency(data[data.length - 1])}
           </div>
         </div>
         <div className={`px-3 py-1 rounded-full text-sm font-medium ${isPositive ? "bg-success/20 text-success" : "bg-danger/20 text-danger"}`}>

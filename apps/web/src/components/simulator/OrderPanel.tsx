@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { BehavioralCheckModal } from "./BehavioralCheckModal";
+import { formatCurrency } from "@/utils/formatters";
 
 type Props = {
   currentPrice: number;
@@ -35,8 +36,8 @@ export function OrderPanel({ currentPrice, onTradeComplete }: Props) {
         {/* Amount Slider */}
         <div className="space-y-4">
           <div className="flex justify-between text-sm">
-            <span className="text-muted">Amount (USD)</span>
-            <span className="text-foreground font-mono">${amount.toLocaleString()}</span>
+            <span className="text-muted">Amount</span>
+            <span className="text-foreground font-mono">{formatCurrency(amount)}</span>
           </div>
           <input 
             type="range" 
@@ -48,8 +49,8 @@ export function OrderPanel({ currentPrice, onTradeComplete }: Props) {
             className="w-full h-2 bg-surface rounded-full appearance-none cursor-pointer accent-gold"
           />
           <div className="flex justify-between text-xs text-muted font-mono">
-            <span>$100</span>
-            <span>$10,000</span>
+            <span>{formatCurrency(100)}</span>
+            <span>{formatCurrency(10000)}</span>
           </div>
         </div>
 

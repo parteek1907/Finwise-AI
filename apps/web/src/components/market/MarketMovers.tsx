@@ -3,7 +3,7 @@ import { Search } from 'lucide-react';
 import { MarketMover } from '../../types/market';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { ErrorCard } from '../common/ErrorCard';
-import { formatPercentage } from '../../utils/formatters';
+import { formatPercentage, formatCurrency } from '../../utils/formatters';
 import styles from './Market.module.css';
 
 interface MarketMoversProps {
@@ -33,7 +33,7 @@ export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, err
                 <span>{item.name}</span>
               </div>
               <div className={styles.price}>
-                <strong>${item.price.toFixed(2)}</strong>
+                <strong>{formatCurrency(item.price)}</strong>
                 <span className={item.isUp ? styles.positiveText : styles.negativeText}>
                   {formatPercentage(item.changePercent)}
                 </span>
