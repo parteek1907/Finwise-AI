@@ -1,6 +1,6 @@
 import React from 'react';
-import NumberFlow from '@number-flow/react';
 import { formatCurrency } from '../../../utils/formatters';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import styles from './TradingChart.module.css';
 
 interface PriceBadgeProps {
@@ -10,6 +10,7 @@ interface PriceBadgeProps {
 }
 
 export const PriceBadge: React.FC<PriceBadgeProps> = ({ symbol, price, changePercent }) => {
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
   const isPositive = changePercent >= 0;
   
   return (
@@ -22,7 +23,7 @@ export const PriceBadge: React.FC<PriceBadgeProps> = ({ symbol, price, changePer
       </div>
       <div className={styles.badgeBottom}>
         <div className={styles.badgePrice}>
-          $<NumberFlow value={price} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />
+          {formatCurrency(price)}
         </div>
         <div className={isPositive ? styles.badgeChangePos : styles.badgeChangeNeg}>
           {isPositive ? '+' : ''}{changePercent.toFixed(2)}%

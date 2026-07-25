@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { BehavioralCheckModal } from "./BehavioralCheckModal";
 import { formatCurrency } from "@/utils/formatters";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 type Props = {
   currentPrice: number;
@@ -10,6 +11,7 @@ type Props = {
 };
 
 export function OrderPanel({ currentPrice, onTradeComplete }: Props) {
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
   const [amount, setAmount] = useState<number>(1000);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<"Buy" | "Sell" | null>(null);

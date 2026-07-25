@@ -7,7 +7,9 @@ import { Target, Plus, PiggyBank, Home, Car, Plane, Briefcase, TrendingUp, Chevr
 import styles from './Goals.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { DatePicker } from '@/components/ui/date-picker';
+import { formatCurrency } from '@/utils/formatters';
 
 const CATEGORY_OPTIONS = [
   { value: 'Emergency', label: 'Emergency Fund', icon: PiggyBank },
@@ -30,6 +32,7 @@ const CATEGORY_ICONS = {
 export default function GoalsPage() {
   const router = useRouter();
   const { goals, addGoal } = useAppStore();
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
   const [showAddModal, setShowAddModal] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
@@ -114,8 +117,8 @@ export default function GoalsPage() {
                 
                 <div className={styles.progressSection}>
                   <div className={styles.progressLabels}>
-                    <span className={styles.currentAmount}>${goal.current.toLocaleString()}</span>
-                    <span className={styles.targetAmount}>of ${goal.target.toLocaleString()}</span>
+                    <span className={styles.currentAmount}>{formatCurrency(goal.current)}</span>
+                    <span className={styles.targetAmount}>of {formatCurrency(goal.target)}</span>
                   </div>
                   <div className={styles.progressBar}>
                     <div className={styles.progressFill} style={{ width: `${progressPercent}%` }}></div>

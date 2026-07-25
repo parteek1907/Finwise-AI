@@ -3,8 +3,10 @@
 import { useMemo } from "react";
 import { motion } from "framer-motion";
 import { formatCurrency } from "@/utils/formatters";
+import { useSettingsStore } from "@/store/useSettingsStore";
 
 export function MarketChart() {
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
   // Generate mock price data (random walk)
   const data = useMemo(() => {
     let currentPrice = 100;

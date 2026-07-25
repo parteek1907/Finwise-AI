@@ -9,15 +9,15 @@ interface EmotionInputProps {
 }
 
 const PROMPT_POOLS = [
-  { category: 'FOMO', text: 'Bitcoin has doubled in 2 weeks. Should I buy in now before it goes higher?', tag: '⚡ FOMO' },
-  { category: 'Herd Mentality', text: 'Everyone at work is buying tech stocks and getting rich. Am I missing out?', tag: '🔥 Herd Mentality' },
-  { category: 'Panic Selling', text: 'My portfolio dropped 12% today during market dip. Should I sell everything?', tag: '📉 Panic' },
-  { category: 'Overconfidence', text: 'I made 50% returns last month. Should I double my position with margin leverage?', tag: '🧠 Overconfidence' },
-  { category: 'Loss Aversion', text: 'My stock is down 30%, but I refuse to sell until I break even.', tag: '🛡️ Loss Aversion' },
-  { category: 'Revenge Trading', text: 'I just lost $1,000 on options. Should I make a quick trade to win it back?', tag: '🎯 Revenge Trading' },
-  { category: 'Greed', text: 'A meme coin is trending on social media. Should I invest my savings in it?', tag: '📈 Greed' },
-  { category: 'Fear', text: 'The stock market is at an all-time high. Should I keep all my money in 100% cash?', tag: '😨 Fear' },
-  { category: 'Confirmation Bias', text: 'I only read bullish articles about this stock because bad news is just noise, right?', tag: '🔍 Bias' },
+  { category: 'FOMO', text: 'Bitcoin has doubled in 2 weeks. Should I buy in now before it goes higher?', tag: 'FOMO' },
+  { category: 'Herd Mentality', text: 'Everyone at work is buying tech stocks and getting rich. Am I missing out?', tag: 'Herd Mentality' },
+  { category: 'Panic Selling', text: 'My portfolio dropped 12% today during market dip. Should I sell everything?', tag: 'Panic' },
+  { category: 'Overconfidence', text: 'I made 50% returns last month. Should I double my position with margin leverage?', tag: 'Overconfidence' },
+  { category: 'Loss Aversion', text: 'My stock is down 30%, but I refuse to sell until I break even.', tag: 'Loss Aversion' },
+  { category: 'Revenge Trading', text: 'I just lost $1,000 on options. Should I make a quick trade to win it back?', tag: 'Revenge Trading' },
+  { category: 'Greed', text: 'A meme coin is trending on social media. Should I invest my savings in it?', tag: 'Greed' },
+  { category: 'Fear', text: 'The stock market is at an all-time high. Should I keep all my money in 100% cash?', tag: 'Fear' },
+  { category: 'Confirmation Bias', text: 'I only read bullish articles about this stock because bad news is just noise, right?', tag: 'Bias' },
 ];
 
 export const EmotionInput: React.FC<EmotionInputProps> = ({ onAnalyze, loading }) => {

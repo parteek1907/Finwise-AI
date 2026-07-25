@@ -4,6 +4,7 @@ import { MarketMover } from '../../types/market';
 import { SkeletonLoader } from '../common/SkeletonLoader';
 import { ErrorCard } from '../common/ErrorCard';
 import { formatPercentage, formatCurrency } from '../../utils/formatters';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import styles from './Market.module.css';
 
 interface MarketMoversProps {
@@ -14,6 +15,7 @@ interface MarketMoversProps {
 }
 
 export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, error, onSelect }) => {
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
   return (
     <div className={styles.card}>
       <div className={styles.header}>

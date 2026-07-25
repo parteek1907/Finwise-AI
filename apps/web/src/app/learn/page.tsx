@@ -18,11 +18,14 @@ export default function LearnPage() {
   const lessons = useAppStore(state => state.lessons);
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [showFilterDropdown, setShowFilterDropdown] = useState(false);
+  const [filterStatus, setFilterStatus] = useState('All');
 
   const filteredLessons = lessons.filter(l => {
     const matchesCategory = activeCategory === 'All' || l.category === activeCategory;
     const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+    const matchesStatus = filterStatus === 'All' || l.status === filterStatus;
+    return matchesCategory && matchesSearch && matchesStatus;
   });
 
   // Calculate Progress
@@ -81,9 +84,27 @@ export default function LearnPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <button className={styles.filterBtn}>
-                <Filter size={16} /> Filters
-              </button>
+              <div style={{ position: 'relative' }}>
+                <button 
+                  className={styles.filterBtn} 
+                  onClick={() => setShowFilterDropdown(!showFilterDropdown)}
+                >
+                  <Filter size={16} /> Filters
+                </button>
+                {showFilterDropdown && (
+                  <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'white', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #E5E7EB', zIndex: 10, minWidth: '150px', overflow: 'hidden' }}>
+                    {['All', 'Completed', 'In Progress', 'Locked'].map(status => (
+                      <button 
+                        key={status}
+                        style={{ display: 'block', width: '100%', padding: '12px 16px', textAlign: 'left', background: filterStatus === status ? '#F3F4F6' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', color: filterStatus === status ? '#19533B' : '#4B5563', fontWeight: filterStatus === status ? 500 : 400 }}
+                        onClick={() => { setFilterStatus(status); setShowFilterDropdown(false); }}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </motion.header>

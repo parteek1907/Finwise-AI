@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
+import { formatCurrency } from '@/utils/formatters';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { motion } from 'framer-motion';
@@ -66,6 +68,7 @@ export default function DashboardPage() {
   const goals = useAppStore(state => state.goals);
   const lessons = useAppStore(state => state.lessons);
   const chats = useAppStore(state => state.chats);
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
 
   useEffect(() => {
     setMounted(true);
@@ -264,7 +267,7 @@ export default function DashboardPage() {
                     <div className={styles.projectInfo}>
                       <span className={styles.projectName}>{goal.name}</span>
                       <span className={styles.projectDate}>
-                        <NumberFlow value={showNumbers ? goal.current : 0} format={{ style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }} /> / <NumberFlow value={showNumbers ? goal.target : 0} format={{ style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }} />
+                        {formatCurrency(showNumbers ? goal.current : 0)} / {formatCurrency(showNumbers ? goal.target : 0)}
                       </span>
                     </div>
                   </div>
