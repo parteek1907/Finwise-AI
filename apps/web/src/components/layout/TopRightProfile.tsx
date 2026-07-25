@@ -34,7 +34,7 @@ export function TopRightProfile() {
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      router.push('/login');
+      router.push('/');
     } catch (err) {
       console.error("Failed to log out", err);
     }
@@ -101,7 +101,7 @@ export function TopRightProfile() {
                 <button 
                   type="button"
                   className={styles.menuItem} 
-                  onClick={() => { setIsOpen(false); router.push('/profile'); }}
+                  onClick={() => { setIsOpen(false); router.push('/settings'); }}
                 >
                   <Settings size={16} />
                   <span>Settings</span>
