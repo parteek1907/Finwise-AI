@@ -34,19 +34,34 @@ export function ChatSidebar() {
         <div className={styles.historyLabel}>{label}</div>
         <div className={styles.historyList}>
           {groupChats.map(chat => (
-            <button
+            <div
               key={chat.id}
               className={`${styles.historyItem} ${chat.id === activeChatId ? styles.historyItemActive : ''}`}
               onClick={() => setActiveChat(chat.id)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  setActiveChat(chat.id);
+                }
+              }}
             >
               <div className={styles.historyItemContent}>
                 <MessageSquare size={14} />
                 <span className={styles.chatTitle}>{chat.title}</span>
               </div>
               <div className={styles.hoverMenu}>
-                <button title="More options"><MoreHorizontal size={14} /></button>
+                <button 
+                  title="More options"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // more options logic
+                  }}
+                >
+                  <MoreHorizontal size={14} />
+                </button>
               </div>
-            </button>
+            </div>
           ))}
         </div>
       </div>

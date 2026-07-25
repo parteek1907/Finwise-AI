@@ -4,6 +4,7 @@ import { PortfolioHolding, PortfolioSummary } from '../types/portfolio';
 import { Trade, Order } from '../types/trade';
 import { getPortfolioHoldings, getTradeHistory } from '../services/portfolio';
 import { executeOrder } from '../services/trade';
+import { getQuote } from '../services/market';
 import { calculatePortfolioSummary } from '../utils/calculations';
 import { INITIAL_BUYING_POWER } from '../mocks/portfolio';
 
@@ -101,16 +102,21 @@ export const useTradeExecution = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submitOrder = async (order: Order, currentPrice: number, stockName: string) => {
+  const submitOrder = async (order: Order, uiPrice: number, stockName: string) => {
     setIsSubmitting(true);
     setError(null);
     try {
       const isBuy = order.side === 'BUY';
-      const orderValue = currentPrice * order.quantity;
+      
+      // FETCH FRESH PRICE RIGHT BEFORE EXECUTION FOR REAL-TIME REALISM
+      const freshQuote = await getQuote(order.symbol);
+      const executionPrice = freshQuote.price;
+      
+      const orderValue = executionPrice * order.quantity;
       
       // Validation
       if (isBuy && orderValue > store.buyingPower) {
-        throw new Error('Insufficient buying power');
+        throw new Error(`Insufficient buying power (Market price: $${executionPrice})`);
       }
       
       const existingHolding = store.holdings.find(h => h.symbol === order.symbol);
@@ -118,8 +124,8 @@ export const useTradeExecution = () => {
         throw new Error('Insufficient shares to sell');
       }
 
-      // Execute via API layer
-      const trade = await executeOrder(order, currentPrice);
+      // Execute via API layer using the fresh execution price
+      const trade = await executeOrder(order, executionPrice);
       
       // Calculate new holding state
       let updatedHolding: PortfolioHolding;
@@ -132,10 +138,10 @@ export const useTradeExecution = () => {
             ...existingHolding,
             shares: totalShares,
             averagePrice: totalCost / totalShares,
-            currentPrice: currentPrice,
-            totalValue: totalShares * currentPrice,
-            totalReturn: (currentPrice - (totalCost / totalShares)) * totalShares,
-            totalReturnPercent: ((currentPrice - (totalCost / totalShares)) / (totalCost / totalShares)) * 100,
+            currentPrice: executionPrice,
+            totalValue: totalShares * executionPrice,
+            totalReturn: (executionPrice - (totalCost / totalShares)) * totalShares,
+            totalReturnPercent: ((executionPrice - (totalCost / totalShares)) / (totalCost / totalShares)) * 100,
             todaysReturn: 0,
             todaysReturnPercent: 0,
           };
@@ -145,8 +151,8 @@ export const useTradeExecution = () => {
             name: stockName,
             shares: trade.quantity,
             averagePrice: trade.executionPrice,
-            currentPrice: currentPrice,
-            totalValue: trade.quantity * currentPrice,
+            currentPrice: executionPrice,
+            totalValue: trade.quantity * executionPrice,
             totalReturn: 0,
             totalReturnPercent: 0,
             todaysReturn: 0,
@@ -159,8 +165,8 @@ export const useTradeExecution = () => {
         updatedHolding = {
           ...existingHolding!,
           shares: remainingShares,
-          totalValue: remainingShares * currentPrice,
-          totalReturn: (currentPrice - existingHolding!.averagePrice) * remainingShares,
+          totalValue: remainingShares * executionPrice,
+          totalReturn: (executionPrice - existingHolding!.averagePrice) * remainingShares,
           // Percent stays same
         };
       }

@@ -14,60 +14,81 @@ interface RichMessageProps {
   content: string;
 }
 
-export function RichMessage({ content }: RichMessageProps) {
-  // A simple parser to make the AI responses look like structured premium blocks.
-  // We'll split by common markdown headers (## or ###) or bold patterns.
-  
-  // If the content is just plain text without much structure, we just return it nicely.
-  if (!content.includes('##') && !content.includes('**')) {
-    return <div className={styles.richText}>{content}</div>;
-  }
+const getIconForTitle = (title: string) => {
+  const lowerTitle = title.toLowerCase();
+  if (lowerTitle.includes('summary')) return <FileText size={18} />;
+  if (lowerTitle.includes('recommendation') || lowerTitle.includes('action')) return <CheckCircle size={18} />;
+  if (lowerTitle.includes('risk') || lowerTitle.includes('warning')) return <AlertTriangle size={18} />;
+  if (lowerTitle.includes('why this matters') || lowerTitle.includes('takeaway')) return <Lightbulb size={18} />;
+  if (lowerTitle.includes('lesson')) return <BookOpen size={18} />;
+  if (lowerTitle.includes('market') || lowerTitle.includes('trend')) return <TrendingUp size={18} />;
+  if (lowerTitle.includes('goal')) return <Target size={18} />;
+  return <FileText size={18} />;
+};
 
-  // Simple heuristic parsing for demonstration
-  // Split by double newline to get blocks
-  const blocks = content.split('\n\n');
+export function RichMessage({ content }: RichMessageProps) {
+  // We'll replace headers with a custom marker so we can split them and inject React icons later
+  // Custom marker: :::HEADER:::Title:::
+  let preProcessed = content
+    // Convert ### Header or ## Header to a custom marker
+    .replace(/^(?:###|##|#)\s+(.+)$/gm, ':::HEADER:::$1:::')
+    // Bold
+    .replace(/\*\*(.*?)\*\*/g, '<strong style="color: #111827; font-weight: 600;">$1</strong>')
+    // Bullet points
+    .replace(/^[\s]*[-*]\s+(.*)$/gm, '<li style="margin-bottom: 0.5rem; color: #374151;">$1</li>')
+    // Numbered lists
+    .replace(/^[\s]*\d+\.\s+(.*)$/gm, '<li class="ol-item" style="margin-bottom: 0.5rem; color: #374151;">$1</li>');
+
+  // Wrap lists
+  preProcessed = preProcessed
+    .replace(/(<li style="margin-bottom: 0.5rem; color: #374151;">.*<\/li>(\n<li style="margin-bottom: 0.5rem; color: #374151;">.*<\/li>)*)/g, '<ul style="padding-left: 1.5rem; margin-bottom: 1.5rem; list-style-type: disc;">$1</ul>')
+    .replace(/(<li class="ol-item" style="margin-bottom: 0.5rem; color: #374151;">.*<\/li>(\n<li class="ol-item" style="margin-bottom: 0.5rem; color: #374151;">.*<\/li>)*)/g, '<ol style="padding-left: 1.5rem; margin-bottom: 1.5rem; list-style-type: decimal;">$1</ol>')
+    .replace(/class="ol-item" /g, '');
+
+  // Split by double newline to handle paragraphs
+  const blocks = preProcessed.split('\n\n').map(p => p.trim()).filter(p => p.length > 0);
 
   return (
-    <div>
+    <div className={styles.richTextContainer} style={{ lineHeight: '1.6', fontSize: '0.95rem' }}>
       {blocks.map((block, idx) => {
-        const lowerBlock = block.toLowerCase();
-        let icon = <FileText size={16} />;
-        let title = '';
-        let textContent = block;
+        
+        // Check if this block contains our custom header marker
+        if (block.includes(':::HEADER:::')) {
+          // Split the block to separate the header from any trailing text (like lists)
+          const parts = block.split(':::');
+          const title = parts[2]?.replace(/<\/?strong[^>]*>/g, '').replace(/\*/g, '');
+          const restOfBlock = parts[3]?.trim();
 
-        // Extract title if block starts with ## or ###
-        const match = block.match(/^(?:###|##)\s*(.+)$/m);
-        if (match) {
-          title = match[1];
-          textContent = block.replace(/^(?:###|##)\s*(.+)$/m, '').trim();
-        } else if (block.startsWith('**') && block.includes('**:')) {
-          // Alternative format: **Summary**: text
-          const splitPoint = block.indexOf('**:');
-          title = block.substring(2, splitPoint).trim();
-          textContent = block.substring(splitPoint + 3).trim();
+          return (
+            <div key={idx} style={{ marginBottom: '1rem', marginTop: idx > 0 ? '1.5rem' : 0 }}>
+              <div 
+                className={styles.richHeader} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: '8px', 
+                  color: '#c8a56e', // Premium gold accent
+                  marginBottom: '0.75rem',
+                  paddingBottom: '0.5rem',
+                  borderBottom: '1px solid rgba(200, 165, 110, 0.2)'
+                }}
+              >
+                {getIconForTitle(title || '')}
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 600, letterSpacing: '0.02em', color: '#303A3C' }}>{title}</h3>
+              </div>
+              {restOfBlock && (
+                <div dangerouslySetInnerHTML={{ __html: restOfBlock.replace(/\n/g, '<br/>') }} />
+              )}
+            </div>
+          );
         }
-
-        if (title) {
-          const lowerTitle = title.toLowerCase();
-          if (lowerTitle.includes('summary')) icon = <FileText size={16} />;
-          if (lowerTitle.includes('recommendation') || lowerTitle.includes('action')) icon = <CheckCircle size={16} />;
-          if (lowerTitle.includes('risk')) icon = <AlertTriangle size={16} />;
-          if (lowerTitle.includes('why this matters') || lowerTitle.includes('takeaway')) icon = <Lightbulb size={16} />;
-          if (lowerTitle.includes('lesson')) icon = <BookOpen size={16} />;
-          if (lowerTitle.includes('market') || lowerTitle.includes('trend')) icon = <TrendingUp size={16} />;
-          if (lowerTitle.includes('goal')) icon = <Target size={16} />;
+        
+        if (block.startsWith('<ul') || block.startsWith('<ol')) {
+           return <div key={idx} dangerouslySetInnerHTML={{ __html: block }} />;
         }
 
         return (
-          <div key={idx} className={styles.richBlock}>
-            {title && (
-              <div className={styles.richHeader}>
-                {icon}
-                <span>{title}</span>
-              </div>
-            )}
-            <div className={styles.richText} dangerouslySetInnerHTML={{ __html: textContent.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') }} />
-          </div>
+          <p key={idx} style={{ marginBottom: '1rem', color: '#4b5563' }} dangerouslySetInnerHTML={{ __html: block.replace(/\n/g, '<br/>') }} />
         );
       })}
     </div>

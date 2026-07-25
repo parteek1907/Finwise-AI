@@ -13,6 +13,8 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [realTimeTick, setRealTimeTick] = useState<{price: number, time: number, volume: number} | null>(null);
+
   const fetchChartData = useCallback(async () => {
     if (!asset) return;
     setLoading(true);
@@ -50,6 +52,71 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
     fetchWatchlist();
   }, [fetchWatchlist]);
 
+  // WebSocket Connection for Real-Time ticks
+  useEffect(() => {
+    if (!asset) return;
+
+    // Use ws:// for http, or wss:// for https
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    // Actually the backend is at 8000
+    const ws = new WebSocket(`ws://localhost:8000/api/market/ws/${asset}`);
+    let mockInterval: NodeJS.Timeout;
+
+    const startMockTicks = () => {
+      if (mockInterval) clearInterval(mockInterval);
+      mockInterval = setInterval(() => {
+        setQuote(prev => {
+          if (!prev) return prev;
+          
+          // Random price fluctuation +/- 0.1%
+          const change = prev.price * (Math.random() * 0.002 - 0.001);
+          const newPrice = Number((prev.price + change).toFixed(2));
+          
+          setRealTimeTick({
+            price: newPrice,
+            time: Math.floor(Date.now() / 1000),
+            volume: 100 // dummy volume increment
+          });
+          
+          return {
+            ...prev, 
+            price: newPrice,
+            change: newPrice - prev.previousClose,
+            changePercent: ((newPrice - prev.previousClose) / prev.previousClose) * 100
+          };
+        });
+      }, 1000); // every 1 second
+    };
+
+    ws.onerror = () => {
+      // WS failed (e.g., backend not running), fallback to mock ticks
+      startMockTicks();
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.price) {
+          setRealTimeTick(data);
+          // Also update the quote state so the UI badge updates
+          setQuote(prev => prev ? { 
+            ...prev, 
+            price: data.price,
+            change: data.price - prev.previousClose,
+            changePercent: ((data.price - prev.previousClose) / prev.previousClose) * 100
+          } : null);
+        }
+      } catch (err) {
+        console.error('WS parse error', err);
+      }
+    };
+
+    return () => {
+      ws.close();
+      if (mockInterval) clearInterval(mockInterval);
+    };
+  }, [asset]);
+
   return {
     asset,
     timeframe,
@@ -59,6 +126,7 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
     watchlist,
     loading,
     error,
+    realTimeTick,
     refresh: fetchChartData
   };
 };

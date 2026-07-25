@@ -66,8 +66,8 @@ export interface AppState {
 
 // Initial Mock Data
 const INITIAL_USER: User = {
-  name: 'Parteek Garg',
-  email: 'parteek@finwise.ai',
+  name: 'Nipun',
+  email: 'nipun@finwise.ai',
   avatar: 'https://i.pravatar.cc/150?img=11',
   archetype: 'The Guardian',
   healthScore: 85,
