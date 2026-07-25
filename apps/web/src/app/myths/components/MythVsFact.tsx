@@ -255,18 +255,6 @@ export function MythVsFact() {
           {/* Right Panel */}
           <div className={styles.sidePanel} style={{ alignItems: 'flex-end', textAlign: 'right' }}>
             <div className={styles.sidePanelItem} style={{ alignItems: 'flex-end' }}>
-              <span className={styles.sidePanelLabel}>Truth Confidence</span>
-              <div className={styles.confidenceMeter}>
-                <div className={styles.meterBar} style={{ width: '120px' }}>
-                  {[...Array(10)].map((_, i) => (
-                    <div key={i} className={`${styles.meterBlock} ${i > 8 ? styles.meterBlockEmpty : ''}`} />
-                  ))}
-                </div>
-                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--color-text-primary)' }}>91% Verified</span>
-              </div>
-            </div>
-            
-            <div className={styles.sidePanelItem} style={{ alignItems: 'flex-end' }}>
               <span className={styles.sidePanelLabel}>Knowledge Gained</span>
               <span style={{ fontSize: '18px', color: 'var(--color-text-primary)', letterSpacing: '2px' }}>
                 ★★★★<span style={{ opacity: 0.3 }}>★</span>

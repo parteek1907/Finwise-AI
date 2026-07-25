@@ -33,7 +33,7 @@ export function Footer({
             <Link href="/" className="font-bold text-2xl font-heading tracking-tight text-white hover:opacity-80 transition-opacity">
               {brandName}
             </Link>
-            <div className="text-sm leading-relaxed text-[#DDD7C9]/50">
+            <div className="text-sm leading-relaxed text-white/50">
               <div>{copyright.text}</div>
               {copyright.license && <div>{copyright.license}</div>}
             </div>
@@ -50,7 +50,7 @@ export function Footer({
                   <li key={i}>
                     <Link
                       href={link.href}
-                      className="text-sm text-[#DDD7C9] hover:text-white transition-colors"
+                      className="text-sm text-white/80 hover:text-white transition-colors"
                     >
                       {link.label}
                     </Link>
@@ -67,7 +67,7 @@ export function Footer({
                   <li key={i}>
                     <Link
                       href={link.href}
-                      className="text-sm text-[#DDD7C9]/70 hover:text-white transition-colors"
+                      className="text-sm text-white/60 hover:text-white transition-colors"
                     >
                       {link.label}
                     </Link>

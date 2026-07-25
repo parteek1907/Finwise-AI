@@ -1,4 +1,5 @@
 "use client";
+// HMR trigger 2
 
 import React from 'react';
 import Link from 'next/link';
@@ -20,6 +21,7 @@ import {
   Settings as SettingsIcon
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
+import { SidebarProfile } from './SidebarProfile';
 
 const MENU_ITEMS = [
   { href: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
@@ -31,7 +33,6 @@ const MENU_ITEMS = [
   { href: '/scam-detector', icon: ShieldCheck, label: 'Scam Detector' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/achievements', icon: Award, label: 'Achievements' },
-  { href: '/settings', icon: SettingsIcon, label: 'Settings' },
 ];
 
 interface SidebarProps {
@@ -79,25 +80,17 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
           <div className={styles.logoIcon}></div>
           {!isCollapsed && <span className={styles.logoText}>FinWise</span>}
         </Link>
-        {onToggleCollapse && (
-          <button 
-            className={styles.collapseBtn} 
-            onClick={onToggleCollapse}
-            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-          </button>
-        )}
       </div>
 
       {/* Menu Section */}
       <div className={styles.navSection}>
-        {!isCollapsed && <div className={styles.sectionTitle}>MENU</div>}
         <nav className={styles.navigation}>
           {renderNavItems(MENU_ITEMS)}
         </nav>
       </div>
 
+      {/* User Profile */}
+      <SidebarProfile isCollapsed={isCollapsed} />
     </aside>
   );
 }

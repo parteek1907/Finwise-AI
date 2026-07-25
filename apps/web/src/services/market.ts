@@ -27,6 +27,15 @@ export const getQuote = async (symbol: string): Promise<Quote> => {
 export const getMarketQuote = getQuote;
 
 export const getMarketMovers = async (): Promise<MarketMover[]> => {
+  try {
+    const response = await fetch('http://localhost:8000/api/market/movers');
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.warn("Backend not available for movers, falling back to mock.");
+  }
+
   await delay(600);
   return MOCK_MOVERS;
 };

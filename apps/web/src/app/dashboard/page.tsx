@@ -69,6 +69,7 @@ export default function DashboardPage() {
   const lessons = useAppStore(state => state.lessons);
   const chats = useAppStore(state => state.chats);
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
+  const profileName = useSettingsStore(state => state.profile?.name) || user.name || 'User';
 
   useEffect(() => {
     setMounted(true);
@@ -124,7 +125,7 @@ export default function DashboardPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.headerLeft}>
-            <h1 className={styles.title}>{getGreeting()}, <span className={styles.nameBold}>{user.name.split(' ')[0]}</span>.</h1>
+            <h1 className={styles.title}>{getGreeting()}, <span className={styles.nameBold}>{profileName.split(' ')[0]}</span></h1>
             <p className={styles.subtitle}>Welcome back. Let's continue building your financial foundation.</p>
           </div>
           <div className={styles.headerActions}>

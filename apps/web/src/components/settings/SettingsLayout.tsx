@@ -79,12 +79,23 @@ export function SettingsLayout() {
 
   // Local Form States
   const [profileForm, setProfileForm] = useState({
-    name: profile.name || appUser.name || 'Aditya Tanwar',
-    email: profile.email || appUser.email || 'adityatanwar13827@gmail.com',
-    phone: profile.phone || '+1 (555) 123-4567',
-    location: profile.location || 'New York, USA',
+    name: profile.name || appUser.name || '',
+    email: profile.email || appUser.email || '',
+    phone: profile.phone || '',
+    location: profile.location || '',
     avatar: profile.avatar || '',
   });
+
+  // Sync local form with store when store updates (e.g., after Firebase auth loads)
+  useEffect(() => {
+    setProfileForm({
+      name: profile.name || appUser.name || '',
+      email: profile.email || appUser.email || '',
+      phone: profile.phone || '',
+      location: profile.location || '',
+      avatar: profile.avatar || '',
+    });
+  }, [profile.name, profile.email, profile.phone, profile.location, profile.avatar, appUser.name, appUser.email]);
 
   const [profileErrors, setProfileErrors] = useState<{ name?: string; email?: string }>({});
 

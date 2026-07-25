@@ -606,3 +606,21 @@
     gap: 3rem;
   }
 }
+
+.xpToast {
+  position: absolute;
+  top: -60px;
+  left: 50%;
+  background: var(--color-accent-green);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 100px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(41, 163, 103, 0.3);
+  z-index: 100;
+  white-space: nowrap;
+}

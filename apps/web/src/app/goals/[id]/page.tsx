@@ -7,12 +7,17 @@ import { ArrowLeft, Target, Plus, TrendingUp, Calendar, Zap, Edit2, Trash2 } fro
 import styles from './GoalDetail.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { motion } from 'framer-motion';
+import { formatCurrency } from '@/utils/formatters';
 
 export default function GoalDetailPage() {
   const router = useRouter();
   const { id } = useParams();
   const goals = useAppStore(state => state.goals);
   const updateGoal = useAppStore(state => state.updateGoal);
+  
+  // Subscribe to currency changes so it updates live
+  const { useSettingsStore } = require('@/store/useSettingsStore');
+  useSettingsStore((state: any) => state.financial?.preferredCurrency);
   
   const goal = goals.find(g => g.id === id) || goals[0]; // fallback
   const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
@@ -53,11 +58,11 @@ export default function GoalDetailPage() {
               <div className={styles.progressTop}>
                 <div>
                   <span className={styles.label}>Current Saved</span>
-                  <h2 className={styles.mainAmount}>${goal.current.toLocaleString()}</h2>
+                  <h2 className={styles.mainAmount}>{formatCurrency(goal.current)}</h2>
                 </div>
                 <div style={{textAlign: 'right'}}>
                   <span className={styles.label}>Target Amount</span>
-                  <h2 className={styles.targetAmount}>${goal.target.toLocaleString()}</h2>
+                  <h2 className={styles.targetAmount}>{formatCurrency(goal.target)}</h2>
                 </div>
               </div>
               
@@ -77,7 +82,7 @@ export default function GoalDetailPage() {
 
               <div className={styles.actionRow}>
                 <button className={styles.addFundsBtn} onClick={handleAddFunds}>
-                  <Plus size={18} /> Add Funds ($500)
+                  <Plus size={18} /> Add Funds ({formatCurrency(500)})
                 </button>
               </div>
             </div>
@@ -90,28 +95,28 @@ export default function GoalDetailPage() {
                   <div className={styles.node}></div>
                   <div className={styles.content}>
                     <h4>25% Milestone</h4>
-                    <p>${(goal.target * 0.25).toLocaleString()}</p>
+                    <p>{formatCurrency(goal.target * 0.25)}</p>
                   </div>
                 </div>
                 <div className={`${styles.timelineItem} ${progressPercent >= 50 ? styles.achieved : ''}`}>
                   <div className={styles.node}></div>
                   <div className={styles.content}>
                     <h4>50% Milestone - Halfway there!</h4>
-                    <p>${(goal.target * 0.5).toLocaleString()}</p>
+                    <p>{formatCurrency(goal.target * 0.5)}</p>
                   </div>
                 </div>
                 <div className={`${styles.timelineItem} ${progressPercent >= 75 ? styles.achieved : ''}`}>
                   <div className={styles.node}></div>
                   <div className={styles.content}>
                     <h4>75% Milestone</h4>
-                    <p>${(goal.target * 0.75).toLocaleString()}</p>
+                    <p>{formatCurrency(goal.target * 0.75)}</p>
                   </div>
                 </div>
                 <div className={`${styles.timelineItem} ${progressPercent >= 100 ? styles.achieved : ''}`}>
                   <div className={styles.node}></div>
                   <div className={styles.content}>
                     <h4>Goal Completed</h4>
-                    <p>${goal.target.toLocaleString()}</p>
+                    <p>{formatCurrency(goal.target)}</p>
                   </div>
                 </div>
               </div>
@@ -130,7 +135,7 @@ export default function GoalDetailPage() {
               <div className={styles.statCard}>
                 <TrendingUp size={18} className={styles.statIcon} />
                 <span className={styles.statLabel}>Monthly Needed</span>
-                <strong className={styles.statValue}>$450/mo</strong>
+                <strong className={styles.statValue}>{formatCurrency(450)}/mo</strong>
               </div>
             </div>
 
@@ -142,7 +147,7 @@ export default function GoalDetailPage() {
               </div>
               <ul className={styles.suggestionList}>
                 <li>
-                  <strong>Reallocate Funds:</strong> You have $200 sitting idle in your checking account. Moving it here would boost your timeline by 2 weeks.
+                  <strong>Reallocate Funds:</strong> You have {formatCurrency(200)} sitting idle in your checking account. Moving it here would boost your timeline by 2 weeks.
                 </li>
                 <li>
                   <strong>Automate:</strong> Set up a recurring transfer on the 1st of every month to ensure you never miss a contribution.

@@ -5,6 +5,7 @@ import { SkeletonLoader } from '../common/SkeletonLoader';
 import { ErrorCard } from '../common/ErrorCard';
 import { formatPercentage, formatCurrency } from '../../utils/formatters';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import NumberFlow from '@number-flow/react';
 import styles from './Market.module.css';
 
 interface MarketMoversProps {
@@ -35,9 +36,17 @@ export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, err
                 <span>{item.name}</span>
               </div>
               <div className={styles.price}>
-                <strong>{formatCurrency(item.price)}</strong>
+                <strong>
+                  <NumberFlow 
+                    value={item.price} 
+                    format={{ style: 'currency', currency: preferredCurrency || 'USD' }} 
+                  />
+                </strong>
                 <span className={item.isUp ? styles.positiveText : styles.negativeText}>
-                  {formatPercentage(item.changePercent)}
+                  <NumberFlow 
+                    value={item.changePercent / 100} 
+                    format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+                  />
                 </span>
               </div>
             </div>

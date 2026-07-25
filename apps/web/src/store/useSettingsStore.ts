@@ -91,10 +91,10 @@ const DEFAULT_SESSIONS: SecuritySession[] = [
 
 const DEFAULT_SETTINGS = {
   profile: {
-    name: 'Aditya Tanwar',
-    email: 'adityatanwar13827@gmail.com',
-    phone: '+1 (555) 123-4567',
-    location: 'New York, USA',
+    name: '',
+    email: '',
+    phone: '',
+    location: '',
     avatar: '',
     archetype: 'The Guardian',
   },

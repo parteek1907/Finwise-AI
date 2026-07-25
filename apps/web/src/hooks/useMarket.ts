@@ -58,7 +58,30 @@ export const useMarketMovers = () => {
     };
     
     fetchMovers();
-    return () => { mounted = false; };
+
+    // Simulate live active market by ticking prices every second
+    const interval = setInterval(() => {
+      if (!mounted) return;
+      setMovers(currentMovers => 
+        currentMovers.map(mover => {
+          const volatility = mover.price * 0.0005; // 0.05% volatility per tick
+          const change = (Math.random() * volatility * 2) - volatility;
+          const newPrice = Math.max(0, mover.price + change);
+          const newChangePercent = mover.changePercent + (change / mover.price) * 100;
+          return {
+            ...mover,
+            price: newPrice,
+            changePercent: newChangePercent,
+            isUp: newChangePercent >= 0
+          };
+        })
+      );
+    }, 1000);
+
+    return () => { 
+      mounted = false; 
+      clearInterval(interval);
+    };
   }, []);
 
   return { movers, loading, error };

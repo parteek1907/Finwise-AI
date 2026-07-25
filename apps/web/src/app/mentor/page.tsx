@@ -12,6 +12,7 @@ import { RichMessage } from '@/components/mentor/RichMessage';
 
 export default function MentorPage() {
   const { chats, activeChatId, addMessage, createNewChat, user, goals, updateGoal, updateChatTitle } = useAppStore();
+  const profileName = useSettingsStore(state => state.profile?.name) || user.name || 'User';
   
   const activeChat = chats.find(c => c.id === activeChatId);
   const history = activeChat ? activeChat.messages : [];
@@ -208,7 +209,7 @@ export default function MentorPage() {
                 <motion.div className={styles.welcomeIcon} initial={{ scale: 0.8 }} animate={{ scale: 1 }}>
                   <Sparkles size={32} />
                 </motion.div>
-                <motion.h1>{getGreeting()}, {user.name.split(' ')[0]}.</motion.h1>
+                <motion.h1>{getGreeting()}, {profileName.split(' ')[0]}</motion.h1>
                 <motion.p>
                   Your personal AI financial mentor. <br />
                   Ask questions, review your portfolio, understand markets, or learn investing with personalized guidance.
@@ -282,7 +283,6 @@ export default function MentorPage() {
                     <p className={styles.examplesTitle}>Examples of queries:</p>
                     <div className={styles.examplesList}>
                       {randomPrompts.map((prompt, i) => {
-                        const IconComponent = prompt.icon;
                         return (
                           <motion.button 
                             key={i} 
@@ -298,9 +298,6 @@ export default function MentorPage() {
                             }}
                           >
                             <div className={styles.exampleBtnLeft}>
-                              <div className={styles.promptIconBox}>
-                                <IconComponent size={15} color="#19533B" />
-                              </div>
                               <span>{prompt.label}</span>
                             </div>
                             <ChevronRight size={14} className={styles.exampleArrow} />

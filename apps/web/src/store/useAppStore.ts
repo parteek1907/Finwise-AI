@@ -65,10 +65,9 @@ export interface AppState {
   updateUser: (data: Partial<User>) => void;
 }
 
-// Initial Mock Data
 const INITIAL_USER: User = {
-  name: 'Aditya Tanwar',
-  email: 'adityatanwar13827@gmail.com',
+  name: '',
+  email: '',
   avatar: '',
   archetype: 'The Guardian',
   healthScore: 85,

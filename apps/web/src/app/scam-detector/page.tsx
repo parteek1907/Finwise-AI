@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { ShieldCheck, Upload, Search, AlertTriangle, ShieldAlert, CheckCircle2, Save, Sparkles, X } from 'lucide-react';
 import styles from './Scam.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Tabs } from '@/components/ui/vercel-tabs';
 
 interface ScamResult {
   isScam: boolean;
@@ -171,15 +172,15 @@ export default function ScamDetectorPage() {
           {/* Left: Input Area */}
           <div className={styles.inputCol}>
             <div className={styles.card}>
-              <div className={styles.tabs}>
-                <button 
-                  className={activeTab === 'text' ? styles.activeTab : ''}
-                  onClick={() => setActiveTab('text')}
-                >Text Message / Email</button>
-                <button 
-                  className={activeTab === 'image' ? styles.activeTab : ''}
-                  onClick={() => setActiveTab('image')}
-                >Upload Screenshot</button>
+              <div style={{ marginBottom: '16px' }}>
+                <Tabs 
+                  tabs={[
+                    { id: 'text', label: 'Text Message / Email' },
+                    { id: 'image', label: 'Upload Screenshot' }
+                  ]}
+                  activeTab={activeTab}
+                  onTabChange={(id) => setActiveTab(id as 'text' | 'image')}
+                />
               </div>
 
               {activeTab === 'text' ? (

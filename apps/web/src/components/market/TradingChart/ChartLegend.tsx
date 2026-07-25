@@ -19,17 +19,6 @@ export const ChartLegend: React.FC<ChartLegendProps> = ({ quote, status }) => {
         <h2>{quote.name}</h2>
         <span className={styles.legendExchange}>NASDAQ</span>
       </div>
-      <div className={styles.legendDetails}>
-        <span className={styles.legendPrice}>{formatCurrency(quote.price)}</span>
-        <span className={isPositive ? styles.legendChangePos : styles.legendChangeNeg}>
-          {isPositive ? '+' : ''}{formatCurrency(quote.change)} ({formatPercentage(quote.changePercent)})
-        </span>
-        {status && (
-          <span className={status.isOpen ? styles.statusOpen : styles.statusClosed}>
-            Market {status.isOpen ? 'Open' : 'Closed'}
-          </span>
-        )}
-      </div>
     </div>
   );
 };

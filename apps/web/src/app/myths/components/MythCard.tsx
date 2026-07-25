@@ -154,25 +154,6 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
           </div>
           <h3 className={`${styles.statement} ${styles.factStatement}`}>{data.fact}</h3>
           <p className={styles.factExplanation}>{data.insight}</p>
-
-          <AnimatePresence>
-            {isFlipped && (
-              <motion.div 
-                className={styles.aiInsight}
-                initial={{ opacity: 0, y: 10, filter: 'blur(4px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 20 }}
-              >
-                <div className={styles.insightIcon}>
-                  <Sparkles size={18} />
-                </div>
-                <div className={styles.insightContent}>
-                  <h4>AI Mentor Insight</h4>
-                  <p><strong>{data.insightPercent}</strong> of users believed this myth before starting.</p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </motion.div>
 
@@ -181,9 +162,9 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
         {showXP && (
           <motion.div
             className={styles.xpToast}
-            initial={{ opacity: 0, scale: 0.9, y: 0 }}
-            animate={{ opacity: 1, scale: 1, y: -20 }}
-            exit={{ opacity: 0, scale: 0.9, y: -40 }}
+            initial={{ opacity: 0, scale: 0.9, y: 0, x: '-50%' }}
+            animate={{ opacity: 1, scale: 1, y: -20, x: '-50%' }}
+            exit={{ opacity: 0, scale: 0.9, y: -40, x: '-50%' }}
             transition={{ duration: 0.4 }}
           >
             <Sparkles size={14} />

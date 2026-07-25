@@ -3,7 +3,6 @@
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
-import { TopRightProfile } from './TopRightProfile';
 import styles from './AppLayout.module.css';
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -45,9 +44,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         const userEmail = firebaseUser.email || '';
         const userAvatar = firebaseUser.photoURL || '';
 
-        updateUser({ name: formattedName || 'Adi' });
+        updateUser({ name: formattedName || 'User' });
         updateProfile({
-          name: formattedName || 'Adi',
+          name: formattedName || 'User',
           email: userEmail,
           avatar: userAvatar,
         });
@@ -57,8 +56,6 @@ export function AppLayout({ children }: AppLayoutProps) {
     return () => unsubscribe();
   }, [updateUser, updateProfile]);
   
-  // Show profile pill only on dashboard
-  const showProfile = pathname === '/dashboard';
   
   // Mentor page gets 0 padding at bottom to allow chat to go all the way down
   const isMentor = pathname === '/mentor';
@@ -71,7 +68,6 @@ export function AppLayout({ children }: AppLayoutProps) {
           onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
         />
         <div className={styles.mainWrapper}>
-          {showProfile && <TopRightProfile />}
           <main 
             className={styles.mainWorkspace}
             style={isMentor ? { paddingBottom: 0 } : undefined}

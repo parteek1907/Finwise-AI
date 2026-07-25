@@ -5,9 +5,11 @@ import { User as UserIcon, Settings, LogOut, ChevronDown, UserCheck } from 'luci
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import styles from './TopRightProfile.module.css';
+import styles from './SidebarProfile.module.css';
+import { useSettingsStore } from '@/store/useSettingsStore';
 
-export function TopRightProfile() {
+export function SidebarProfile({ isCollapsed = false }: { isCollapsed?: boolean }) {
+  const profile = useSettingsStore(state => state.profile);
   const [user, setUser] = useState<User | null>(null);
   const [imgError, setImgError] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -42,24 +44,25 @@ export function TopRightProfile() {
 
   const getAvatarUrl = () => {
     if (user?.photoURL && !imgError) return user.photoURL;
-    const name = user?.displayName || user?.email || 'Aditya Tanwar';
+    if (profile.avatar && !imgError) return profile.avatar;
+    const name = user?.displayName || profile.name || user?.email || profile.email || 'User';
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=19533B&color=fff`;
   };
 
-  const displayName = user?.displayName || 'Aditya Tanwar';
-  const displayEmail = user?.email || 'adityatanwar13827@gmail.com';
+  const displayName = user?.displayName || profile.name || 'User';
+  const displayEmail = user?.email || profile.email || '';
 
   return (
-    <div className={styles.topbar} style={{ justifyContent: 'flex-end' }}>
-      <div className={styles.actions}>
-        <div className={styles.dropdownContainer} ref={dropdownRef}>
-          <button 
-            className={styles.profileButton}
+    <div className={styles.profileSection}>
+      <div className={styles.dropdownContainer} ref={dropdownRef}>
+        <button 
+          className={`${styles.profileButton} ${isCollapsed ? styles.profileButtonCollapsed : ''}`}
             onClick={() => setIsOpen(!isOpen)}
             aria-expanded={isOpen}
             aria-haspopup="true"
             type="button"
           >
+          <div className={styles.avatarWrapper}>
             <div className={styles.avatar}>
               <img 
                 src={getAvatarUrl()} 
@@ -67,12 +70,17 @@ export function TopRightProfile() {
                 onError={() => setImgError(true)}
               />
             </div>
+          </div>
+          {!isCollapsed && (
             <div className={styles.userInfo}>
               <span className={styles.userName}>{displayName}</span>
               <span className={styles.userEmail}>{displayEmail}</span>
             </div>
-            <ChevronDown className={`${styles.chevron} ${isOpen ? styles.chevronOpen : ''}`} size={16} />
-          </button>
+          )}
+          {!isCollapsed && (
+            <Settings className={styles.settingsIcon} size={18} />
+          )}
+        </button>
 
           {isOpen && (
             <div className={styles.dropdownMenu}>
@@ -121,7 +129,6 @@ export function TopRightProfile() {
             </div>
           )}
         </div>
-      </div>
     </div>
   );
 }

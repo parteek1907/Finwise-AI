@@ -86,6 +86,35 @@ export const usePortfolio = () => {
     return () => { mounted = false; };
   }, [store.isInitialized]);
 
+  // Simulate live market for portfolio holdings
+  useEffect(() => {
+    if (!store.isInitialized) return;
+    
+    const interval = setInterval(() => {
+      usePortfolioStore.setState((state) => ({
+        holdings: state.holdings.map(h => {
+          const volatility = h.currentPrice * 0.0005; 
+          const change = (Math.random() * volatility * 2) - volatility;
+          const newPrice = Math.max(0, h.currentPrice + change);
+          
+          const totalValue = newPrice * h.shares;
+          const totalReturn = (newPrice - h.averagePrice) * h.shares;
+          const totalReturnPercent = h.averagePrice > 0 ? ((newPrice - h.averagePrice) / h.averagePrice) * 100 : 0;
+          
+          return {
+            ...h,
+            currentPrice: newPrice,
+            totalValue,
+            totalReturn,
+            totalReturnPercent
+          };
+        })
+      }));
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [store.isInitialized]);
+
   const summary = calculatePortfolioSummary(store.holdings, store.buyingPower);
 
   return {

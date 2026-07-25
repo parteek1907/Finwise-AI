@@ -2,6 +2,8 @@ import React from 'react';
 import { PortfolioHolding, PortfolioSummary } from '../../types/portfolio';
 import { Trade } from '../../types/trade';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
+import { useSettingsStore } from '@/store/useSettingsStore';
+import NumberFlow from '@number-flow/react';
 import { EmptyState } from '../common/EmptyState';
 import styles from './Portfolio.module.css';
 
@@ -20,18 +22,31 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
   activeTab,
   onTabChange
 }) => {
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
 
   return (
     <div className={styles.portfolioView}>
       <div className={styles.portStats}>
         <div className={styles.statBox}>
           <span>Total Value</span>
-          <h3>{formatCurrency(summary.totalValue)}</h3>
+          <h3>
+            <NumberFlow 
+              value={summary.totalValue} 
+              format={{ style: 'currency', currency: preferredCurrency }} 
+            />
+          </h3>
         </div>
         <div className={styles.statBox}>
           <span>Total Return</span>
           <h3 className={summary.totalReturn >= 0 ? styles.positiveText : styles.negativeText}>
-            {formatCurrency(summary.totalReturn)} ({formatPercentage(summary.totalReturnPercent)})
+            <NumberFlow 
+              value={summary.totalReturn} 
+              format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
+            /> 
+            {' '}(<NumberFlow 
+              value={summary.totalReturnPercent / 100} 
+              format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+            />)
           </h3>
         </div>
       </div>
@@ -82,10 +97,23 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                       </td>
                       <td>{pos.shares}</td>
                       <td>{formatCurrency(pos.averagePrice)}</td>
-                      <td>{formatCurrency(pos.currentPrice)}</td>
+                      <td>
+                        <NumberFlow 
+                          value={pos.currentPrice} 
+                          format={{ style: 'currency', currency: preferredCurrency }} 
+                        />
+                      </td>
                       <td className={pos.totalReturn >= 0 ? styles.positiveText : styles.negativeText}>
-                        {formatCurrency(pos.totalReturn)}
-                        <span className={styles.percentText}>({formatPercentage(pos.totalReturnPercent)})</span>
+                        <NumberFlow 
+                          value={pos.totalReturn} 
+                          format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
+                        />
+                        <span className={styles.percentText}>
+                          (<NumberFlow 
+                            value={pos.totalReturnPercent / 100} 
+                            format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+                          />)
+                        </span>
                       </td>
                     </tr>
                   ))}

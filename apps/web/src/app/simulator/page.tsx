@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { AlertTriangle, LineChart } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { Tabs } from '@/components/ui/vercel-tabs';
 import styles from './Simulator.module.css';
 
 // Hooks
@@ -101,19 +102,15 @@ export default function SimulatorPage() {
           {/* Main Area: Chart & Trading / Portfolio */}
           <main className={styles.mainCol}>
             
-            <div className={styles.tabs}>
-              <button 
-                className={`${styles.tabBtn} ${activeTab === 'Trade' ? styles.activeTab : ''}`} 
-                onClick={() => setActiveTab('Trade')}
-              >
-                Trade
-              </button>
-              <button 
-                className={`${styles.tabBtn} ${activeTab === 'Portfolio' ? styles.activeTab : ''}`} 
-                onClick={() => setActiveTab('Portfolio')}
-              >
-                Portfolio
-              </button>
+            <div style={{ marginBottom: '16px' }}>
+              <Tabs 
+                tabs={[
+                  { id: 'Trade', label: 'Trade' },
+                  { id: 'Portfolio', label: 'Portfolio' }
+                ]}
+                activeTab={activeTab}
+                onTabChange={(id) => setActiveTab(id as 'Trade' | 'Portfolio')}
+              />
             </div>
 
             <div className={styles.card}>
