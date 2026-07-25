@@ -101,12 +101,16 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
         if (data.price) {
           setRealTimeTick(data);
           // Also update the quote state so the UI badge updates
-          setQuote(prev => prev ? { 
-            ...prev, 
-            price: data.price,
-            change: data.price - prev.previousClose,
-            changePercent: ((data.price - prev.previousClose) / prev.previousClose) * 100
-          } : null);
+          setQuote(prev => {
+            if (!prev) return null;
+            const prevClose = prev.price - prev.change;
+            return {
+              ...prev, 
+              price: data.price,
+              change: data.price - prevClose,
+              changePercent: ((data.price - prevClose) / prevClose) * 100
+            };
+          });
         }
       } catch (err) {
         console.error('WS parse error', err);
