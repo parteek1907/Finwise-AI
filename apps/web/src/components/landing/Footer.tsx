@@ -1,6 +1,5 @@
 import React from 'react';
 import { Hexagon } from 'lucide-react';
-import { IconBrandTwitter, IconBrandLinkedin, IconBrandGithub } from '@tabler/icons-react';
 import { Footer as UIFooter } from '@/components/ui/footer';
 
 export function Footer() {

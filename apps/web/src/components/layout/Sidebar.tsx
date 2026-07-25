@@ -13,7 +13,8 @@ import {
   LineChart,
   Award,
   Sparkles,
-  Brain
+  Brain,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -27,6 +28,7 @@ const MENU_ITEMS = [
   { href: '/scam-detector', icon: ShieldCheck, label: 'Scam Detector' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/achievements', icon: Award, label: 'Achievements' },
+  { href: '/settings', icon: SettingsIcon, label: 'Settings' },
 ];
 
 export function Sidebar() {

@@ -1,8 +1,13 @@
-export default function Page() {
+"use client";
+
+import React from 'react';
+import { AppLayout } from '@/components/layout/AppLayout';
+import { SettingsLayout } from '@/components/settings/SettingsLayout';
+
+export default function SettingsPage() {
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-8 text-center animate-in fade-in zoom-in duration-500">
-      <h1 className="text-4xl font-semibold mb-4 capitalize">settings</h1>
-      <p className="text-secondary">Your learning journey continues here.</p>
-    </div>
+    <AppLayout>
+      <SettingsLayout />
+    </AppLayout>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 import React, { useState } from 'react';
 import { Plus } from 'lucide-react';
-import * as AccordionPrimitive from '@radix-ui/react-accordion';
 import styles from './Landing.module.css';
 import { ScrollReveal } from './ScrollAnimations';
 
@@ -15,6 +14,10 @@ export function FAQ() {
     { question: "How does the Scam Detector work?", answer: "You simply paste a suspicious email, text, or investment offer into the detector. Our AI analyzes the linguistics, urgency markers, and known scam patterns, giving you a risk score and breaking down exactly how the scammer is trying to manipulate you." },
     { question: "Can I cancel my subscription at any time?", answer: "Yes, you can cancel your subscription at any time directly from your dashboard settings. You will retain access to Premium features until the end of your current billing cycle." },
   ];
+
+  const toggleItem = (itemKey: string) => {
+    setOpenIndex(prev => prev === itemKey ? null : itemKey);
+  };
 
   return (
     <section className={styles.faqSection} id="faq">
@@ -30,36 +33,45 @@ export function FAQ() {
         </ScrollReveal>
 
         <ScrollReveal delay={100}>
-          <AccordionPrimitive.Root 
-            type="single" 
-            collapsible 
-            className={styles.faqContainer}
-            value={openIndex || undefined}
-            onValueChange={setOpenIndex}
-          >
+          <div className={styles.faqContainer}>
             {faqs.map((faq, index) => {
-              const isItemOpen = openIndex === `item-${index}`;
+              const itemKey = `item-${index}`;
+              const isItemOpen = openIndex === itemKey;
               return (
-                <AccordionPrimitive.Item 
-                  key={index} 
-                  value={`item-${index}`} 
+                <div
+                  key={index}
                   className={`${styles.faqItem} ${isItemOpen ? styles.open : ''}`}
                 >
-                  <AccordionPrimitive.Header className="flex" style={{ width: '100%', margin: 0 }}>
-                    <AccordionPrimitive.Trigger className={styles.faqQuestion}>
+                  <div className="flex" style={{ width: '100%', margin: 0 }}>
+                    <button
+                      className={styles.faqQuestion}
+                      onClick={() => toggleItem(itemKey)}
+                      aria-expanded={isItemOpen}
+                    >
                       {faq.question}
-                      <Plus size={20} className={styles.faqIcon} style={{ transform: isItemOpen ? 'rotate(45deg)' : 'rotate(0deg)', transition: 'transform 200ms ease' }} />
-                    </AccordionPrimitive.Trigger>
-                  </AccordionPrimitive.Header>
-                  <AccordionPrimitive.Content 
-                    className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
+                      <Plus
+                        size={20}
+                        className={styles.faqIcon}
+                        style={{
+                          transform: isItemOpen ? 'rotate(45deg)' : 'rotate(0deg)',
+                          transition: 'transform 200ms ease'
+                        }}
+                      />
+                    </button>
+                  </div>
+                  <div
+                    className="overflow-hidden"
+                    style={{
+                      maxHeight: isItemOpen ? '500px' : '0',
+                      transition: 'max-height 300ms ease',
+                    }}
                   >
                     <div className={styles.faqAnswer}><p>{faq.answer}</p></div>
-                  </AccordionPrimitive.Content>
-                </AccordionPrimitive.Item>
+                  </div>
+                </div>
               );
             })}
-          </AccordionPrimitive.Root>
+          </div>
         </ScrollReveal>
       </div>
     </section>

@@ -5,6 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight } from 'lucide-react';
 import styles from './Mentor.module.css';
 import { useAppStore } from '@/store/useAppStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatSidebar } from '@/components/mentor/ChatSidebar';
 import { RichMessage } from '@/components/mentor/RichMessage';
@@ -104,10 +105,11 @@ export default function MentorPage() {
       apiMessages.push({ role: 'user', content: userMessage });
 
       const apiUrl = '/api';
+      const aiSettings = useSettingsStore.getState().aiMentor;
       const response = await fetch(`${apiUrl}/mentor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, goals }),
+        body: JSON.stringify({ messages: apiMessages, goals, aiSettings }),
       });
 
       if (!response.ok) throw new Error('API failed');
