@@ -1,0 +1,128 @@
+.card {
+  /* Copying from simulator styles */
+  background-color: white;
+  border-radius: 20px;
+  border: 1px solid rgba(0,0,0,0.05);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.03);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.header h2 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 0.25rem 0;
+}
+
+.priceRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.currentPrice {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.02em;
+}
+
+.positiveChange, .negativeChange {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 1rem;
+  font-weight: 500;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+}
+
+.positiveChange {
+  color: #16a34a;
+  background-color: #dcfce7;
+}
+
+.negativeChange {
+  color: #dc2626;
+  background-color: #fee2e2;
+}
+
+.timeframes {
+  display: flex;
+  background-color: #f3f4f6;
+  padding: 0.25rem;
+  border-radius: 8px;
+}
+
+.timeframes button {
+  background: transparent;
+  border: none;
+  padding: 0.4rem 0.8rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timeframes button:hover {
+  color: #111827;
+}
+
+.activeTime {
+  background-color: white !important;
+  color: #111827 !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.chartArea {
+  height: 350px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.chartPlaceholder {
+  flex: 1;
+  border: 1px dashed rgba(0,0,0,0.1);
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+}
+
+.chartPlaceholder p {
+  margin: 1rem 0 0.25rem 0;
+  font-weight: 500;
+}
+
+.dataInfo {
+  font-size: 0.8rem;
+  color: #d1d5db;
+}
+
+.spinner {
+  width: 30px;
+  height: 30px;
+  border: 3px solid #f3f4f6;
+  border-top-color: #303A3C;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

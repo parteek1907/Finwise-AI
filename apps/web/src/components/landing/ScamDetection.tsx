@@ -2,7 +2,7 @@
 import React from 'react';
 import { ShieldAlert, Fingerprint } from 'lucide-react';
 import styles from './Landing.module.css';
-import { Button } from '@/components/ui/Button';
+import { Button } from '@/components/ui/button';
 import { ScrollReveal, ScrollScale } from './ScrollAnimations';
 
 export function ScamDetection() {

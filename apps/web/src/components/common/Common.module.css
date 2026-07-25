@@ -1,0 +1,220 @@
+/* --------------------
+   Skeleton Loaders
+   -------------------- */
+.shimmer {
+  background: #f6f7f8;
+  background-image: linear-gradient(
+    90deg,
+    #f6f7f8 0px,
+    #edeef1 40px,
+    #f6f7f8 80px
+  );
+  background-size: 200vw 100%;
+  animation: shimmer 1.5s infinite linear;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -100vw 0;
+  }
+  100% {
+    background-position: 100vw 0;
+  }
+}
+
+.skeletonGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.skeletonCard {
+  height: 80px;
+  width: 100%;
+  border-radius: 12px;
+}
+
+.skeletonList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.skeletonListItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+}
+
+.skeletonAvatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeletonTextCol {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex: 1;
+}
+
+.skeletonText {
+  height: 12px;
+  border-radius: 4px;
+}
+
+.skeletonChart {
+  width: 100%;
+  height: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.skeletonChartHeader {
+  height: 40px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.skeletonChartBody {
+  flex: 1;
+  border-radius: 12px;
+}
+
+.skeletonTable {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.skeletonTableHeader {
+  height: 30px;
+  width: 100%;
+  margin-bottom: 1rem;
+}
+
+.skeletonTableRow {
+  height: 40px;
+  width: 100%;
+}
+
+/* --------------------
+   Empty States
+   -------------------- */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: white;
+  border-radius: 16px;
+  border: 1px dashed rgba(0,0,0,0.1);
+}
+
+.emptyIcon {
+  width: 64px;
+  height: 64px;
+  background-color: #f9fafb;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #9ca3af;
+  margin-bottom: 1rem;
+}
+
+.emptyTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.emptyDescription {
+  font-size: 0.9rem;
+  color: #6b7280;
+  max-width: 300px;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.emptyAction {
+  background-color: #303A3C;
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.emptyAction:hover {
+  transform: translateY(-2px);
+}
+
+/* --------------------
+   Error Cards
+   -------------------- */
+.errorCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.25rem;
+  background-color: #FEF2F2;
+  border: 1px solid #FCA5A5;
+  border-radius: 12px;
+  width: 100%;
+}
+
+.errorIcon {
+  color: #EF4444;
+  margin-top: 2px;
+}
+
+.errorContent {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.errorTitle {
+  font-weight: 600;
+  color: #991B1B;
+  margin: 0 0 0.25rem 0;
+  font-size: 0.95rem;
+}
+
+.errorMessage {
+  color: #B91C1C;
+  margin: 0 0 1rem 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.retryBtn {
+  background-color: white;
+  color: #991B1B;
+  border: 1px solid #FCA5A5;
+  padding: 0.4rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.retryBtn:hover {
+  background-color: #FEE2E2;
+}

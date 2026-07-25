@@ -1,0 +1,151 @@
+.portfolioView {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.portStats {
+  display: flex;
+  gap: 1rem;
+}
+
+.statBox {
+  flex: 1;
+  background-color: #f8fafc;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.statBox span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statBox h3 {
+  margin: 0;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.tabToggle {
+  display: flex;
+  gap: 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1rem;
+}
+
+.tabToggle button {
+  background: transparent;
+  border: none;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  transition: all 0.2s;
+}
+
+.tabToggle button:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.activeTab {
+  background-color: #0f172a !important;
+  color: white !important;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  padding: 1rem;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+  font-size: 0.95rem;
+  vertical-align: middle;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.table td strong {
+  color: #0f172a;
+  display: block;
+}
+
+.assetName {
+  font-size: 0.8rem;
+  color: #64748b;
+  display: block;
+  margin-top: 0.2rem;
+}
+
+.positiveText {
+  color: #16a34a !important;
+  font-weight: 600;
+}
+
+.negativeText {
+  color: #dc2626 !important;
+  font-weight: 600;
+}
+
+.percentText {
+  font-size: 0.8rem;
+  margin-left: 0.5rem;
+  font-weight: 500;
+}
+
+.emptyContainer {
+  padding: 2rem 0;
+}
+
+.buyBadge, .sellBadge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+}
+
+.buyBadge {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.sellBadge {
+  background-color: #fee2e2;
+  color: #dc2626;
+}

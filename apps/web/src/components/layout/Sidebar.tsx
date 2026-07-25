@@ -12,7 +12,8 @@ import {
   ShieldCheck, 
   LineChart,
   Award,
-  Sparkles
+  Sparkles,
+  Brain
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
@@ -22,6 +23,7 @@ const MENU_ITEMS = [
   { href: '/mentor', icon: MessageSquare, label: 'AI Mentor' },
   { href: '/simulator', icon: LineChart, label: 'Virtual Market' },
   { href: '/myths', icon: Sparkles, label: 'Myth vs Fact' },
+  { href: '/emotion', icon: Brain, label: 'Emotion AI' },
   { href: '/scam-detector', icon: ShieldCheck, label: 'Scam Detector' },
   { href: '/goals', icon: Target, label: 'Goals' },
   { href: '/achievements', icon: Award, label: 'Achievements' },

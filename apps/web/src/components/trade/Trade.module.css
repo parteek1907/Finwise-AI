@@ -1,0 +1,187 @@
+.orderEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+}
+
+.orderType {
+  display: flex;
+  background-color: #f3f4f6;
+  border-radius: 12px;
+  padding: 0.25rem;
+}
+
+.orderType button {
+  flex: 1;
+  padding: 0.75rem;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.activeBuy {
+  background-color: white !important;
+  color: #16a34a !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.activeSell {
+  background-color: white !important;
+  color: #dc2626 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.orderInputs {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.inputGroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.inputGroup label {
+  font-size: 0.95rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.inputGroup input {
+  text-align: right;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid rgba(0,0,0,0.1);
+  border-radius: 8px;
+  width: 120px;
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  background-color: white;
+  transition: border-color 0.2s;
+}
+
+.inputGroup input:focus {
+  outline: none;
+  border-color: rgba(200, 165, 110, 0.5);
+}
+
+.inputGroup input[readOnly] {
+  background-color: transparent;
+  border-color: transparent;
+}
+
+.totalInput {
+  font-size: 1.1rem !important;
+  color: #303A3C !important;
+}
+
+.buyingPower {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(0,0,0,0.05);
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.buyingPower strong {
+  color: #111827;
+}
+
+.reflectionCheck {
+  background-color: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.reflectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #475569;
+  margin-bottom: 0.75rem;
+}
+
+.reflectionHeader h4 {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.reflectionCheck textarea {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 0.75rem;
+  font-family: inherit;
+  font-size: 0.9rem;
+  resize: none;
+  transition: border-color 0.2s;
+}
+
+.reflectionCheck textarea:focus {
+  outline: none;
+  border-color: rgba(200, 165, 110, 0.5);
+}
+
+.submitOrderBtn, .successBtn {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.submitOrderBtn {
+  background-color: #303A3C;
+  color: white;
+}
+
+.submitOrderBtn:hover:not(:disabled) {
+  background-color: #1f2937;
+  transform: translateY(-1px);
+}
+
+.submitOrderBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.successBtn {
+  background-color: #16a34a;
+  color: white;
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+}
+
+.errorMessage {
+  color: #dc2626;
+  font-size: 0.9rem;
+  text-align: center;
+  background-color: #fef2f2;
+  padding: 0.5rem;
+  border-radius: 8px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

@@ -5,8 +5,10 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
 import { Target, Plus, PiggyBank, Home, Car, Plane, Briefcase, TrendingUp } from 'lucide-react';
 import styles from './Goals.module.css';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
+import { DatePicker } from '@/components/ui/date-picker';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const CATEGORY_ICONS = {
   'Emergency': PiggyBank,
@@ -114,63 +116,81 @@ export default function GoalsPage() {
         </motion.div>
 
         {/* Add Modal Overlay */}
-        {showAddModal && (
-          <div className={styles.modalOverlay} onClick={() => setShowAddModal(false)}>
-            <div className={styles.modalContent} onClick={e => e.stopPropagation()}>
-              <h2 style={{ marginBottom: '1.5rem', marginTop: 0 }}>Create New Goal</h2>
-              
-              <div className={styles.formGroup}>
-                <label>Goal Name</label>
-                <input 
-                  type="text" 
-                  className={styles.input}
-                  value={newGoal.name} 
-                  onChange={e => setNewGoal({...newGoal, name: e.target.value})} 
-                  placeholder="e.g. Vacation Fund" 
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Target Amount ($)</label>
-                <input 
-                  type="number" 
-                  className={styles.input}
-                  value={newGoal.target} 
-                  onChange={e => setNewGoal({...newGoal, target: e.target.value})} 
-                  placeholder="e.g. 5000" 
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Target Date</label>
-                <input 
-                  type="date" 
-                  className={styles.input}
-                  value={newGoal.deadline} 
-                  onChange={e => setNewGoal({...newGoal, deadline: e.target.value})} 
-                />
-              </div>
-              <div className={styles.formGroup}>
-                <label>Category</label>
-                <select 
-                  className={styles.select}
-                  value={newGoal.category} 
-                  onChange={e => setNewGoal({...newGoal, category: e.target.value})}
-                >
-                  <option value="Emergency">Emergency</option>
-                  <option value="Housing">Housing</option>
-                  <option value="Vehicle">Vehicle</option>
-                  <option value="Travel">Travel</option>
-                  <option value="Retirement">Retirement</option>
-                  <option value="Other">Other</option>
-                </select>
-              </div>
+        <AnimatePresence>
+          {showAddModal && (
+            <motion.div 
+              className={styles.modalOverlay} 
+              onClick={() => setShowAddModal(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            >
+              <motion.div 
+                className={styles.modalContent} 
+                onClick={e => e.stopPropagation()}
+                initial={{ scale: 0.95, opacity: 0, y: 20 }}
+                animate={{ scale: 1, opacity: 1, y: 0 }}
+                exit={{ scale: 0.95, opacity: 0, y: 20 }}
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              >
+                <div className={styles.modalHeader}>
+                  <h2 className={styles.modalTitle}>New Financial Goal</h2>
+                  <p className={styles.modalSubtitle}>Define your milestone and target date.</p>
+                </div>
+                
+                <div className={styles.formGroup}>
+                  <label>Goal Name</label>
+                  <input 
+                    type="text" 
+                    className={styles.input}
+                    value={newGoal.name} 
+                    onChange={e => setNewGoal({...newGoal, name: e.target.value})} 
+                    placeholder="e.g. Vacation Fund" 
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Target Amount ($)</label>
+                  <input 
+                    type="number" 
+                    className={styles.input}
+                    value={newGoal.target} 
+                    onChange={e => setNewGoal({...newGoal, target: e.target.value})} 
+                    placeholder="e.g. 5000" 
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Target Date</label>
+                  <DatePicker
+                    date={newGoal.deadline ? new Date(newGoal.deadline) : undefined}
+                    onDateChange={(date) => setNewGoal({...newGoal, deadline: date ? date.toISOString() : ''})}
+                    className={`${styles.input} w-full flex gap-2 justify-start items-center text-left font-normal hover:bg-[var(--color-primary-bg)] ${!newGoal.deadline ? '!text-gray-400' : ''}`}
+                  />
+                </div>
+                <div className={styles.formGroup}>
+                  <label>Category</label>
+                  <Select value={newGoal.category} onValueChange={value => setNewGoal({...newGoal, category: value})}>
+                    <SelectTrigger className={`${styles.select} w-full h-[46px] justify-between text-left font-normal hover:bg-[#F3F4F6] ${!newGoal.category ? '!text-gray-400' : ''}`}>
+                      <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Emergency">Emergency</SelectItem>
+                      <SelectItem value="Housing">Housing</SelectItem>
+                      <SelectItem value="Vehicle">Vehicle</SelectItem>
+                      <SelectItem value="Travel">Travel</SelectItem>
+                      <SelectItem value="Retirement">Retirement</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div style={{display: 'flex', gap: '1rem', marginTop: '2rem'}}>
-                <button className={styles.addGoalBtn} style={{flex: 1, justifyContent: 'center', backgroundColor: 'var(--color-surface-bg)', color: 'var(--color-text-secondary)'}} onClick={() => setShowAddModal(false)}>Cancel</button>
-                <button className={styles.addGoalBtn} style={{flex: 1, justifyContent: 'center', backgroundColor: 'var(--color-accent-green)', color: 'black'}} onClick={handleSaveGoal}>Save Goal</button>
-              </div>
-            </div>
-          </div>
-        )}
+                <div style={{display: 'flex', gap: '1rem', marginTop: '2.5rem'}}>
+                  <button className={styles.addGoalBtn} style={{flex: 1, justifyContent: 'center', backgroundColor: '#F3F4F6', color: '#6B7280', boxShadow: 'none'}} onClick={() => setShowAddModal(false)}>Cancel</button>
+                  <button className={styles.addGoalBtn} style={{flex: 1, justifyContent: 'center', backgroundColor: '#19533B', color: 'white', boxShadow: '0 8px 20px rgba(25, 83, 59, 0.25)'}} onClick={handleSaveGoal}>Create Goal</button>
+                </div>
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </AppLayout>
   );

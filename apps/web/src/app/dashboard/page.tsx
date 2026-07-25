@@ -103,6 +103,13 @@ export default function DashboardPage() {
 
   if (!mounted) return null; // Avoid hydration mismatch on initial render
 
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
     <AppLayout>
       <div className={styles.workspace}>
@@ -114,7 +121,7 @@ export default function DashboardPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.headerLeft}>
-            <h1 className={styles.title}>Good morning, {user.name.split(' ')[0]}</h1>
+            <h1 className={styles.title}>{getGreeting()}, {user.name.split(' ')[0]}</h1>
             <p className={styles.subtitle}>Welcome back. Let's continue building your financial foundation.</p>
           </div>
           <div className={styles.headerActions}>

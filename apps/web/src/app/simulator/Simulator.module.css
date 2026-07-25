@@ -310,7 +310,10 @@
   font-size: 0.85rem;
 }
 
-/* Sidebar */
+.searchSection {
+  margin-bottom: 1.5rem;
+}
+
 .watchlistHeader {
   display: flex;
   justify-content: space-between;
