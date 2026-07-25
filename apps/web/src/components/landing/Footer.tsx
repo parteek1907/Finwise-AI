@@ -49,7 +49,7 @@ export function Footer() {
             </p>
             
             {/* Premium Underline Email Input */}
-            <form className="relative w-full max-w-sm mt-4 flex items-center border-b pb-3 mx-auto" style={{ borderColor: 'rgba(221, 215, 201, 0.3)' }} onSubmit={(e) => e.preventDefault()}>
+            <form className="relative w-full max-w-sm mt-4 flex items-center border-b pb-3 mx-auto" style={{ borderColor: 'rgba(221, 215, 201, 0.3)' }}>
               <input
                 type="email"
                 placeholder="Enter your email address"
@@ -57,7 +57,7 @@ export function Footer() {
                 style={{ color: '#DDD7C9' }}
               />
               <button
-                type="submit"
+                type="button"
                 className="absolute right-0 top-1/2 -translate-y-1/2 flex items-center justify-center transition-transform hover:scale-110"
                 style={{ color: '#DDD7C9' }}
               >
