@@ -28,7 +28,12 @@ export default function SimulatorPage() {
     <AppLayout>
       <div className={styles.workspace}>
         
-        <header className={styles.header}>
+        <motion.header 
+          className={styles.header}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
           <div className={styles.headerTop}>
             <div>
               <h1 className={styles.title}>Virtual Market</h1>
@@ -40,9 +45,14 @@ export default function SimulatorPage() {
               <h2 className={styles.balance}>$10,000.00</h2>
             </div>
           </div>
-        </header>
+        </motion.header>
 
-        <div className={styles.layout}>
+        <motion.div 
+          className={styles.layout}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
           
           {/* Main Area: Chart & Trading */}
           <main className={styles.mainCol}>
@@ -194,7 +204,7 @@ export default function SimulatorPage() {
               <p>This is a simulated environment. Real markets involve significant risk. Always stick to your strategy and avoid emotional trading.</p>
             </div>
           </aside>
-        </div>
+        </motion.div>
       </div>
     </AppLayout>
   );

@@ -1,56 +1,39 @@
 "use client";
 
-import React, { useState } from 'react';
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { ChevronDown } from 'lucide-react';
+import React from 'react';
+import { Search, Mail, Bell, Command } from 'lucide-react';
 import styles from './TopRightProfile.module.css';
-import { useAppStore } from '@/store/useAppStore';
 
 export function TopRightProfile() {
-  const pathname = usePathname();
-  const user = useAppStore(state => state.user);
-  const [showProfile, setShowProfile] = useState(false);
-
-  if (pathname !== '/dashboard') {
-    return null;
-  }
-
   return (
-    <div className={styles.profileContainer}>
-      <div className={styles.profileDropdown} onClick={() => setShowProfile(!showProfile)}>
-        <div className={styles.avatar}>
-          <img src={user.avatar} alt={user.name} />
+    <div className={styles.topbar}>
+      <div className={styles.searchContainer}>
+        <Search size={18} className={styles.searchIcon} />
+        <input type="text" placeholder="Search task" className={styles.searchInput} />
+        <div className={styles.shortcut}>
+          <Command size={12} />
+          <span>F</span>
         </div>
-        <div className={styles.profileInfo}>
-          <span className={styles.profileName}>{user.name}</span>
-          <span className={styles.profileEmail}>{user.archetype}</span>
-        </div>
-        <ChevronDown size={14} className={styles.dropdownIcon} />
       </div>
-
-      {/* Profile Popover */}
-      {showProfile && (
-        <div className={styles.popover}>
-          <div className={styles.popoverHeader}>
-            <div className={styles.popoverStat}>
-              <span>XP</span>
-              <strong>{user.xp}</strong>
-            </div>
-            <div className={styles.popoverStat}>
-              <span>Streak</span>
-              <strong>{user.streak}🔥</strong>
-            </div>
+      
+      <div className={styles.actions}>
+        <button className={styles.iconButton}>
+          <Mail size={20} />
+        </button>
+        <button className={styles.iconButton}>
+          <Bell size={20} />
+        </button>
+        
+        <div className={styles.profileSection}>
+          <div className={styles.avatar}>
+            <img src="https://i.pravatar.cc/150?img=11" alt="Profile" />
           </div>
-          <div className={styles.popoverLinks}>
-            <Link href="/profile">My Profile</Link>
-            <Link href="/achievements">Achievements</Link>
-            <Link href="/settings">Settings</Link>
-            <hr className={styles.divider} />
-            <button className={styles.logoutBtn}>Sign Out</button>
+          <div className={styles.userInfo}>
+            <span className={styles.userName}>Totok Michael</span>
+            <span className={styles.userEmail}>tmichael20@mail.com</span>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }

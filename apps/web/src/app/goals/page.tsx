@@ -17,15 +17,7 @@ const CATEGORY_ICONS = {
   'Other': Briefcase
 };
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
-};
+// Removed old variants to use dashboard's explicit stagger pattern
 
 export default function GoalsPage() {
   const router = useRouter();
@@ -56,7 +48,12 @@ export default function GoalsPage() {
     <AppLayout>
       <div className={styles.workspace}>
         {/* Header Section */}
-        <header className={styles.header}>
+        <motion.header 
+          className={styles.header}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
           <div className={styles.headerTop}>
             <div>
               <h1 className={styles.title}>Financial Goals</h1>
@@ -67,10 +64,15 @@ export default function GoalsPage() {
               <Plus size={18} /> New Goal
             </button>
           </div>
-        </header>
+        </motion.header>
 
         {/* Goals Grid */}
-        <motion.div className={styles.grid} variants={containerVariants} initial="hidden" animate="show">
+        <motion.div 
+          className={styles.grid}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
           {goals.map(goal => {
             const Icon = CATEGORY_ICONS[goal.category as keyof typeof CATEGORY_ICONS] || Target;
             const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
@@ -78,8 +80,10 @@ export default function GoalsPage() {
             return (
               <motion.div 
                 key={goal.id} 
-                variants={itemVariants} 
                 className={styles.goalCard}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.1 + (goals.indexOf(goal) * 0.05), ease: [0.16, 1, 0.3, 1] }}
                 onClick={() => router.push(`/goals/${goal.id}`)}
               >
                 <div className={styles.cardHeader}>

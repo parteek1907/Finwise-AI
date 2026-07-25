@@ -20,7 +20,7 @@ export function ScamDetection() {
           <div className={styles.scamDemoContainer}>
             <div className={styles.scamInputPanel}>
               <textarea className={styles.scamTextarea} readOnly value="URGENT: Your account has been suspended due to suspicious activity. Click here immediately to verify your identity and restore access, or your funds will be permanently frozen. Do not share this link with anyone." />
-              <Button variant="primary" style={{width: '100%'}}>Analyze Message</Button>
+              <Button variant="default" style={{width: '100%'}}>Analyze Message</Button>
             </div>
             <div className={styles.scamResultPanel}>
               <div className={styles.scamResultHeader}>

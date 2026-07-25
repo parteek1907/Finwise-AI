@@ -1,24 +1,25 @@
 @import "tailwindcss";
 
 :root {
-  /* ═══ Crypto.in-Inspired Palette ═══ */
-  --color-bg-primary: #DDD7C9;
-  --color-bg-dark: #303A3C;
-  --color-bg-cream: #E8E0CC;
-  --color-card-bg: #D4CCB7;
+  /* ═══ FinWise Sleek SaaS Palette ═══ */
+  --color-bg-primary: #F3F4F6;
+  --color-bg-dark: #19533B;
+  --color-bg-cream: #F9FAFB;
+  --color-card-bg: #FFFFFF;
 
-  --color-text-primary: #303A3C;
-  --color-text-secondary: #5A6460;
-  --color-text-inverse: #DDD7C9;
-  --color-text-muted: #7A8178;
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-inverse: #FFFFFF;
+  --color-text-muted: #9CA3AF;
 
-  --color-border: #C4B896;
-  --color-border-light: rgba(48,58,60,0.10);
+  --color-border: #E5E7EB;
+  --color-border-light: rgba(0,0,0,0.05);
 
-  --color-accent-primary: #303A3C;
-  --color-accent-secondary: #C4B896;
-  --color-accent-highlight: #5A6460;
-  --color-error: #C65353;
+  --color-accent-primary: #19533B;
+  --color-accent-secondary: #29A367;
+  --color-accent-highlight: #A7D3BC;
+  --color-error: #EF4444;
+  --color-accent-green: #29A367;
 
   /* Typography */
   --font-sans: var(--font-inter), system-ui, sans-serif;
@@ -27,13 +28,13 @@
 
   /* Radii */
   --radius-button: 100px;
-  --radius-card: 8px;
-  --radius-panel: 16px;
+  --radius-card: 20px;
+  --radius-panel: 24px;
 
   /* Shadows */
-  --shadow-soft: 0 4px 16px rgba(48,58,60,.06);
-  --shadow-card: 0 2px 8px rgba(48,58,60,.05);
-  --shadow-elevated: 0 8px 32px rgba(48,58,60,.10);
+  --shadow-soft: 0 4px 12px rgba(0,0,0,0.02);
+  --shadow-card: 0 8px 24px rgba(0,0,0,0.04);
+  --shadow-elevated: 0 12px 32px rgba(0,0,0,0.08);
 
   /* Easing */
   --ease-luxury: cubic-bezier(0.16, 1, 0.3, 1);
@@ -41,7 +42,7 @@
 
   /* Legacy tokens */
   --color-primary-bg: var(--color-bg-primary);
-  --color-surface-bg: var(--color-card-bg);
+  --color-surface-bg: #F9FAFB;
 
   /* Shadcn Tailwind V4 Integration */
   --background: var(--color-bg-primary);
@@ -52,11 +53,11 @@
   --popover-foreground: var(--color-text-primary);
   --primary: var(--color-bg-dark);
   --primary-foreground: var(--color-text-inverse);
-  --secondary: var(--color-bg-cream);
+  --secondary: var(--color-surface-bg);
   --secondary-foreground: var(--color-text-primary);
-  --muted: var(--color-bg-cream);
+  --muted: var(--color-surface-bg);
   --muted-foreground: var(--color-text-secondary);
-  --accent: var(--color-bg-cream);
+  --accent: var(--color-surface-bg);
   --accent-foreground: var(--color-text-primary);
   --destructive: var(--color-error);
   --destructive-foreground: #ffffff;
@@ -64,6 +65,13 @@
   --input: var(--color-border-light);
   --ring: var(--color-accent-primary);
   --radius: 8px;
+
+  /* Chart Colors */
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
 }
 
 @theme inline {
@@ -90,12 +98,12 @@
 
 /* ─── Dark Section Theme ─── */
 .dark-section {
-  --color-bg-primary: var(--color-bg-dark);
-  --color-card-bg: #3A4648;
-  --color-text-primary: #DDD7C9;
-  --color-text-secondary: #A8AD9E;
-  --color-border: rgba(221,215,201,0.15);
-  --color-border-light: rgba(221,215,201,0.06);
+  --color-bg-primary: #111827;
+  --color-card-bg: #1F2937;
+  --color-text-primary: #F9FAFB;
+  --color-text-secondary: #9CA3AF;
+  --color-border: #374151;
+  --color-border-light: rgba(255,255,255,0.05);
   --shadow-soft: 0 4px 16px rgba(0,0,0,.15);
   --shadow-card: 0 2px 8px rgba(0,0,0,.12);
 
@@ -229,4 +237,12 @@ button {
   .feature-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+.dark {
+  --chart-1: 220 70% 50%;
+  --chart-2: 160 60% 45%;
+  --chart-3: 30 80% 55%;
+  --chart-4: 280 65% 60%;
+  --chart-5: 340 75% 55%;
 }

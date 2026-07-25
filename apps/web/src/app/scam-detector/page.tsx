@@ -102,7 +102,12 @@ export default function ScamDetectorPage() {
   return (
     <AppLayout>
       <div className={styles.workspace}>
-        <header className={styles.header}>
+        <motion.header 
+          className={styles.header}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
           <div className={styles.titleWrap}>
             <div className={styles.iconBox}><ShieldCheck size={28} color="#22c55e" /></div>
             <div>
@@ -110,9 +115,14 @@ export default function ScamDetectorPage() {
               <p className={styles.subtitle}>Paste a suspicious message, email, or investment offer to check its safety.</p>
             </div>
           </div>
-        </header>
+        </motion.header>
 
-        <div className={styles.layout}>
+        <motion.div 
+          className={styles.layout}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
           {/* Left: Input Area */}
           <div className={styles.inputCol}>
             <div className={styles.card}>
@@ -260,7 +270,7 @@ export default function ScamDetectorPage() {
               )}
             </AnimatePresence>
           </div>
-        </div>
+        </motion.div>
 
         {/* Saved Reports Section */}
         {savedReports.length > 0 && (

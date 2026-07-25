@@ -11,15 +11,7 @@ import { Tabs } from '@/components/ui/vercel-tabs';
 
 const CATEGORIES = ['All', 'Behavior', 'Saving', 'Investing', 'Credit', 'Taxes', 'Retirement'];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
-};
+// Removed old variants to use dashboard's explicit stagger pattern
 
 export default function LearnPage() {
   const router = useRouter();
@@ -41,7 +33,12 @@ export default function LearnPage() {
     <AppLayout>
       <div className={styles.workspace}>
         {/* Header Section */}
-        <header className={styles.header}>
+        <motion.header 
+          className={styles.header}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+        >
           <div className={styles.headerTop}>
             <div>
               <h1 className={styles.title}>Financial Education Library</h1>
@@ -84,12 +81,23 @@ export default function LearnPage() {
               </button>
             </div>
           </div>
-        </header>
+        </motion.header>
 
         {/* Lessons Grid */}
-        <motion.div className={styles.grid} variants={containerVariants} initial="hidden" animate="show">
-          {filteredLessons.map(lesson => (
-            <motion.div key={lesson.id} variants={itemVariants} className={styles.lessonCard}>
+        <motion.div 
+          className={styles.grid}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+        >
+          {filteredLessons.map((lesson, idx) => (
+            <motion.div 
+              key={lesson.id} 
+              className={styles.lessonCard}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 + (idx * 0.05), ease: [0.16, 1, 0.3, 1] }}
+            >
               <div className={styles.cardThumbnail}>
                 <div className={styles.thumbnailOverlay}>
                   {lesson.status === 'Completed' && <CheckCircle2 className={styles.statusIcon} color="#22c55e" />}

@@ -127,7 +127,7 @@
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background-color: var(--color-accent-gold);
+  background-color: var(--color-accent-highlight);
   color: #1a1a1a;
   display: flex;
   align-items: center;
@@ -217,7 +217,7 @@
 }
 
 .inputWrapper:focus-within {
-  border-color: var(--color-accent-gold);
+  border-color: var(--color-accent-green);
 }
 
 .inputWrapper textarea {
@@ -354,7 +354,7 @@
 }
 
 .promptBtn:hover {
-  border-color: var(--color-accent-gold);
+  border-color: var(--color-accent-green);
   color: var(--color-text-primary);
   background-color: var(--color-primary-bg);
 }
