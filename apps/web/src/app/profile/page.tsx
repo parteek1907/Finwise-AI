@@ -1,13 +1,30 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { User as UserIcon, Shield, Bell, Settings as SettingsIcon, LogOut, FileText, Smartphone } from 'lucide-react';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged, User } from 'firebase/auth';
 import styles from './Profile.module.css';
 import { useAppStore } from '@/store/useAppStore';
 
 export default function ProfilePage() {
-  const user = useAppStore(state => state.user);
+  const storeUser = useAppStore(state => state.user);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setFirebaseUser(currentUser);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const getAvatarUrl = () => {
+    if (firebaseUser?.photoURL && !imgError) return firebaseUser.photoURL;
+    const name = firebaseUser?.displayName || storeUser.name || firebaseUser?.email || 'User';
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=303A3C&color=fff`;
+  };
 
   return (
     <AppLayout>
@@ -19,15 +36,19 @@ export default function ProfilePage() {
             <div className={styles.profileCard}>
               <div className={styles.avatarSection}>
                 <div className={styles.avatarWrapper}>
-                  <img src={user.avatar} alt={user.name} />
+                  <img 
+                    src={getAvatarUrl()} 
+                    alt={firebaseUser?.displayName || storeUser.name} 
+                    onError={() => setImgError(true)}
+                  />
                   <button className={styles.editAvatarBtn}>Edit</button>
                 </div>
                 <div className={styles.userInfo}>
-                  <h1>{user.name}</h1>
-                  <span className={styles.userEmail}>{user.email}</span>
+                  <h1>{firebaseUser?.displayName || storeUser.name}</h1>
+                  <span className={styles.userEmail}>{firebaseUser?.email || storeUser.email}</span>
                   <div className={styles.archetypeBadge}>
                     <Shield size={14} />
-                    Archetype: {user.archetype}
+                    Archetype: {storeUser.archetype}
                   </div>
                 </div>
               </div>
@@ -37,11 +58,11 @@ export default function ProfilePage() {
                 <div className={styles.formGrid}>
                   <div className={styles.inputGroup}>
                     <label>Full Name</label>
-                    <input type="text" defaultValue={user.name} />
+                    <input type="text" defaultValue={firebaseUser?.displayName || storeUser.name} />
                   </div>
                   <div className={styles.inputGroup}>
                     <label>Email Address</label>
-                    <input type="email" defaultValue={user.email} />
+                    <input type="email" defaultValue={firebaseUser?.email || storeUser.email} />
                   </div>
                   <div className={styles.inputGroup}>
                     <label>Phone Number</label>
