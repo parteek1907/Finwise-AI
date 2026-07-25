@@ -320,10 +320,10 @@ export const TradingChart: React.FC<TradingChartProps> = ({
     // Instead of updating the same candle, we append a new one
     // We increment time by 1 day (86400 seconds) so it plots a new candle on the chart
     const newCandle = {
-      time: (live.time as number) + 86400,
-      open: live.close,
-      high: Math.max(live.close, newPrice),
-      low: Math.min(live.close, newPrice),
+      time: ((live.time as number) + 86400) as Time,
+      open: Number(live.close),
+      high: Math.max(Number(live.close), newPrice),
+      low: Math.min(Number(live.close), newPrice),
       close: newPrice,
       volume: realTimeTick.volume || 100
     };
