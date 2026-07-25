@@ -109,7 +109,7 @@ export default function MentorPage() {
       const response = await fetch(`${apiUrl}/mentor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: apiMessages, goals, aiSettings }),
+        body: JSON.stringify({ messages: apiMessages, goals, aiSettings, userName: user.name }),
       });
 
       if (!response.ok) throw new Error('API failed');

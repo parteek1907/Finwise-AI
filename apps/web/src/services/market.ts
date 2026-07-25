@@ -7,7 +7,17 @@ import { Timeframe } from '../constants/symbols';
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export const getQuote = async (symbol: string): Promise<Quote> => {
-  await delay(400); // mock network
+  try {
+    const response = await fetch(`http://localhost:8000/api/market/quote/${symbol}`);
+    if (response.ok) {
+      return await response.json();
+    }
+  } catch (error) {
+    console.warn("Backend not available for quote, falling back to mock.");
+  }
+  
+  // Fallback to mock if backend fails (e.g., missing API key)
+  await delay(400); 
   const quote = MOCK_QUOTES[symbol.toUpperCase()];
   if (!quote) throw new Error(`Symbol ${symbol} not found`);
   return quote;
@@ -22,6 +32,16 @@ export const getMarketMovers = async (): Promise<MarketMover[]> => {
 };
 
 export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<Candle[]> => {
+  try {
+    const response = await fetch(`http://localhost:8000/api/market/candles/${symbol}?timeframe=${timeframe}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (data && data.length > 0) return data;
+    }
+  } catch (error) {
+    console.warn("Backend not available for candles, falling back to mock.");
+  }
+
   await delay(500);
   const upperSym = symbol.toUpperCase();
   const allCandles = MOCK_CANDLES[upperSym];

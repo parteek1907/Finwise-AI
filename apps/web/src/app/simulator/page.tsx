@@ -39,7 +39,8 @@ export default function SimulatorPage() {
     marketStatus,
     loading: chartLoading,
     error: chartError,
-    refresh
+    refresh,
+    realTimeTick
   } = useChart(selectedSymbol, timeframe);
 
   // Generate markers from trades for the current symbol
@@ -123,6 +124,7 @@ export default function SimulatorPage() {
                     error={chartError}
                     onTimeframeChange={setTimeframe}
                     markers={markers}
+                    realTimeTick={realTimeTick}
                   />
                   
                   {showInsight && (

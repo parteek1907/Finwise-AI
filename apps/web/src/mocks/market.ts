@@ -44,30 +44,31 @@ export const MOCK_MOVERS: MarketMover[] = [
 
 // Helper to generate a realistic looking candlestick series
 export const generateMockCandles = (basePrice: number, points: number = 30): Candle[] => {
-  let currentPrice = basePrice * 0.8; // start 20% lower
   const data: Candle[] = [];
+  let currentClose = basePrice;
   
-  for (let i = points; i >= 0; i--) {
+  // We want the last candle (today) to have `close = basePrice`
+  for (let i = 0; i <= points; i++) {
     const date = new Date();
     date.setDate(date.getDate() - i);
-    date.setUTCHours(0, 0, 0, 0); // Need consistent time for daily candles
+    date.setUTCHours(0, 0, 0, 0);
     
-    const volatility = currentPrice * 0.02;
-    const open = currentPrice;
-    const close = currentPrice + (Math.random() * volatility * 2 - volatility);
-    const high = Math.max(open, close) + (Math.random() * volatility);
-    const low = Math.min(open, close) - (Math.random() * volatility);
+    const volatility = currentClose * 0.02;
+    const open = currentClose + (Math.random() * volatility * 2 - volatility);
+    const high = Math.max(open, currentClose) + (Math.random() * volatility);
+    const low = Math.min(open, currentClose) - (Math.random() * volatility);
     
     data.push({
-      time: Math.floor(date.getTime() / 1000), // lightweight-charts expects unix timestamp in seconds for daily
+      time: Math.floor(date.getTime() / 1000),
       open,
       high,
       low,
-      close,
+      close: currentClose,
       volume: Math.floor(Math.random() * 1000000)
     });
     
-    currentPrice = close;
+    // The previous day's close is approximately today's open
+    currentClose = open;
   }
   
   // sort by time ascending

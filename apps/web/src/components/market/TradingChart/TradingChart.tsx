@@ -61,6 +61,7 @@ interface TradingChartProps {
   onTimeframeChange: (tf: any) => void;
   markers?: ChartMarker[];
   orderLines?: OrderLine[];
+  realTimeTick?: { price: number; time: number; volume: number } | null;
 }
 
 export const TradingChart: React.FC<TradingChartProps> = ({ 
@@ -73,7 +74,8 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   error,
   onTimeframeChange,
   markers = [], 
-  orderLines = [] 
+  orderLines = [],
+  realTimeTick
 }) => {
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -84,6 +86,9 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   // Indicator series refs
   const smaSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
   const emaSeriesRef = useRef<ISeriesApi<"Line"> | null>(null);
+
+  // Live Candle Ref
+  const liveCandleRef = useRef<any>(null);
 
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
@@ -149,6 +154,13 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       close: c.close,
     }));
     candleSeries.setData(formattedCandles);
+    
+    if (formattedCandles.length > 0) {
+      liveCandleRef.current = { 
+        ...formattedCandles[formattedCandles.length - 1],
+        volume: candles[candles.length - 1].volume || 0 
+      };
+    }
 
     // 3. Add Volume Series (Histogram)
     const volumeInd = indicators.find(i => i.id === 'vol');
@@ -297,6 +309,36 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       chart.remove();
     };
   }, [candles, indicators, loading]);
+
+  // Handle Real-Time Tick Update
+  useEffect(() => {
+    if (!realTimeTick || !candleSeriesRef.current || !liveCandleRef.current) return;
+    
+    const live = liveCandleRef.current;
+    const newPrice = realTimeTick.price;
+    
+    // Instead of updating the same candle, we append a new one
+    // We increment time by 1 day (86400 seconds) so it plots a new candle on the chart
+    const newCandle = {
+      time: ((live.time as number) + 86400) as Time,
+      open: Number(live.close),
+      high: Math.max(Number(live.close), newPrice),
+      low: Math.min(Number(live.close), newPrice),
+      close: newPrice,
+      volume: realTimeTick.volume || 100
+    };
+    
+    candleSeriesRef.current.update(newCandle);
+    liveCandleRef.current = newCandle;
+    
+    if (volumeSeriesRef.current) {
+      volumeSeriesRef.current.update({
+        time: newCandle.time,
+        value: newCandle.volume,
+        color: newPrice >= newCandle.open ? 'rgba(22, 163, 74, 0.5)' : 'rgba(220, 38, 38, 0.5)'
+      });
+    }
+  }, [realTimeTick]);
 
   if (!asset) {
     return (

@@ -10,20 +10,28 @@ export const useMarketQuote = (symbol: string) => {
 
   useEffect(() => {
     let mounted = true;
-    const fetchQuote = async () => {
+    const fetchQuote = async (isBackground = false) => {
       try {
-        setLoading(true);
+        if (!isBackground) setLoading(true);
         setError(null);
         const data = await getMarketQuote(symbol);
         if (mounted) setQuote(data);
       } catch (err: any) {
-        if (mounted) setError(err.message || 'Failed to fetch quote');
+        if (mounted && !isBackground) setError(err.message || 'Failed to fetch quote');
       } finally {
-        if (mounted) setLoading(false);
+        if (mounted && !isBackground) setLoading(false);
       }
     };
     
-    if (symbol) fetchQuote();
+    if (symbol) {
+      fetchQuote();
+      // Poll every 10 seconds for real-time updates
+      const interval = setInterval(() => fetchQuote(true), 10000);
+      return () => {
+        mounted = false;
+        clearInterval(interval);
+      };
+    }
     return () => { mounted = false; };
   }, [symbol]);
 
