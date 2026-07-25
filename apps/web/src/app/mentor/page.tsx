@@ -42,7 +42,7 @@ export default function MentorPage() {
     try {
       if (isFirstMessage) {
         // Generate title in background
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+        const apiUrl = (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) ? process.env.NEXT_PUBLIC_API_URL : '/api';
         fetch(`${apiUrl}/chat-title`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -61,7 +61,7 @@ export default function MentorPage() {
       }));
       apiMessages.push({ role: 'user', content: userMessage });
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) ? process.env.NEXT_PUBLIC_API_URL : '/api';
       const response = await fetch(`${apiUrl}/mentor`, {
         method: 'POST',
         headers: {

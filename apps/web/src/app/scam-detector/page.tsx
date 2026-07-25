@@ -72,7 +72,7 @@ export default function ScamDetectorPage() {
     setResult(null);
     
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+      const apiUrl = (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) ? process.env.NEXT_PUBLIC_API_URL : '/api';
       const res = await fetch(`${apiUrl}/scam-detect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -149,6 +149,20 @@ export default function ScamDetectorPage() {
                 <div 
                   className={styles.uploadZone} 
                   onClick={() => fileInputRef.current?.click()}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    const file = e.dataTransfer.files?.[0];
+                    if (file && file.type.startsWith('image/')) {
+                      const reader = new FileReader();
+                      reader.onloadend = () => {
+                        const base64String = (reader.result as string).split(',')[1];
+                        setImageBase64(base64String);
+                        setActiveTab('image');
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                   style={{ position: 'relative' }}
                 >
                   <input 
