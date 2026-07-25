@@ -1,10 +1,16 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
 import { Sidebar } from './Sidebar';
 import { TopRightProfile } from './TopRightProfile';
 import styles from './AppLayout.module.css';
+import { auth } from '@/lib/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { useAppStore } from '@/store/useAppStore';
+import { useSettingsStore } from '@/store/useSettingsStore';
+
+import { MotionConfig } from 'framer-motion';
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -12,6 +18,44 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
+  const updateUser = useAppStore(state => state.updateUser);
+  const updateProfile = useSettingsStore(state => state.updateProfile);
+  const reduceAnimations = useSettingsStore(state => state.appearance.reduceAnimations);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-reduce-animations', String(reduceAnimations));
+  }, [reduceAnimations]);
+
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+    const t1 = setTimeout(() => window.dispatchEvent(new Event('resize')), 100);
+    const t2 = setTimeout(() => window.dispatchEvent(new Event('resize')), 300);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isSidebarCollapsed]);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        const rawName = firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : '');
+        const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : '';
+        const userEmail = firebaseUser.email || '';
+        const userAvatar = firebaseUser.photoURL || '';
+
+        updateUser({ name: formattedName || 'Adi' });
+        updateProfile({
+          name: formattedName || 'Adi',
+          email: userEmail,
+          avatar: userAvatar,
+        });
+      }
+    });
+
+    return () => unsubscribe();
+  }, [updateUser, updateProfile]);
   
   // Show profile pill only on dashboard
   const showProfile = pathname === '/dashboard';
@@ -20,17 +64,22 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMentor = pathname === '/mentor';
 
   return (
-    <div className={styles.appContainer}>
-      <Sidebar />
-      <div className={styles.mainWrapper}>
-        {showProfile && <TopRightProfile />}
-        <main 
-          className={styles.mainWorkspace}
-          style={isMentor ? { paddingBottom: 0 } : undefined}
-        >
-          {children}
-        </main>
+    <MotionConfig reducedMotion={reduceAnimations ? "always" : "never"}>
+      <div className={`${styles.appContainer} ${isSidebarCollapsed ? styles.appContainerCollapsed : ''}`}>
+        <Sidebar 
+          isCollapsed={isSidebarCollapsed} 
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+        />
+        <div className={styles.mainWrapper}>
+          {showProfile && <TopRightProfile />}
+          <main 
+            className={styles.mainWorkspace}
+            style={isMentor ? { paddingBottom: 0 } : undefined}
+          >
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </MotionConfig>
   );
 }

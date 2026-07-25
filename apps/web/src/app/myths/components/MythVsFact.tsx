@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, ShieldCheck, Gauge, Sparkles, AlertCircle } from 'lucide-react';
 import { MythCard, MythData } from './MythCard';
 import styles from './MythVsFact.module.css';
 
@@ -14,7 +14,8 @@ const MYTHS_DATA: MythData[] = [
     myth: 'Trading is the fastest way to become rich.',
     fact: 'Consistent investing usually outperforms emotional short-term trading.',
     insight: 'Day trading requires intense focus and has high failure rates. Long-term investing relies on the power of compounding.',
-    insightPercent: '82%'
+    insightPercent: '82%',
+    confidence: 98
   },
   {
     id: '2',
@@ -23,7 +24,8 @@ const MYTHS_DATA: MythData[] = [
     myth: 'You need $1,000 to start investing.',
     fact: 'You can begin investing with as little as $10 through fractional shares.',
     insight: 'Small investments made consistently outperform waiting for the "perfect" amount to start.',
-    insightPercent: '76%'
+    insightPercent: '76%',
+    confidence: 96
   },
   {
     id: '3',
@@ -32,7 +34,8 @@ const MYTHS_DATA: MythData[] = [
     myth: 'The stock market is essentially gambling.',
     fact: 'Investing is ownership of businesses. Speculation is gambling.',
     insight: 'When you buy a stock, you own a piece of a company. When you gamble, the odds are mathematically against you.',
-    insightPercent: '65%'
+    insightPercent: '65%',
+    confidence: 94
   },
   {
     id: '4',
@@ -41,7 +44,8 @@ const MYTHS_DATA: MythData[] = [
     myth: 'Crypto is guaranteed to make you rich.',
     fact: 'Crypto is highly volatile and speculative.',
     insight: 'While some have made high returns, crypto should only be a small part of a highly diversified portfolio.',
-    insightPercent: '88%'
+    insightPercent: '88%',
+    confidence: 99
   },
   {
     id: '5',
@@ -50,7 +54,8 @@ const MYTHS_DATA: MythData[] = [
     myth: 'Higher returns always mean better investments.',
     fact: 'Higher returns usually indicate higher underlying risk.',
     insight: 'Risk and reward are directly correlated. An unusually high return often means you could lose your principal.',
-    insightPercent: '54%'
+    insightPercent: '54%',
+    confidence: 95
   }
 ];
 
@@ -163,40 +168,59 @@ export function MythVsFact() {
 
       <div className={styles.contentWrapper}>
         <div className={styles.header}>
-          <h2 className={styles.title}>Not everything you hear about money is true.</h2>
-          <p className={styles.subtitle}>Separate myths from reality before you invest.</p>
+          <div className={styles.titleWrap}>
+            <div className={styles.iconBox}>
+              <Gauge size={28} color="#19533B" />
+            </div>
+            <div>
+              <h1 className={styles.title}>Myth vs Fact</h1>
+              <p className={styles.subtitle}>Debunk common money misconceptions with evidence-based insights.</p>
+            </div>
+          </div>
         </div>
 
         <div className={styles.mainArea}>
           
           {/* Left Panel */}
           <div className={styles.sidePanel}>
-            <div className={styles.sidePanelItem}>
-              <span className={styles.sidePanelValue}>{MYTHS_DATA[currentIndex].insightPercent}</span>
-              <span className={styles.sidePanelLabel}>Users believed this myth.</span>
+            {/* Belief Percentage Highlight Card */}
+            <div className={styles.highlightCard}>
+              <span className={styles.percentBadge}>{MYTHS_DATA[currentIndex].insightPercent}</span>
+              <p className={styles.highlightLabel}>of users believed this myth before learning the facts.</p>
+            </div>
+
+            {/* Truth Confidence Gauge Box */}
+            <div className={styles.confidenceCard}>
+              <div className={styles.confidenceHeader}>
+                <Gauge size={16} color="#29A367" />
+                <span>Truth Confidence</span>
+              </div>
+              <div className={styles.gaugeMeterWrap}>
+                <div className={styles.gaugeArc}>
+                  <div 
+                    className={styles.gaugeNeedle} 
+                    style={{ transform: `rotate(${(MYTHS_DATA[currentIndex].confidence / 100) * 180 - 90}deg)` }} 
+                  />
+                </div>
+                <span className={styles.confidenceValue}>{MYTHS_DATA[currentIndex].confidence}%</span>
+              </div>
+              <p className={styles.confidenceSub}>Factual accuracy verified by AI & market data.</p>
             </div>
           </div>
 
           {/* Center Card Stack */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', maxWidth: '480px' }}>
             <div className={styles.cardArea}>
-              <AnimatePresence mode="popLayout" custom={direction}>
-                {MYTHS_DATA.map((myth, index) => {
-                  if (index < currentIndex) return null;
-                  if (index > currentIndex + 2) return null;
-
-                  return (
-                    <MythCard 
-                      key={myth.id}
-                      data={myth}
-                      isActive={index === currentIndex}
-                      index={index - currentIndex}
-                      onNext={handleNext}
-                      onPrev={handlePrev}
-                      direction={direction}
-                    />
-                  );
-                })}
+              <AnimatePresence mode="wait" custom={direction}>
+                <MythCard 
+                  key={MYTHS_DATA[currentIndex].id}
+                  data={MYTHS_DATA[currentIndex]}
+                  isActive={true}
+                  index={0}
+                  onNext={handleNext}
+                  onPrev={handlePrev}
+                  direction={direction}
+                />
               </AnimatePresence>
             </div>
 

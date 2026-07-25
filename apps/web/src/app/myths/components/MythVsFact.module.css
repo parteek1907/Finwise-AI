@@ -7,6 +7,8 @@
   background-color: var(--color-bg-primary);
   font-family: var(--font-sans), sans-serif;
   overflow-x: hidden;
+  overflow-y: auto;
+  padding-bottom: 3rem;
 }
 
 /* Background Elements */
@@ -56,27 +58,47 @@
 
 /* Header */
 .header {
-  text-align: center;
-  margin-bottom: 60px;
-  max-width: 600px;
+  margin-bottom: 40px;
+  width: 100%;
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+.iconBox {
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-card-bg, #FFFFFF);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  border: 1px solid var(--color-border, #E5E7EB);
+  flex-shrink: 0;
 }
 
 .title {
-  font-family: var(--font-heading), serif;
-  font-size: 42px;
-  font-weight: 600;
-  line-height: 1.1;
-  margin-bottom: 16px;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
+  font-family: var(--font-sans);
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 0.25rem 0;
+  color: var(--color-text-primary, #111827);
+  letter-spacing: -0.025em;
+  text-transform: none;
 }
 
 .subtitle {
-  font-size: 14px;
-  color: var(--color-text-secondary);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  font-weight: 500;
+  font-size: 1.05rem;
+  color: var(--color-text-secondary, #6B7280);
+  font-weight: 400;
+  margin: 0;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 /* Main Area Wrapper (Side Panels + Card) */
@@ -91,52 +113,103 @@
 .sidePanel {
   display: flex;
   flex-direction: column;
-  gap: 3rem;
-  width: 160px;
-  opacity: 0.8;
+  gap: 1.5rem;
+  width: 230px;
+  flex-shrink: 0;
 }
 
-.sidePanelItem {
+.highlightCard {
+  background-color: var(--color-card-bg, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.5rem;
 }
 
-.sidePanelLabel {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-secondary);
+.percentBadge {
+  font-size: 2.25rem;
+  font-family: var(--font-sans);
+  font-weight: 900;
+  color: #19533B;
+  letter-spacing: -0.03em;
+  line-height: 1;
 }
 
-.sidePanelValue {
-  font-size: 28px;
-  font-family: var(--font-mono), monospace;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  letter-spacing: -0.02em;
+.highlightLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary, #6B7280);
+  line-height: 1.4;
+  margin: 0;
 }
 
-.confidenceMeter {
+.confidenceCard {
+  background-color: var(--color-card-bg, #FFFFFF);
+  border: 1px solid var(--color-border, #E5E7EB);
+  border-radius: 16px;
+  padding: 1.25rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.03);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 0.75rem;
 }
 
-.meterBar {
+.confidenceHeader {
   display: flex;
-  gap: 2px;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #111827;
 }
 
-.meterBlock {
-  height: 6px;
-  flex: 1;
-  background: var(--color-text-primary);
-  border-radius: 1px;
+.gaugeMeterWrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  margin: 0.5rem 0 0 0;
 }
 
-.meterBlockEmpty {
-  background: var(--color-border);
+.gaugeArc {
+  width: 100px;
+  height: 50px;
+  border-top-left-radius: 100px;
+  border-top-right-radius: 100px;
+  border: 8px solid #F3F4F6;
+  border-bottom: none;
+  background: conic-gradient(from 270deg at 50% 100%, #19533B 0deg 170deg, #E5E7EB 170deg 180deg);
+  position: relative;
+  overflow: hidden;
+}
+
+.gaugeNeedle {
+  position: absolute;
+  bottom: 0;
+  left: calc(50% - 2px);
+  width: 4px;
+  height: 42px;
+  background-color: #111827;
+  border-radius: 4px;
+  transform-origin: bottom center;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.confidenceValue {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #19533B;
+  margin-top: 0.5rem;
+}
+
+.confidenceSub {
+  font-size: 0.75rem;
+  color: #6B7280;
+  margin: 0;
+  text-align: center;
 }
 
 /* Card Area */
@@ -144,7 +217,7 @@
   position: relative;
   width: 100%;
   max-width: 480px;
-  height: 560px;
+  height: 640px;
   perspective: 1400px;
   display: flex;
   align-items: center;
@@ -168,12 +241,12 @@
   position: relative;
   transform-style: preserve-3d;
   cursor: grab;
-  background: var(--color-card-bg);
+  background: #FFFFFF !important;
+  opacity: 1 !important;
   /* Premium Layered Borders & Shadow */
   box-shadow: 
     0 24px 48px -12px rgba(0,0,0,0.08), 
-    0 0 0 1px rgba(0,0,0,0.04),
-    inset 0 1px 0 rgba(255,255,255,1);
+    0 0 0 1px rgba(0,0,0,0.06);
 }
 
 .card:active {
@@ -183,18 +256,24 @@
 .cardFace {
   position: absolute;
   inset: 0;
-  backface-visibility: hidden;
+  backface-visibility: hidden !important;
+  -webkit-backface-visibility: hidden !important;
   border-radius: 32px;
   display: flex;
   flex-direction: column;
-  padding: 40px;
-  overflow: hidden;
-  background: var(--color-card-bg);
+  padding: 36px 32px;
+  overflow-y: auto;
+  background: #FFFFFF !important;
+  opacity: 1 !important;
+}
+
+.cardFront {
+  background: #FFFFFF !important;
 }
 
 .cardBack {
   transform: rotateY(180deg);
-  background: #FDFDFD;
+  background: #FFFFFF !important;
 }
 
 .badge {

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   User, 
   Bot, 
@@ -16,14 +16,42 @@ import {
   Trash2, 
   LogOut, 
   Sparkles,
-  Camera
+  Camera,
+  Settings,
+  Zap
 } from 'lucide-react';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useAppStore } from '@/store/useAppStore';
+import { auth } from '@/lib/firebase';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { motion } from 'framer-motion';
 import styles from './Settings.module.css';
 
 type TabType = 'profile' | 'aiMentor' | 'financial' | 'notifications' | 'security' | 'appearance' | 'privacy';
+
+function ToggleSwitch({ checked, onChange, ariaLabel = "Toggle option" }: { checked: boolean; onChange: (val: boolean) => void; ariaLabel?: string }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={ariaLabel}
+      className={`${styles.toggleSwitch} ${checked ? styles.toggleOn : ''}`}
+      onClick={(e) => {
+        e.stopPropagation();
+        onChange(!checked);
+      }}
+    >
+      <div 
+        className={styles.toggleKnob}
+        style={{
+          transform: checked ? 'translateX(22px)' : 'translateX(0px)',
+          transition: 'transform 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+        }}
+      />
+    </button>
+  );
+}
 
 export function SettingsLayout() {
   const [activeTab, setActiveTab] = useState<TabType>('profile');
@@ -120,6 +148,13 @@ export function SettingsLayout() {
 
     setProfileErrors({});
     updateProfile(profileForm);
+    if (auth.currentUser) {
+      import('firebase/auth').then(({ updateProfile: updateFirebaseProfile }) => {
+        if (auth.currentUser) {
+          updateFirebaseProfile(auth.currentUser, { displayName: profileForm.name }).catch(err => console.error("Firebase profile update error:", err));
+        }
+      });
+    }
     showToast('Profile changes saved successfully');
   };
 
@@ -147,12 +182,25 @@ export function SettingsLayout() {
     showToast('Password updated successfully');
   };
 
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   const handleAvatarUpload = () => {
-    const newAvatar = prompt("Enter Image URL for profile picture:", profileForm.avatar);
-    if (newAvatar !== null) {
-      setProfileForm((prev) => ({ ...prev, avatar: newAvatar }));
-      updateProfile({ avatar: newAvatar });
-      showToast('Profile picture updated');
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const dataUrl = event.target?.result as string;
+        if (dataUrl) {
+          setProfileForm(prev => ({ ...prev, avatar: dataUrl }));
+          updateProfile({ avatar: dataUrl });
+          showToast('Profile picture updated from device');
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -206,7 +254,7 @@ export function SettingsLayout() {
     { id: 'financial' as TabType, label: 'Financial Preferences', icon: DollarSign },
     { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
     { id: 'security' as TabType, label: 'Security', icon: Shield },
-    { id: 'appearance' as TabType, label: 'Appearance', icon: Palette },
+    { id: 'appearance' as TabType, label: 'Performance', icon: Zap },
     { id: 'privacy' as TabType, label: 'Privacy', icon: Lock },
   ];
 
@@ -220,8 +268,15 @@ export function SettingsLayout() {
       )}
 
       <div className={styles.headerArea}>
-        <h1>Settings</h1>
-        <p>Manage your account settings, AI preferences, and security options.</p>
+        <div className={styles.titleWrap}>
+          <div className={styles.iconBox}>
+            <Settings size={28} color="#19533B" />
+          </div>
+          <div>
+            <h1>Settings</h1>
+            <p>Manage your account settings, AI preferences, and security options.</p>
+          </div>
+        </div>
       </div>
 
       <div className={styles.workspaceLayout}>
@@ -257,10 +312,18 @@ export function SettingsLayout() {
               </div>
 
               <div className={styles.avatarRow}>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  accept="image/*" 
+                  style={{ display: 'none' }} 
+                  onChange={handleFileSelected} 
+                />
                 <div className={styles.avatarWrapper}>
                   <img
                     src={
                       profileForm.avatar ||
+                      auth.currentUser?.photoURL ||
                       `https://ui-avatars.com/api/?name=${encodeURIComponent(
                         profileForm.name
                       )}&background=19533B&color=fff`
@@ -272,6 +335,7 @@ export function SettingsLayout() {
                     className={styles.avatarEditBtn}
                     onClick={handleAvatarUpload}
                     aria-label="Upload Avatar"
+                    title="Choose photo from device"
                   >
                     <Camera size={14} />
                   </button>
@@ -279,9 +343,6 @@ export function SettingsLayout() {
                 <div className={styles.avatarMeta}>
                   <h3>{profileForm.name}</h3>
                   <p>{profileForm.email}</p>
-                  <span className={styles.archetypeTag}>
-                    Archetype: {profile.archetype || 'The Guardian'}
-                  </span>
                 </div>
               </div>
 
@@ -536,17 +597,12 @@ export function SettingsLayout() {
                   <h4>Budget & Goal Reminders</h4>
                   <p>Receive proactive notifications when approaching monthly spending limits.</p>
                 </div>
-                <button
-                  type="button"
-                  className={`${styles.toggleSwitch} ${
-                    financial.budgetReminders ? styles.toggleOn : ''
-                  }`}
-                  onClick={() => {
-                    const next = !financial.budgetReminders;
+                <ToggleSwitch
+                  checked={financial.budgetReminders}
+                  onChange={(next) => {
                     updateFinancial({ budgetReminders: next });
                     showToast(`Budget reminders ${next ? 'enabled' : 'disabled'}`);
                   }}
-                  aria-pressed={financial.budgetReminders}
                 />
               </div>
             </div>
@@ -566,17 +622,12 @@ export function SettingsLayout() {
                     <h4>Goal Reminders</h4>
                     <p>Alerts when you reach milestones or get off-track on your savings goals.</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${styles.toggleSwitch} ${
-                      notifications.goalReminders ? styles.toggleOn : ''
-                    }`}
-                    onClick={() => {
-                      const next = !notifications.goalReminders;
+                  <ToggleSwitch
+                    checked={notifications.goalReminders}
+                    onChange={(next) => {
                       updateNotifications({ goalReminders: next });
                       showToast(`Goal reminders ${next ? 'enabled' : 'disabled'}`);
                     }}
-                    aria-pressed={notifications.goalReminders}
                   />
                 </div>
 
@@ -587,17 +638,12 @@ export function SettingsLayout() {
                     <h4>Scam & Fraud Alerts</h4>
                     <p>High-priority notifications when suspicious transactions or scams are detected.</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${styles.toggleSwitch} ${
-                      notifications.scamAlerts ? styles.toggleOn : ''
-                    }`}
-                    onClick={() => {
-                      const next = !notifications.scamAlerts;
+                  <ToggleSwitch
+                    checked={notifications.scamAlerts}
+                    onChange={(next) => {
                       updateNotifications({ scamAlerts: next });
                       showToast(`Scam alerts ${next ? 'enabled' : 'disabled'}`);
                     }}
-                    aria-pressed={notifications.scamAlerts}
                   />
                 </div>
 
@@ -608,17 +654,12 @@ export function SettingsLayout() {
                     <h4>Weekly Financial Summary</h4>
                     <p>Receive a weekly digest summarizing your net portfolio and goal progress.</p>
                   </div>
-                  <button
-                    type="button"
-                    className={`${styles.toggleSwitch} ${
-                      notifications.weeklySummary ? styles.toggleOn : ''
-                    }`}
-                    onClick={() => {
-                      const next = !notifications.weeklySummary;
+                  <ToggleSwitch
+                    checked={notifications.weeklySummary}
+                    onChange={(next) => {
                       updateNotifications({ weeklySummary: next });
                       showToast(`Weekly summary ${next ? 'enabled' : 'disabled'}`);
                     }}
-                    aria-pressed={notifications.weeklySummary}
                   />
                 </div>
               </div>
@@ -758,30 +799,26 @@ export function SettingsLayout() {
             </div>
           )}
 
-          {/* APPEARANCE & PERFORMANCE SECTION */}
+          {/* PERFORMANCE SECTION */}
           {activeTab === 'appearance' && (
             <div className={styles.card}>
               <div className={styles.cardHeader}>
-                <h2>Appearance & Performance</h2>
-                <p>Manage application motion, rendering speed, and interface responsiveness.</p>
+                <h2>Performance Mode</h2>
+                <p>Optimize application motion, rendering speed, and interface responsiveness.</p>
               </div>
 
               <div className={styles.toggleRow}>
                 <div>
                   <h4>Reduce Animations & Improve Performance</h4>
-                  <p>Completely disables background motion, transition delays, and GPU rendering effects to eliminate lag and maximize speed.</p>
+                  <p>Completely disables background motion, transition delays, and GPU rendering effects to eliminate lag and maximize speed on low-end devices.</p>
                 </div>
-                <button
-                  type="button"
-                  className={`${styles.toggleSwitch} ${
-                    appearance.reduceAnimations ? styles.toggleOn : ''
-                  }`}
-                  onClick={() => {
-                    const next = !appearance.reduceAnimations;
+                <ToggleSwitch
+                  ariaLabel="Reduce Animations & Improve Performance"
+                  checked={appearance.reduceAnimations}
+                  onChange={(next) => {
                     updateAppearance({ reduceAnimations: next });
-                    showToast(`Performance mode ${next ? 'enabled (Animations disabled)' : 'disabled'}`);
+                    showToast(`Performance mode ${next ? 'enabled' : 'disabled'}`);
                   }}
-                  aria-pressed={appearance.reduceAnimations}
                 />
               </div>
             </div>

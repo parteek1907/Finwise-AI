@@ -96,6 +96,18 @@
   --color-ring: var(--ring);
 }
 
+/* ─── Performance Mode Override (Reduces GPU rendering & lag on low-end devices) ─── */
+[data-reduce-animations="true"] *:not([class*="toggle"]):not([class*="Toggle"]),
+[data-reduce-animations="true"] *:not([class*="toggle"]):not([class*="Toggle"])::before,
+[data-reduce-animations="true"] *:not([class*="toggle"]):not([class*="Toggle"])::after {
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.05s !important;
+  scroll-behavior: auto !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
 /* ─── Dark Section Theme ─── */
 .dark-section {
   --color-bg-primary: #111827;

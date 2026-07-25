@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, LineChart } from 'lucide-react';
 import { motion } from 'framer-motion';
 import styles from './Simulator.module.css';
 
@@ -72,9 +72,14 @@ export default function SimulatorPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.headerTop}>
-            <div>
-              <h1 className={styles.title}>Virtual Market</h1>
-              <p className={styles.subtitle}>Practice trading without the risk. Learn from every trade.</p>
+            <div className={styles.titleWrap}>
+              <div className={styles.iconBox}>
+                <LineChart size={28} color="#19533B" />
+              </div>
+              <div>
+                <h1 className={styles.title}>Virtual Market</h1>
+                <p className={styles.subtitle}>Practice trading without the risk. Learn from every trade.</p>
+              </div>
             </div>
             
             <div className={styles.balanceCard}>

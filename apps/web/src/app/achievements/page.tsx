@@ -37,7 +37,7 @@ export default function AchievementsPage() {
       <div className={styles.workspace}>
         <header className={styles.header}>
           <div className={styles.titleWrap}>
-            <div className={styles.iconBox}><Award size={28} color="#eab308" /></div>
+            <div className={styles.iconBox}><Award size={28} color="#19533B" /></div>
             <div>
               <h1 className={styles.title}>Achievements & Rankings</h1>
               <p className={styles.subtitle}>Track your progress and compete on the global leaderboard.</p>
@@ -98,16 +98,22 @@ export default function AchievementsPage() {
               <p className={styles.leaderboardSub}>Compete with other learners to build the best financial habits.</p>
               
               <div className={styles.list}>
-                {LEADERBOARD.map(player => (
-                  <div key={player.rank} className={`${styles.playerRow} ${player.isUser ? styles.currentUser : ''}`}>
-                    <div className={styles.rank}>{player.rank}</div>
-                    <div className={styles.avatar}>
-                      <img src={player.avatar} alt={player.name} />
+                {LEADERBOARD.map(player => {
+                  const playerName = player.isUser ? user.name : player.name;
+                  const playerAvatar = player.isUser 
+                    ? (user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=19533B&color=fff`)
+                    : player.avatar;
+                  return (
+                    <div key={player.rank} className={`${styles.playerRow} ${player.isUser ? styles.currentUser : ''}`}>
+                      <div className={styles.rank}>{player.rank}</div>
+                      <div className={styles.avatar}>
+                        <img src={playerAvatar} alt={playerName} />
+                      </div>
+                      <div className={styles.playerName}>{playerName}</div>
+                      <div className={styles.playerXp}>{player.xp} XP</div>
                     </div>
-                    <div className={styles.playerName}>{player.name}</div>
-                    <div className={styles.playerXp}>{player.xp} XP</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </aside>

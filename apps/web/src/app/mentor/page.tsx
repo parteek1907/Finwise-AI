@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight } from 'lucide-react';
+import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight, Home, LineChart, ShieldCheck, BookOpen } from 'lucide-react';
 import styles from './Mentor.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -32,9 +32,12 @@ export default function MentorPage() {
   }, [history, isTyping]);
 
   const SUGGESTED_PROMPTS = [
-    { label: "Explain compound interest simply" },
-    { label: "Generate a step-by-step plan to buy a house" },
-    { label: "Analyze my current portfolio for improvements" }
+    { label: "Explain compound interest simply", icon: Sparkles },
+    { label: "AI financial advice vs index funds", icon: Sparkles },
+    { label: "Generate a step-by-step plan to buy a house", icon: Home },
+    { label: "Analyze my current portfolio for improvements", icon: LineChart },
+    { label: "How to build a $10k emergency fund", icon: ShieldCheck },
+    { label: "How does tax loss harvesting work?", icon: BookOpen }
   ];
 
   const handleVoiceInput = () => {
@@ -269,24 +272,32 @@ export default function MentorPage() {
                   >
                     <p className={styles.examplesTitle}>Examples of queries:</p>
                     <div className={styles.examplesList}>
-                      {SUGGESTED_PROMPTS.slice(0, 3).map((prompt, i) => (
-                        <motion.button 
-                          key={i} 
-                          className={styles.exampleBtn}
-                          onClick={() => setInputValue(prompt.label)}
-                          initial={{ opacity: 0, y: 30 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          transition={{ 
-                            delay: 0.1 + (i * 0.1),
-                            type: "spring",
-                            stiffness: 300,
-                            damping: 24
-                          }}
-                        >
-                          <span>{prompt.label}</span>
-                          <ChevronRight size={14} className={styles.exampleArrow} />
-                        </motion.button>
-                      ))}
+                      {SUGGESTED_PROMPTS.map((prompt, i) => {
+                        const IconComponent = prompt.icon;
+                        return (
+                          <motion.button 
+                            key={i} 
+                            className={styles.exampleBtn}
+                            onClick={() => setInputValue(prompt.label)}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ 
+                              delay: 0.05 + (i * 0.05),
+                              type: "spring",
+                              stiffness: 300,
+                              damping: 24
+                            }}
+                          >
+                            <div className={styles.exampleBtnLeft}>
+                              <div className={styles.promptIconBox}>
+                                <IconComponent size={15} color="#19533B" />
+                              </div>
+                              <span>{prompt.label}</span>
+                            </div>
+                            <ChevronRight size={14} className={styles.exampleArrow} />
+                          </motion.button>
+                        );
+                      })}
                     </div>
                   </motion.div>
                 )}

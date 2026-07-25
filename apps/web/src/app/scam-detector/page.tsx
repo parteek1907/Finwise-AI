@@ -154,7 +154,7 @@ export default function ScamDetectorPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.titleWrap}>
-            <div className={styles.iconBox}><ShieldCheck size={28} color="#22c55e" /></div>
+            <div className={styles.iconBox}><ShieldCheck size={28} color="#19533B" /></div>
             <div>
               <h1 className={styles.title}>AI Scam Detector</h1>
               <p className={styles.subtitle}>Paste a suspicious message, email, or investment offer to check its safety.</p>

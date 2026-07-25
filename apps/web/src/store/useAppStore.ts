@@ -62,13 +62,14 @@ export interface AppState {
   createNewChat: (title?: string) => string;
   setActiveChat: (id: string) => void;
   updateChatTitle: (id: string, title: string) => void;
+  updateUser: (data: Partial<User>) => void;
 }
 
 // Initial Mock Data
 const INITIAL_USER: User = {
-  name: 'Nipun',
-  email: 'nipun@finwise.ai',
-  avatar: 'https://i.pravatar.cc/150?img=11',
+  name: 'Aditya Tanwar',
+  email: 'adityatanwar13827@gmail.com',
+  avatar: '',
   archetype: 'The Guardian',
   healthScore: 85,
   xp: 1250,
@@ -163,5 +164,9 @@ export const useAppStore = create<AppState>((set) => ({
 
   updateChatTitle: (id, title) => set((state) => ({
     chats: state.chats.map(chat => chat.id === id ? { ...chat, title } : chat)
+  })),
+
+  updateUser: (data) => set((state) => ({
+    user: { ...state.user, ...data }
   }))
 }));

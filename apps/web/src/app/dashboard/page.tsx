@@ -121,7 +121,7 @@ export default function DashboardPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.headerLeft}>
-            <h1 className={styles.title}>{getGreeting()}, {user.name.split(' ')[0]}</h1>
+            <h1 className={styles.title}>{getGreeting()}, <span className={styles.nameBold}>{user.name.split(' ')[0]}</span>.</h1>
             <p className={styles.subtitle}>Welcome back. Let's continue building your financial foundation.</p>
           </div>
           <div className={styles.headerActions}>
@@ -333,31 +333,46 @@ export default function DashboardPage() {
           {/* Financial Health Score */}
           <div className={styles.card}>
             <h3 className={styles.cardTitle}>Health Score</h3>
-            <div className={styles.donutContainer}>
-              <svg viewBox="0 0 100 50" className={styles.donutSvg}>
-                {/* Background path */}
-                <path d="M 10 50 A 40 40 0 0 1 90 50" fill="none" stroke="#F3F4F6" strokeWidth="6" strokeLinecap="round" />
-                {/* Foreground path (Score) */}
-                <motion.path 
-                  d="M 10 50 A 40 40 0 0 1 90 50" 
-                  fill="none" 
-                  stroke="#19533B" 
-                  strokeWidth="6" 
-                  strokeLinecap="round" 
-                  strokeDasharray={semiCircumference} 
-                  initial={{ strokeDashoffset: semiCircumference }}
-                  animate={{ strokeDashoffset: semiCircumference - scorePercent }}
-                  transition={{ duration: 1.0, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-                />
-              </svg>
-              <div className={styles.donutValue}>
-                <NumberFlow value={showNumbers ? user.healthScore : 0} />
-                <span className={styles.donutLabel}>Excellent</span>
+            <div className={styles.healthScoreBody}>
+              <div className={styles.donutContainer}>
+                <div className={styles.donutTopValue}>
+                  <NumberFlow value={showNumbers ? user.healthScore : 0} />
+                </div>
+                <svg viewBox="0 0 100 52" className={styles.donutSvg}>
+                  {/* Background path */}
+                  <path d="M 12 48 A 38 38 0 0 1 88 48" fill="none" stroke="#F3F4F6" strokeWidth="6" strokeLinecap="round" />
+                  {/* Foreground path (Score) */}
+                  <path 
+                    d="M 12 48 A 38 38 0 0 1 88 48" 
+                    fill="none" 
+                    stroke="#19533B" 
+                    strokeWidth="6" 
+                    strokeLinecap="round" 
+                    strokeDasharray={`${scorePercent} 120`}
+                    strokeDashoffset="0"
+                    style={{ transition: 'stroke-dasharray 1s ease-out' }}
+                  />
+                </svg>
+                <div className={styles.donutBottomBadge}>
+                  <span>EXCELLENT</span>
+                </div>
               </div>
-            </div>
-            <div className={styles.donutLegend}>
-              <div className={styles.legendItem}><div className={styles.legendDot} style={{ background: '#19533B' }}></div> Score</div>
-              <div className={styles.legendItem}><div className={styles.legendDot} style={{ background: '#F3F4F6' }}></div> Target</div>
+
+              <div className={styles.donutLegend}>
+                <div className={styles.legendItem}><div className={styles.legendDot} style={{ background: '#19533B' }}></div> Score</div>
+                <div className={styles.legendItem}><div className={styles.legendDot} style={{ background: '#F3F4F6' }}></div> Target</div>
+              </div>
+
+              <div className={styles.scoreMetricsList}>
+                <div className={styles.scoreMetricRow}>
+                  <span className={styles.metricName}>Saving Habits</span>
+                  <span className={styles.metricScore}>92/100</span>
+                </div>
+                <div className={styles.scoreMetricRow}>
+                  <span className={styles.metricName}>Risk Management</span>
+                  <span className={styles.metricScore}>80/100</span>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -365,13 +380,31 @@ export default function DashboardPage() {
           <div className={`${styles.card} ${styles.timeTrackerCard}`}>
             <div className={styles.timeTrackerWave}></div>
             <div className={styles.timeTrackerContent}>
-              <div className={styles.timeTrackerTitle}>Up Next: {inProgressLesson.title}</div>
-              <div className={styles.timeTrackerValue}>{inProgressLesson.duration}</div>
-              <div className={styles.timeTrackerControls}>
-                <button className={styles.trackerBtn} onClick={() => router.push(`/learn/${inProgressLesson.id}`)}>
-                  <Play size={18} fill="currentColor" />
-                </button>
+              <div className={styles.lessonTag}>
+                <BookOpen size={12} /> UP NEXT
               </div>
+              
+              <h4 className={styles.timeTrackerLessonTitle}>{inProgressLesson.title}</h4>
+              
+              <div className={styles.timeTrackerMeta}>
+                <span>⏱️ {inProgressLesson.duration}</span>
+                <span>•</span>
+                <span>+{inProgressLesson.xp || 50} XP</span>
+              </div>
+
+              <div className={styles.lessonProgressBarWrap}>
+                <div className={styles.lessonProgressTop}>
+                  <span>Course Progress</span>
+                  <strong>60%</strong>
+                </div>
+                <div className={styles.lessonTrackFill}>
+                  <div className={styles.lessonTrackBar} style={{ width: '60%' }}></div>
+                </div>
+              </div>
+
+              <button className={styles.resumeLessonBtn} onClick={() => router.push(`/learn/${inProgressLesson.id}`)}>
+                <Play size={15} fill="currentColor" /> Resume Lesson
+              </button>
             </div>
           </div>
         </motion.div>

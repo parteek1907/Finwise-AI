@@ -3,12 +3,20 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
-import { Target, Plus, PiggyBank, Home, Car, Plane, Briefcase, TrendingUp } from 'lucide-react';
+import { Target, Plus, PiggyBank, Home, Car, Plane, Briefcase, TrendingUp, ChevronDown, Check } from 'lucide-react';
 import styles from './Goals.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { DatePicker } from '@/components/ui/date-picker';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+
+const CATEGORY_OPTIONS = [
+  { value: 'Emergency', label: 'Emergency Fund', icon: PiggyBank },
+  { value: 'Housing', label: 'Housing & Real Estate', icon: Home },
+  { value: 'Vehicle', label: 'Vehicle & Transport', icon: Car },
+  { value: 'Travel', label: 'Travel & Vacation', icon: Plane },
+  { value: 'Retirement', label: 'Retirement & Wealth', icon: TrendingUp },
+  { value: 'Other', label: 'Other Financial Goal', icon: Briefcase },
+];
 
 const CATEGORY_ICONS = {
   'Emergency': PiggyBank,
@@ -19,12 +27,11 @@ const CATEGORY_ICONS = {
   'Other': Briefcase
 };
 
-// Removed old variants to use dashboard's explicit stagger pattern
-
 export default function GoalsPage() {
   const router = useRouter();
   const { goals, addGoal } = useAppStore();
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
     name: '',
     target: '',
@@ -57,9 +64,14 @@ export default function GoalsPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.headerTop}>
-            <div>
-              <h1 className={styles.title}>Financial Goals</h1>
-              <p className={styles.subtitle}>Track your milestones and automate your wealth building.</p>
+            <div className={styles.titleWrap}>
+              <div className={styles.iconBox}>
+                <Target size={28} color="#19533B" />
+              </div>
+              <div>
+                <h1 className={styles.title}>Financial Goals</h1>
+                <p className={styles.subtitle}>Track your milestones and automate your wealth building.</p>
+              </div>
             </div>
             
             <button className={styles.addGoalBtn} onClick={() => setShowAddModal(true)}>
@@ -168,19 +180,65 @@ export default function GoalsPage() {
                 </div>
                 <div className={styles.formGroup}>
                   <label>Category</label>
-                  <Select value={newGoal.category} onValueChange={value => setNewGoal({...newGoal, category: value})}>
-                    <SelectTrigger className={`${styles.select} w-full h-[46px] justify-between text-left font-normal hover:bg-[#F3F4F6] ${!newGoal.category ? '!text-gray-400' : ''}`}>
-                      <SelectValue placeholder="Select a category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Emergency">Emergency</SelectItem>
-                      <SelectItem value="Housing">Housing</SelectItem>
-                      <SelectItem value="Vehicle">Vehicle</SelectItem>
-                      <SelectItem value="Travel">Travel</SelectItem>
-                      <SelectItem value="Retirement">Retirement</SelectItem>
-                      <SelectItem value="Other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <div className={styles.categoryDropdownWrap}>
+                    <button
+                      type="button"
+                      className={styles.categoryTriggerBtn}
+                      onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    >
+                      <div className={styles.categorySelectedValue}>
+                        {(() => {
+                          const selected = CATEGORY_OPTIONS.find(opt => opt.value === newGoal.category) || CATEGORY_OPTIONS[0];
+                          const IconComp = selected.icon;
+                          return (
+                            <>
+                              <div className={styles.categoryIconBox}>
+                                <IconComp size={16} />
+                              </div>
+                              <span>{selected.label}</span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <ChevronDown size={18} color="#6B7280" style={{ transform: isCategoryOpen ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }} />
+                    </button>
+
+                    <AnimatePresence>
+                      {isCategoryOpen && (
+                        <motion.div
+                          className={styles.categoryMenu}
+                          initial={{ opacity: 0, y: -10, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          exit={{ opacity: 0, y: -10, scale: 0.98 }}
+                          transition={{ duration: 0.15 }}
+                        >
+                          {CATEGORY_OPTIONS.map(opt => {
+                            const Icon = opt.icon;
+                            const isSelected = newGoal.category === opt.value;
+                            return (
+                              <button
+                                key={opt.value}
+                                type="button"
+                                className={`${styles.categoryMenuItem} ${isSelected ? styles.categoryMenuItemActive : ''}`}
+                                onClick={() => {
+                                  setNewGoal({ ...newGoal, category: opt.value });
+                                  setIsCategoryOpen(false);
+                                }}
+                              >
+                                <div className={styles.categoryMenuLabel}>
+                                  <div className={styles.categoryIconBox}>
+                                    <Icon size={16} />
+                                  </div>
+                                  <span>{opt.label}</span>
+                                </div>
+                                {isSelected && <Check size={16} color="#19533B" />}
+                              </button>
+                            );
+                          })}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 </div>
 
                 <div style={{display: 'flex', gap: '1rem', marginTop: '2.5rem'}}>

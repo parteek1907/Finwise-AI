@@ -127,9 +127,21 @@ export const useSettingsStore = create<SettingsState>()(
       ...DEFAULT_SETTINGS,
 
       updateProfile: (data) =>
-        set((state) => ({
-          profile: { ...state.profile, ...data },
-        })),
+        set((state) => {
+          const newProfile = { ...state.profile, ...data };
+          // Sync with useAppStore
+          try {
+            const { useAppStore } = require('./useAppStore');
+            useAppStore.getState().updateUser({
+              name: newProfile.name,
+              email: newProfile.email,
+              avatar: newProfile.avatar,
+            });
+          } catch (e) {
+            console.error('Error syncing store user', e);
+          }
+          return { profile: newProfile };
+        }),
 
       updateAIMentor: (data) =>
         set((state) => ({

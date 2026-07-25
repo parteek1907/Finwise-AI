@@ -7,6 +7,7 @@ import { EmotionInput } from '../../components/emotion/EmotionInput';
 import { EmotionResults } from '../../components/emotion/EmotionResults';
 import { EmotionHistoryList } from '../../components/emotion/EmotionHistoryList';
 import { EmotionAnalytics } from '../../components/emotion/EmotionAnalytics';
+import { Brain } from 'lucide-react';
 import styles from './Emotion.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,9 +20,14 @@ export default function EmotionPage() {
     <AppLayout>
       <div className={styles.container}>
         <div className={styles.header}>
-          <div>
-            <h1 className={styles.title}>Emotion Detector</h1>
-            <p className={styles.subtitle}>Understand the psychology behind your investment decisions.</p>
+          <div className={styles.titleWrap}>
+            <div className={styles.iconBox}>
+              <Brain size={28} color="#19533B" />
+            </div>
+            <div>
+              <h1 className={styles.title}>Emotion AI</h1>
+              <p className={styles.subtitle}>Understand the psychology behind your investment decisions.</p>
+            </div>
           </div>
           
           {history.length > 0 && (

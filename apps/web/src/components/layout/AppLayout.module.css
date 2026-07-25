@@ -5,6 +5,11 @@
   background-color: #f4f5f7;
   color: #111827;
   font-family: var(--font-sans), sans-serif;
+  transition: grid-template-columns 0.3s ease;
+}
+
+.appContainerCollapsed {
+  grid-template-columns: 80px 1fr;
 }
 
 .mainWrapper {
@@ -14,6 +19,7 @@
   overflow: hidden;
   position: relative;
   background-color: transparent;
+  min-width: 0;
 }
 
 .mainWorkspace {
@@ -22,6 +28,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
 
 .mainWorkspace::-webkit-scrollbar {

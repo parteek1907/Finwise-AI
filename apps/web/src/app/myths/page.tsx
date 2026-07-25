@@ -9,7 +9,7 @@ export default function MythsPage() {
   return (
     <AppLayout>
       <motion.div 
-        style={{ width: '100%', minHeight: '100%', overflow: 'hidden' }}
+        style={{ width: '100%', minHeight: '100%', overflow: 'visible' }}
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}

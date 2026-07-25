@@ -13,6 +13,7 @@ export interface MythData {
   fact: string;
   insight: string;
   insightPercent: string;
+  confidence: number;
 }
 
 interface MythCardProps {
@@ -62,26 +63,20 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
   const [isFlipped, setIsFlipped] = useState(false);
   const [showXP, setShowXP] = useState(false);
 
-  const handleFlip = () => {
+  const handleCardClick = () => {
     if (!isActive) return;
     if (!isFlipped) {
       setIsFlipped(true);
       setTimeout(() => {
         setShowXP(true);
-      }, 600);
+      }, 400);
       setTimeout(() => {
         setShowXP(false);
-      }, 2500);
+      }, 2200);
+    } else {
+      onNext();
     }
   };
-
-  // Reset flip state when not active
-  useEffect(() => {
-    if (!isActive) {
-      setIsFlipped(false);
-      setShowXP(false);
-    }
-  }, [isActive]);
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
@@ -116,7 +111,7 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
     >
       <motion.div
         className={styles.card}
-        onClick={handleFlip}
+        onClick={handleCardClick}
         drag={isActive ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.6}
@@ -126,14 +121,14 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
         }}
         transition={{
           type: "spring",
-          stiffness: 120,
+          stiffness: 260,
           damping: 24,
-          mass: 1,
+          mass: 0.8,
         }}
         whileTap={{ scale: 0.98 }}
       >
         {/* Front of Card: MYTH */}
-        <div className={`${styles.cardFace} ${styles.cardFront}`}>
+        <div className={`${styles.cardFace} ${styles.cardFront}`} style={{ visibility: isFlipped ? 'hidden' : 'visible' }}>
           <div className={styles.badge}>
             {getCategoryIcon(data.category)}
             <span style={{ marginLeft: 6 }}>{data.category}</span>
@@ -142,7 +137,7 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
           
           <div className={styles.swipeIndicator}>
             <Hand size={14} />
-            <span>Click to reveal · Swipe to skip</span>
+            <span>Click to reveal · Click again for next</span>
             <motion.div
               animate={{ x: [0, 4, 0] }}
               transition={{ repeat: Infinity, duration: 1.5 }}
@@ -153,7 +148,7 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
         </div>
 
         {/* Back of Card: FACT */}
-        <div className={`${styles.cardFace} ${styles.cardBack}`}>
+        <div className={`${styles.cardFace} ${styles.cardBack}`} style={{ visibility: isFlipped ? 'visible' : 'hidden' }}>
           <div className={`${styles.badge} ${styles.badgeFact}`}>
             <span style={{ marginLeft: 6 }}>REALITY</span>
           </div>

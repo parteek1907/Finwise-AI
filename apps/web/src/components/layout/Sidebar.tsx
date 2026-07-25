@@ -14,6 +14,9 @@ import {
   Award,
   Sparkles,
   Brain,
+  Gauge,
+  PanelLeftClose,
+  PanelLeft,
   Settings as SettingsIcon
 } from 'lucide-react';
 import styles from './Sidebar.module.css';
@@ -23,7 +26,7 @@ const MENU_ITEMS = [
   { href: '/learn', icon: BookOpen, label: 'Learning' },
   { href: '/mentor', icon: MessageSquare, label: 'AI Mentor' },
   { href: '/simulator', icon: LineChart, label: 'Virtual Market' },
-  { href: '/myths', icon: Sparkles, label: 'Myth vs Fact' },
+  { href: '/myths', icon: Gauge, label: 'Myth vs Fact' },
   { href: '/emotion', icon: Brain, label: 'Emotion AI' },
   { href: '/scam-detector', icon: ShieldCheck, label: 'Scam Detector' },
   { href: '/goals', icon: Target, label: 'Goals' },
@@ -31,7 +34,12 @@ const MENU_ITEMS = [
   { href: '/settings', icon: SettingsIcon, label: 'Settings' },
 ];
 
-export function Sidebar() {
+interface SidebarProps {
+  isCollapsed?: boolean;
+  onToggleCollapse?: () => void;
+}
+
+export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps) {
   const pathname = usePathname();
 
   const renderNavItems = (items: any[]) => {
@@ -43,6 +51,7 @@ export function Sidebar() {
           key={item.href} 
           href={item.href}
           className={`${styles.navItem} ${isActive ? styles.active : ''}`}
+          title={isCollapsed ? item.label : undefined}
         >
           {isActive && (
             <motion.div
@@ -55,24 +64,35 @@ export function Sidebar() {
           <div className={`${styles.iconWrapper} ${isActive ? styles.activeIcon : ''}`}>
             <item.icon size={20} strokeWidth={isActive ? 2.5 : 1.5} />
           </div>
-          <span>{item.label}</span>
-          {item.badge && <span className={styles.badge}>{item.badge}</span>}
+          {!isCollapsed && <span>{item.label}</span>}
+          {!isCollapsed && item.badge && <span className={styles.badge}>{item.badge}</span>}
         </Link>
       );
     });
   };
 
   return (
-    <aside className={styles.sidebar}>
-      {/* Logo */}
-      <Link href="/dashboard" className={styles.logoContainer}>
-        <div className={styles.logoIcon}></div>
-        <span className={styles.logoText}>FinWise</span>
-      </Link>
+    <aside className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ''}`}>
+      {/* Header with Logo & Collapse Toggle */}
+      <div className={styles.sidebarHeader}>
+        <Link href="/dashboard" className={styles.logoContainer}>
+          <div className={styles.logoIcon}></div>
+          {!isCollapsed && <span className={styles.logoText}>FinWise</span>}
+        </Link>
+        {onToggleCollapse && (
+          <button 
+            className={styles.collapseBtn} 
+            onClick={onToggleCollapse}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {isCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
+          </button>
+        )}
+      </div>
 
       {/* Menu Section */}
       <div className={styles.navSection}>
-        <div className={styles.sectionTitle}>MENU</div>
+        {!isCollapsed && <div className={styles.sectionTitle}>MENU</div>}
         <nav className={styles.navigation}>
           {renderNavItems(MENU_ITEMS)}
         </nav>

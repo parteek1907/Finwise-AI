@@ -40,9 +40,14 @@ export default function LearnPage() {
           transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         >
           <div className={styles.headerTop}>
-            <div>
-              <h1 className={styles.title}>Financial Education Library</h1>
-              <p className={styles.subtitle}>Master your money through bite-sized behavioral lessons.</p>
+            <div className={styles.titleWrap}>
+              <div className={styles.iconBox}>
+                <BookOpen size={28} color="#19533B" />
+              </div>
+              <div>
+                <h1 className={styles.title}>Financial Education Library</h1>
+                <p className={styles.subtitle}>Master your money through bite-sized behavioral lessons.</p>
+              </div>
             </div>
             
             <div className={styles.progressCard}>
