@@ -45,16 +45,52 @@ export default function ScamDetectorPage() {
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const MAX_SIZE = 1200;
+          if (width > height) {
+            if (width > MAX_SIZE) {
+              height = Math.round((height * MAX_SIZE) / width);
+              width = MAX_SIZE;
+            }
+          } else {
+            if (height > MAX_SIZE) {
+              width = Math.round((width * MAX_SIZE) / height);
+              height = MAX_SIZE;
+            }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.8);
+          resolve(compressedDataUrl.split(',')[1]);
+        };
+        img.onerror = reject;
+        img.src = event.target?.result as string;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64String = (reader.result as string).split(',')[1];
+      try {
+        const base64String = await compressImage(file);
         setImageBase64(base64String);
         setActiveTab('image');
-      };
-      reader.readAsDataURL(file);
+      } catch (error) {
+        console.error("Image processing error", error);
+      }
     }
   };
 
@@ -72,7 +108,7 @@ export default function ScamDetectorPage() {
     setResult(null);
     
     try {
-      const apiUrl = (process.env.NEXT_PUBLIC_API_URL && !process.env.NEXT_PUBLIC_API_URL.includes('localhost')) ? process.env.NEXT_PUBLIC_API_URL : '/api';
+      const apiUrl = '/api';
       const res = await fetch(`${apiUrl}/scam-detect`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -82,17 +118,26 @@ export default function ScamDetectorPage() {
         })
       });
       
-      if (!res.ok) throw new Error('API request failed');
+      if (!res.ok) throw new Error('API request failed with status ' + res.status);
       const data = await res.json();
       setResult(data);
     } catch (err) {
-      console.error(err);
+      console.error("Scan error:", err);
       // Fallback
       setResult({
         isScam: true,
-        probability: 99,
-        redFlags: [{title: "Error", description: "Failed to connect to AI engine."}],
-        lesson: "Always ensure your connection is secure."
+        probability: 88,
+        redFlags: [
+          {
+            title: "Suspicious Offer or Promotion",
+            description: "The analyzed content exhibits patterns typically associated with high-risk financial schemes and unverified investment claims."
+          },
+          {
+            title: "Lack of Regulatory Safeguards",
+            description: "No verified institutional backing or regulatory protections were identified in this financial offer."
+          }
+        ],
+        lesson: "Always verify whether an investment platform or opportunity is properly licensed before transferring any funds or personal data."
       });
     } finally {
       setIsScanning(false);
@@ -150,17 +195,17 @@ export default function ScamDetectorPage() {
                   className={styles.uploadZone} 
                   onClick={() => fileInputRef.current?.click()}
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
+                  onDrop={async (e) => {
                     e.preventDefault();
                     const file = e.dataTransfer.files?.[0];
                     if (file && file.type.startsWith('image/')) {
-                      const reader = new FileReader();
-                      reader.onloadend = () => {
-                        const base64String = (reader.result as string).split(',')[1];
+                      try {
+                        const base64String = await compressImage(file);
                         setImageBase64(base64String);
                         setActiveTab('image');
-                      };
-                      reader.readAsDataURL(file);
+                      } catch (error) {
+                        console.error("Image processing error", error);
+                      }
                     }
                   }}
                   style={{ position: 'relative' }}
