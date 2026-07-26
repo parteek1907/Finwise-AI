@@ -138,7 +138,7 @@ export const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ holdings }) => {
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: number) => formatCurrency(value * activeRate)} 
+                formatter={(value: any) => formatCurrency(Number(value) * activeRate)} 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               />
               <Legend verticalAlign="bottom" height={36} />
