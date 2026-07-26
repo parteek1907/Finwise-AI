@@ -10,7 +10,7 @@ type Props = {
 };
 
 export function AIMentorOrb({ isThinking = false }: Props) {
-  const orbRef = useRef<THREE.Mesh>(null);
+  const orbRef = useRef<any>(null);
 
   useFrame((state, delta) => {
     if (orbRef.current) {

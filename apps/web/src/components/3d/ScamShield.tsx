@@ -11,7 +11,7 @@ type Props = {
 
 export function ScamShield({ status = 'scanning' }: Props) {
   const shieldGroupRef = useRef<THREE.Group>(null);
-  const ringRef = useRef<THREE.Mesh>(null);
+  const ringRef = useRef<any>(null);
 
   useFrame((state, delta) => {
     if (shieldGroupRef.current) {

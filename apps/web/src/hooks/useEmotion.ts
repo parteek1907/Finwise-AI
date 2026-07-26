@@ -35,8 +35,8 @@ export const useEmotion = () => {
 
     const emotionCounts: Record<string, number> = {};
     const biasCounts: Record<string, number> = {};
-    const riskTrend: { date: string; riskScore: number }[] = [];
-    const emotionTrend: { date: string; confidence: number }[] = [];
+    const riskTrend: { id: string; date: string; riskScore: number }[] = [];
+    const emotionTrend: { id: string; date: string; confidence: number }[] = [];
 
     // Process from oldest to newest for trends
     const reversedData = [...data].reverse();

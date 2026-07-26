@@ -8,7 +8,7 @@ import * as THREE from "three";
 export function TreeOfWealth() {
   const scroll = useScroll();
   const treeRef = useRef<THREE.Group>(null);
-  const orbRef = useRef<THREE.Mesh>(null);
+  const orbRef = useRef<any>(null);
   const branchesRef = useRef<THREE.Group>(null);
 
   // Procedural abstract branches (cleaner, fewer for light theme)
