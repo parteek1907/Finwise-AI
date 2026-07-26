@@ -7,8 +7,12 @@ import { Timeframe } from '../constants/symbols';
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export const getQuote = async (symbol: string): Promise<Quote> => {
+  let fetchSymbol = symbol;
+  if (symbol === 'BTC') fetchSymbol = 'BTC-USD';
+  if (symbol === 'ETH') fetchSymbol = 'ETH-USD';
+  if (symbol === 'SOL') fetchSymbol = 'SOL-USD';
   try {
-    const response = await fetch(`http://localhost:8000/api/market/quote/${symbol}`);
+    const response = await fetch(`/api/market/quote/${fetchSymbol}`);
     if (response.ok) {
       return await response.json();
     }
@@ -41,8 +45,12 @@ export const getMarketMovers = async (): Promise<MarketMover[]> => {
 };
 
 export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<Candle[]> => {
+  let fetchSymbol = symbol;
+  if (symbol === 'BTC') fetchSymbol = 'BTC-USD';
+  if (symbol === 'ETH') fetchSymbol = 'ETH-USD';
+  if (symbol === 'SOL') fetchSymbol = 'SOL-USD';
   try {
-    const response = await fetch(`http://localhost:8000/api/market/candles/${symbol}?timeframe=${timeframe}`);
+    const response = await fetch(`/api/market/candles/${fetchSymbol}?timeframe=${timeframe}`);
     if (response.ok) {
       const data = await response.json();
       if (data && data.length > 0) return data;

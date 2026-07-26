@@ -23,6 +23,8 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
   onTabChange
 }) => {
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
+  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates);
+  const activeRate = exchangeRates ? (exchangeRates[preferredCurrency] || 1) : 1;
 
   return (
     <div className={styles.portfolioView}>
@@ -31,7 +33,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
           <span>Total Value</span>
           <h3>
             <NumberFlow 
-              value={summary.totalValue} 
+              value={summary.totalValue * activeRate} 
               format={{ style: 'currency', currency: preferredCurrency }} 
             />
           </h3>
@@ -40,7 +42,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
           <span>Total Return</span>
           <h3 className={summary.totalReturn >= 0 ? styles.positiveText : styles.negativeText}>
             <NumberFlow 
-              value={summary.totalReturn} 
+              value={summary.totalReturn * activeRate} 
               format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
             /> 
             {' '}(<NumberFlow 
@@ -99,13 +101,13 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                       <td>{formatCurrency(pos.averagePrice)}</td>
                       <td>
                         <NumberFlow 
-                          value={pos.currentPrice} 
+                          value={pos.currentPrice * activeRate} 
                           format={{ style: 'currency', currency: preferredCurrency }} 
                         />
                       </td>
                       <td className={pos.totalReturn >= 0 ? styles.positiveText : styles.negativeText}>
                         <NumberFlow 
-                          value={pos.totalReturn} 
+                          value={pos.totalReturn * activeRate} 
                           format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
                         />
                         <span className={styles.percentText}>

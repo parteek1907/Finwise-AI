@@ -16,7 +16,10 @@ interface MarketMoversProps {
 }
 
 export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, error, onSelect }) => {
-  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency || 'USD');
+  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates);
+  const activeRate = exchangeRates ? (exchangeRates[preferredCurrency] || 1) : 1;
+
   return (
     <div className={styles.card}>
       <div className={styles.header}>
@@ -38,8 +41,8 @@ export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, err
               <div className={styles.price}>
                 <strong>
                   <NumberFlow 
-                    value={item.price} 
-                    format={{ style: 'currency', currency: preferredCurrency || 'USD' }} 
+                    value={item.price * activeRate} 
+                    format={{ style: 'currency', currency: preferredCurrency }} 
                   />
                 </strong>
                 <span className={item.isUp ? styles.positiveText : styles.negativeText}>

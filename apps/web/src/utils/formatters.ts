@@ -1,6 +1,6 @@
 import { useSettingsStore } from '@/store/useSettingsStore';
 
-const CURRENCY_MAP: Record<string, { symbol: string; rate: number; locale: string }> = {
+export const CURRENCY_MAP: Record<string, { symbol: string; rate: number; locale: string }> = {
   USD: { symbol: '$', rate: 1, locale: 'en-US' },
   INR: { symbol: '₹', rate: 83, locale: 'en-IN' },
   EUR: { symbol: '€', rate: 0.92, locale: 'de-DE' },
@@ -14,16 +14,26 @@ export const formatCurrency = (
   maxFractions: number = 2
 ) => {
   let code = overrideCurrency;
+  let exchangeRates: Record<string, number> | undefined;
   if (!code) {
     try {
-      code = useSettingsStore.getState().financial?.preferredCurrency || 'USD';
+      const financial = useSettingsStore.getState().financial;
+      code = financial?.preferredCurrency || 'USD';
+      exchangeRates = financial?.exchangeRates;
     } catch {
       code = 'USD';
+    }
+  } else {
+    try {
+      exchangeRates = useSettingsStore.getState().financial?.exchangeRates;
+    } catch {
+      // ignore
     }
   }
 
   const config = CURRENCY_MAP[code] || CURRENCY_MAP.USD;
-  const converted = value * config.rate;
+  const activeRate = exchangeRates ? (exchangeRates[code] || config.rate) : config.rate;
+  const converted = value * activeRate;
 
   return new Intl.NumberFormat(config.locale, {
     style: 'currency',

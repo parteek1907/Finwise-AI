@@ -13,6 +13,8 @@ import {
 
 import { Indicator } from '../../../types/market';
 import { calculateSMA, calculateEMA } from '../../../utils/chart';
+import { useSettingsStore } from '@/store/useSettingsStore';
+import { CURRENCY_MAP } from '../../../utils/formatters';
 
 import { ChartLoading } from './ChartLoading';
 import { ChartLegend } from './ChartLegend';
@@ -92,6 +94,9 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency || 'USD');
+  const currencyRate = CURRENCY_MAP[preferredCurrency]?.rate || 1;
+
   const [indicators, setIndicators] = useState<Indicator[]>([
     { id: 'sma20', name: 'SMA', type: 'SMA', visible: false, period: 20, color: '#2962FF' },
     { id: 'ema20', name: 'EMA', type: 'EMA', visible: false, period: 20, color: '#FF6D00' },
@@ -148,10 +153,10 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
     const formattedCandles = candles.map(c => ({
       time: c.time as Time,
-      open: c.open,
-      high: c.high,
-      low: c.low,
-      close: c.close,
+      open: c.open * currencyRate,
+      high: c.high * currencyRate,
+      low: c.low * currencyRate,
+      close: c.close * currencyRate,
     }));
     candleSeries.setData(formattedCandles);
     
@@ -196,7 +201,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         lineWidth: 2,
         crosshairMarkerVisible: false,
       });
-      smaSeries.setData(smaData.map(d => ({ time: d.time as Time, value: d.value })));
+      smaSeries.setData(smaData.map(d => ({ time: d.time as Time, value: d.value * currencyRate })));
       smaSeriesRef.current = smaSeries;
     }
 
@@ -209,7 +214,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         lineWidth: 2,
         crosshairMarkerVisible: false,
       });
-      emaSeries.setData(emaData.map(d => ({ time: d.time as Time, value: d.value })));
+      emaSeries.setData(emaData.map(d => ({ time: d.time as Time, value: d.value * currencyRate })));
       emaSeriesRef.current = emaSeries;
     }
 
@@ -227,11 +232,9 @@ export const TradingChart: React.FC<TradingChartProps> = ({
     }
 
     // 7. Set Order Lines
-    // We clear existing price lines (not natively supported to list them, so we'll just not support dynamic updates of order lines within the same instance for this mock, or we can just create them)
-    // Actually, createPriceLine returns an object we can remove later. For simplicity we'll just add them on mount/update.
     orderLines.forEach(line => {
       candleSeries.createPriceLine({
-        price: line.price,
+        price: line.price * currencyRate,
         color: line.color,
         lineWidth: 2,
         lineStyle: 3, // dashed
@@ -292,10 +295,10 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
       setTooltipData({
         time: dateStr,
-        open: data.open,
-        high: data.high,
-        low: data.low,
-        close: data.close,
+        open: data.open / currencyRate,
+        high: data.high / currencyRate,
+        low: data.low / currencyRate,
+        close: data.close / currencyRate,
         volume: volData.value,
         x,
         y,
@@ -308,24 +311,23 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       window.removeEventListener('resize', handleResize);
       chart.remove();
     };
-  }, [candles, indicators, loading]);
+  }, [candles, indicators, loading, currencyRate]);
 
   // Handle Real-Time Tick Update
   useEffect(() => {
     if (!realTimeTick || !candleSeriesRef.current || !liveCandleRef.current) return;
     
     const live = liveCandleRef.current;
-    const newPrice = realTimeTick.price;
+    const newPrice = realTimeTick.price * currencyRate;
     
-    // Instead of updating the same candle, we append a new one
-    // We increment time by 1 day (86400 seconds) so it plots a new candle on the chart
+    // Update the existing candle instead of spawning a new one
     const newCandle = {
-      time: ((live.time as number) + 86400) as Time,
-      open: Number(live.close),
-      high: Math.max(Number(live.close), newPrice),
-      low: Math.min(Number(live.close), newPrice),
+      time: live.time,
+      open: Number(live.open),
+      high: Math.max(Number(live.high), newPrice),
+      low: Math.min(Number(live.low), newPrice),
       close: newPrice,
-      volume: realTimeTick.volume || 100
+      volume: live.volume || (realTimeTick.volume || 100)
     };
     
     candleSeriesRef.current.update(newCandle);

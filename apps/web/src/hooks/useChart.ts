@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { Asset, Candle, Quote, MarketStatus } from '../types/market';
 import { getCandles, getQuote, getMarketStatus, getWatchlist } from '../services/market';
 import { Timeframe } from '../constants/symbols';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { CURRENCY_MAP } from '../utils/formatters';
 
 export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') => {
   
@@ -25,6 +27,7 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
         getQuote(asset),
         getMarketStatus()
       ]);
+      
       setCandles(candleData);
       setQuote(quoteData);
       setMarketStatus(statusData);

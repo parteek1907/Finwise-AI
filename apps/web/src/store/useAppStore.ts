@@ -26,7 +26,7 @@ export interface Lesson {
   title: string;
   category: string;
   duration: string;
-  difficulty: 'Beginner' | 'Intermediate' | 'Advanced';
+  difficulty: 'Easy' | 'Medium' | 'Hard';
   status: 'Completed' | 'In Progress' | 'Locked';
   xp: number;
 }
@@ -83,12 +83,46 @@ const INITIAL_GOALS: Goal[] = [
 ];
 
 const INITIAL_LESSONS: Lesson[] = [
-  { id: 'l1', title: 'The Psychology of Spending', category: 'Behavior', duration: '5 min', difficulty: 'Beginner', status: 'Completed', xp: 50 },
-  { id: 'l2', title: 'The Delay Discounting Trap', category: 'Behavior', duration: '8 min', difficulty: 'Beginner', status: 'In Progress', xp: 50 },
-  { id: 'l3', title: 'Lifestyle Creep', category: 'Behavior', duration: '10 min', difficulty: 'Intermediate', status: 'Locked', xp: 100 },
-  { id: 'l4', title: 'Index Funds 101', category: 'Investing', duration: '15 min', difficulty: 'Beginner', status: 'Locked', xp: 150 },
-  { id: 'l5', title: 'Emergency Fund Basics', category: 'Saving', duration: '6 min', difficulty: 'Beginner', status: 'Completed', xp: 50 },
+  { id: 'l1', title: 'The Psychology of Spending', category: 'Behavior', duration: '5 min', difficulty: 'Easy', status: 'In Progress', xp: 50 },
+  { id: 'l2', title: 'The Delay Discounting Trap', category: 'Behavior', duration: '8 min', difficulty: 'Easy', status: 'Locked', xp: 50 },
+  { id: 'l4', title: 'Index Funds 101', category: 'Investing', duration: '15 min', difficulty: 'Easy', status: 'Locked', xp: 50 },
+  { id: 'l5', title: 'Emergency Fund Basics', category: 'Saving', duration: '6 min', difficulty: 'Easy', status: 'Locked', xp: 50 },
+  
+  { id: 'l3', title: 'Lifestyle Creep', category: 'Behavior', duration: '10 min', difficulty: 'Medium', status: 'Locked', xp: 100 },
+  { id: 'l6', title: 'Debt Snowball vs Avalanche', category: 'Credit', duration: '12 min', difficulty: 'Medium', status: 'Locked', xp: 100 },
+  { id: 'l7', title: 'Asset Allocation Strategies', category: 'Investing', duration: '14 min', difficulty: 'Medium', status: 'Locked', xp: 100 },
+  
+  { id: 'l8', title: 'Tax-Advantaged Accounts', category: 'Taxes', duration: '15 min', difficulty: 'Hard', status: 'Locked', xp: 150 },
+  { id: 'l9', title: 'Options Trading Basics', category: 'Investing', duration: '20 min', difficulty: 'Hard', status: 'Locked', xp: 150 },
+  { id: 'l10', title: 'Retirement Drawdown', category: 'Retirement', duration: '18 min', difficulty: 'Hard', status: 'Locked', xp: 150 },
 ];
+
+// Helper to recalculate which lessons are locked
+const recalculateLocks = (lessons: Lesson[]): Lesson[] => {
+  const easyCompleted = lessons.filter(l => l.difficulty === 'Easy').every(l => l.status === 'Completed');
+  const mediumCompleted = lessons.filter(l => l.difficulty === 'Medium').every(l => l.status === 'Completed');
+
+  let hasFirstInProgress = false; // ensures only the very first uncompleted is "In Progress", rest are locked (if we want linear progression). 
+  // Let's just unlock all in the current tier.
+  
+  return lessons.map(lesson => {
+    if (lesson.status === 'Completed') return lesson;
+
+    if (lesson.difficulty === 'Easy') {
+      return { ...lesson, status: 'In Progress' };
+    }
+    
+    if (lesson.difficulty === 'Medium') {
+      return { ...lesson, status: easyCompleted ? 'In Progress' : 'Locked' };
+    }
+
+    if (lesson.difficulty === 'Hard') {
+      return { ...lesson, status: mediumCompleted ? 'In Progress' : 'Locked' };
+    }
+
+    return lesson;
+  });
+};
 
 const INITIAL_MESSAGES: MentorMessage[] = [];
 
@@ -97,7 +131,7 @@ const INITIAL_CHATS: ChatSession[] = [];
 export const useAppStore = create<AppState>((set) => ({
   user: INITIAL_USER,
   goals: INITIAL_GOALS,
-  lessons: INITIAL_LESSONS,
+  lessons: recalculateLocks(INITIAL_LESSONS),
   chats: INITIAL_CHATS,
   activeChatId: null,
 
@@ -123,8 +157,10 @@ export const useAppStore = create<AppState>((set) => ({
     const lesson = state.lessons.find(l => l.id === id);
     if (!lesson || lesson.status === 'Completed') return state;
     
+    const newLessons = state.lessons.map(l => l.id === id ? { ...l, status: 'Completed' } : l) as Lesson[];
+    
     return {
-      lessons: state.lessons.map(l => l.id === id ? { ...l, status: 'Completed' } : l),
+      lessons: recalculateLocks(newLessons),
       user: { ...state.user, xp: state.user.xp + lesson.xp }
     };
   }),

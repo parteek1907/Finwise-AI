@@ -54,7 +54,7 @@ export default function SimulatorPage() {
         position: isBuy ? 'belowBar' : 'aboveBar',
         color: isBuy ? '#16a34a' : '#dc2626',
         shape: isBuy ? 'arrowUp' : 'arrowDown',
-        text: `${isBuy ? 'BUY' : 'SELL'} @ $${t.executionPrice.toFixed(2)}`
+        text: `${isBuy ? 'BUY' : 'SELL'} @ ${formatCurrency(t.executionPrice)}`
       } as ChartMarker;
     })
     .sort((a, b) => (a.time as number) - (b.time as number));

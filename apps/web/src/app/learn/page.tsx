@@ -24,7 +24,9 @@ export default function LearnPage() {
   const filteredLessons = lessons.filter(l => {
     const matchesCategory = activeCategory === 'All' || l.category === activeCategory;
     const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = filterStatus === 'All' || l.status === filterStatus;
+    const matchesStatus = filterStatus === 'All' 
+                       || l.status === filterStatus 
+                       || l.difficulty === filterStatus;
     return matchesCategory && matchesSearch && matchesStatus;
   });
 
@@ -93,7 +95,7 @@ export default function LearnPage() {
                 </button>
                 {showFilterDropdown && (
                   <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', background: 'white', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #E5E7EB', zIndex: 10, minWidth: '150px', overflow: 'hidden' }}>
-                    {['All', 'Completed', 'In Progress', 'Locked'].map(status => (
+                    {['All', 'Completed', 'In Progress', 'Locked', 'Easy', 'Medium', 'Hard'].map(status => (
                       <button 
                         key={status}
                         style={{ display: 'block', width: '100%', padding: '12px 16px', textAlign: 'left', background: filterStatus === status ? '#F3F4F6' : 'transparent', border: 'none', cursor: 'pointer', fontSize: '14px', color: filterStatus === status ? '#19533B' : '#4B5563', fontWeight: filterStatus === status ? 500 : 400 }}

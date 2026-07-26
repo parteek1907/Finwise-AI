@@ -21,6 +21,7 @@ export interface FinancialSettings {
   preferredCurrency: 'USD' | 'INR' | 'EUR' | 'GBP';
   riskTolerance: 'Low' | 'Medium' | 'High';
   budgetReminders: boolean;
+  exchangeRates: Record<string, number>;
 }
 
 export interface NotificationSettings {
@@ -57,6 +58,7 @@ export interface SettingsState {
   updateFinancial: (data: Partial<FinancialSettings>) => void;
   updateNotifications: (data: Partial<NotificationSettings>) => void;
   updateAppearance: (data: Partial<AppearanceSettings>) => void;
+  updateExchangeRates: (rates: Record<string, number>) => void;
   terminateSession: (id: string) => void;
   terminateAllOtherSessions: () => void;
   resetAllSettings: () => void;
@@ -108,6 +110,12 @@ const DEFAULT_SETTINGS = {
     preferredCurrency: 'USD' as const,
     riskTolerance: 'Medium' as const,
     budgetReminders: true,
+    exchangeRates: {
+      USD: 1,
+      INR: 83,
+      EUR: 0.92,
+      GBP: 0.79
+    },
   },
   notifications: {
     goalReminders: true,
@@ -161,6 +169,11 @@ export const useSettingsStore = create<SettingsState>()(
       updateAppearance: (data) =>
         set((state) => ({
           appearance: { ...state.appearance, ...data },
+        })),
+
+      updateExchangeRates: (rates) =>
+        set((state) => ({
+          financial: { ...state.financial, exchangeRates: { ...state.financial.exchangeRates, ...rates } },
         })),
 
       terminateSession: (id) =>

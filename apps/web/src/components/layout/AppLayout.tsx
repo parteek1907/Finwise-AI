@@ -19,8 +19,20 @@ export function AppLayout({ children }: AppLayoutProps) {
   const pathname = usePathname();
   const updateUser = useAppStore(state => state.updateUser);
   const updateProfile = useSettingsStore(state => state.updateProfile);
+  const updateExchangeRates = useSettingsStore(state => state.updateExchangeRates);
   const reduceAnimations = useSettingsStore(state => state.appearance.reduceAnimations);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
+
+  useEffect(() => {
+    fetch('/api/market/exchange-rates')
+      .then(res => res.json())
+      .then(rates => {
+        if (rates && Object.keys(rates).length > 0) {
+          updateExchangeRates(rates);
+        }
+      })
+      .catch(console.error);
+  }, [updateExchangeRates]);
 
   useEffect(() => {
     document.documentElement.setAttribute('data-reduce-animations', String(reduceAnimations));

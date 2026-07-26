@@ -1,0 +1,433 @@
+/* ─── Wrapper ─────────────────────────────────────────── */
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+/* ─── Certificate Card ───────────────────────────────── */
+.certificateRoot {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #19533B;
+  border-radius: 20px;
+  padding: 48px 56px;
+  max-width: 760px;
+  width: 100%;
+  box-shadow: 0 24px 64px rgba(25, 83, 59, 0.12);
+  overflow: hidden;
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
+}
+
+/* ─── Decorative corner brackets ─────────────────────── */
+.corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: #19533B;
+  border-style: solid;
+  border-width: 0;
+}
+.cornerTL { top: 16px; left: 16px; border-top-width: 3px; border-left-width: 3px; border-top-left-radius: 4px; }
+.cornerTR { top: 16px; right: 16px; border-top-width: 3px; border-right-width: 3px; border-top-right-radius: 4px; }
+.cornerBL { bottom: 16px; left: 16px; border-bottom-width: 3px; border-left-width: 3px; border-bottom-left-radius: 4px; }
+.cornerBR { bottom: 16px; right: 16px; border-bottom-width: 3px; border-right-width: 3px; border-bottom-right-radius: 4px; }
+
+/* ─── Watermark ──────────────────────────────────────── */
+.watermark {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-30deg);
+  font-size: 7rem;
+  font-weight: 900;
+  letter-spacing: 0.5rem;
+  color: rgba(25, 83, 59, 0.045);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+  font-family: var(--font-geist), sans-serif;
+}
+
+/* ─── Header (Logo + label) ──────────────────────────── */
+.certHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 20px;
+}
+
+.logoGroup {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Exact replica of the sidebar FinWise logo */
+.logoIcon {
+  width: 36px;
+  height: 36px;
+  background-color: #19533B;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.logoIcon::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  background-color: white;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+.logoText {
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  letter-spacing: -0.3px;
+}
+
+.certLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2.5px;
+  color: #19533B;
+  background: rgba(25, 83, 59, 0.07);
+  padding: 4px 12px;
+  border-radius: 20px;
+}
+
+/* ─── Divider ─────────────────────────────────────────── */
+.divider {
+  height: 1px;
+  background: linear-gradient(to right, transparent, #19533B40, transparent);
+  margin: 0 0 32px 0;
+  position: relative;
+  z-index: 1;
+}
+
+/* ─── Body ────────────────────────────────────────────── */
+.certBody {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  margin-bottom: 28px;
+}
+
+.certPresentedTo {
+  font-size: 1rem;
+  color: #6b7280;
+  font-style: italic;
+  margin-bottom: 12px;
+}
+
+/* User's name — elegant script-style stand-out */
+.certUserName {
+  font-family: 'Georgia', 'Times New Roman', serif;
+  font-size: 3.2rem;
+  font-weight: 400;
+  font-style: italic;
+  color: #19533B;
+  margin: 0 0 20px;
+  line-height: 1.1;
+  border-bottom: 1.5px solid #d1fae5;
+  padding-bottom: 16px;
+  display: inline-block;
+  min-width: 320px;
+}
+
+.certReason {
+  font-size: 1rem;
+  color: #6b7280;
+  margin-bottom: 10px;
+}
+
+.certCourseTitle {
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  letter-spacing: -0.3px;
+  line-height: 1.3;
+}
+
+/* ─── Score Badge ─────────────────────────────────────── */
+.scoreBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.9rem;
+  font-weight: 600;
+  padding: 8px 20px;
+  border-radius: 30px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+.checkIcon {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+/* ─── Footer ─────────────────────────────────────────── */
+.certFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.footerBlock {
+  text-align: center;
+  width: 160px;
+}
+
+.footerSignature {
+  font-family: var(--font-geist), sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #19533B;
+  border-bottom: 1px solid #d1d5db;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.footerDate {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #d1d5db;
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.footerLabel {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+}
+
+/* ─── Seal (matches FinWise green palette) ─────────────── */
+.footerSeal {
+  width: 88px;
+  height: 88px;
+  background: linear-gradient(135deg, #19533B, #0f3828);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 20px rgba(25, 83, 59, 0.35);
+}
+
+.sealRing {
+  width: 74px;
+  height: 74px;
+  border: 2px dashed rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+/* Mini FinWise logo icon inside seal */
+.sealIcon {
+  width: 20px;
+  height: 20px;
+  background-color: white;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+.sealText {
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  font-family: var(--font-geist), sans-serif;
+}
+
+/* ─── Action Buttons ─────────────────────────────────── */
+.actionRow {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.downloadBtn,
+.linkedinBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  border: none;
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
+}
+
+.downloadBtn {
+  background: #f9fafb;
+  color: #111827;
+  border: 1.5px solid #e5e7eb;
+}
+
+.downloadBtn:hover:not(:disabled) {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.downloadBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.linkedinBtn {
+  background: #0a66c2;
+  color: white;
+}
+
+.linkedinBtn:hover {
+  background: #004182;
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* ─── LinkedIn Modal ─────────────────────────────────── */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+}
+
+.modalContent {
+  background: white;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 500px;
+  padding: 32px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  font-family: var(--font-geist), var(--font-inter), sans-serif;
+}
+
+.modalContent h3 {
+  font-size: 1.4rem;
+  color: #111827;
+  margin: 0;
+}
+
+.modalContent p {
+  color: #4b5563;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+.takeawayInput,
+.captionInput {
+  width: 100%;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  resize: vertical;
+  background: #f9fafb;
+}
+
+.takeawayInput {
+  min-height: 80px;
+}
+
+.captionInput {
+  min-height: 120px;
+}
+
+.takeawayInput:focus,
+.captionInput:focus {
+  outline: none;
+  border-color: #19533B;
+  background: white;
+}
+
+.generateBtn {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+.generateBtn:hover:not(:disabled) {
+  background: #e5e7eb;
+}
+
+.generateBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.closeModalBtn {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.closeModalBtn:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
