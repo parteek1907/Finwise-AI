@@ -246,6 +246,59 @@ def chat_title_endpoint(request: TitleRequest):
         print(f"Error generating title: {e}")
         return {"title": "New Chat"}
 
+class EmotionRequest(BaseModel):
+    message: str
+
+@app.post("/api/emotion-ai")
+def emotion_ai_endpoint(request: EmotionRequest):
+    system_prompt = (
+        "You are Groq's expert financial psychologist and behavioral finance analyst. "
+        "Your task is to carefully analyze the user's message to determine their true underlying emotion, "
+        "objective risk level, and any genuine cognitive biases they are exhibiting. "
+        "Do not assume the user is making a trade; they might be asking about a general financial situation, "
+        "a potential scam, or personal finance. "
+        "All values you return MUST be strictly accurate and TRUE based on the exact context of the user's input. "
+        "\nSCORING RUBRIC FOR CONFIDENCE & BIASES:"
+        "\n- Confidence (0-100%): This must reflect how strongly the user is exhibiting the emotion or bias, NOT just how obvious the situation is. "
+        "If the user explicitly expresses doubt, uncertainty, or skepticism (e.g., 'I am not sure', 'Should I do it?'), the confidence score MUST be lower (30-60%) because their bias is not fully cemented. "
+        "If they are completely resolute and acting blindly (e.g., 'I am going all in!'), confidence should be high (80-100%)."
+        "\n- Biases: MUST specifically identify well-known behavioral finance/cognitive biases (e.g., Gullibility, Greed, FOMO, Confirmation Bias, Trust Bias, Loss Aversion). "
+        "Do not just say 'Uncertainty'. Dig deeper into their psychological vulnerability."
+        "\nCRITICAL INSTRUCTION: If the user asks an irrelevant, non-financial question (e.g., 'hello', 'am i gay', 'what is the weather', 'who are you'), "
+        "you MUST NOT analyze them financially. You MUST set 'emotion' to 'Irrelevant', 'confidence' to 0, 'risk' to 'None', 'biases' to [], "
+        "and 'summary' to 'This query is not related to finance, investing, or market psychology.', and provide an empty array for recommendations.\n"
+        "EXAMPLE 1 (Irrelevant):\n"
+        "User: 'am i gay'\n"
+        "Output: {\"emotion\": \"Irrelevant\", \"confidence\": 0, \"risk\": \"None\", \"biases\": [], \"summary\": \"This query is not related to finance, investing, or market psychology.\", \"recommendations\": []}\n"
+        "EXAMPLE 2 (Uncertain about a Scam):\n"
+        "User: 'my friend promises me 1000 rupees when i give him 200 should i do it im not sure'\n"
+        "Output: {\"emotion\": \"Uncertainty / Mild Greed\", \"confidence\": 45, \"risk\": \"Very High\", \"biases\": [\"Trust Bias\", \"Authority Bias\"], \"summary\": \"The user is being lured into a classic advance-fee scheme, but they are exhibiting healthy skepticism and doubt rather than full gullibility.\", \"recommendations\": [\"Trust your gut feeling—do not send any money.\", \"Recognize that guaranteed high returns from friends are common scams.\", \"Politely decline the offer and protect your savings.\"]}\n\n"
+        "You MUST output your response in valid JSON format ONLY with the following schema:\n"
+        "{\n"
+        "  \"emotion\": \"Short string of the primary emotion detected (e.g., Greed, Naivety, Panic, FOMO)\",\n"
+        "  \"confidence\": number (0-100, representing how clearly the emotion/bias is shown in their text),\n"
+        "  \"risk\": \"String (Low, Medium, High, Very High, or None for irrelevant queries)\",\n"
+        "  \"biases\": [\"Array of actual cognitive biases detected (e.g., Authority Bias, Gullibility). Return empty array if none exist.\"],\n"
+        "  \"summary\": \"A grounded, logical summary explaining exactly why they feel this way and the true reality of the situation.\",\n"
+        "  \"recommendations\": [\"Array of 3 highly specific, actionable, rational steps they must take regarding their exact situation.\"]\n"
+        "}\n"
+    )
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": request.message}
+            ],
+            model="llama-3.3-70b-versatile",
+            response_format={"type": "json_object"},
+            temperature=0.1
+        )
+        import json
+        return json.loads(chat_completion.choices[0].message.content)
+    except Exception as e:
+        print(f"Error calling Groq API: {e}")
+        raise HTTPException(status_code=500, detail="Failed to analyze emotion.")
+
 import finnhub
 
 finnhub_api_key = os.getenv("FINNHUB_API_KEY")

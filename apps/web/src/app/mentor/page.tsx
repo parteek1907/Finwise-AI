@@ -23,6 +23,19 @@ export default function MentorPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
+    }
+  };
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputValue]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -31,6 +44,14 @@ export default function MentorPage() {
   useEffect(() => {
     scrollToBottom();
   }, [history, isTyping]);
+
+  useEffect(() => {
+    const draft = sessionStorage.getItem('mentorDraft');
+    if (draft) {
+      setInputValue(draft);
+      sessionStorage.removeItem('mentorDraft');
+    }
+  }, []);
 
   const SUGGESTED_PROMPTS = [
     { label: "Explain compound interest simply", icon: Sparkles },
@@ -110,15 +131,17 @@ export default function MentorPage() {
         }).catch(e => console.error("Title generation error", e));
       }
 
+      const aiSettings = useSettingsStore.getState().aiMentor;
+      
       // Prepare messages payload for backend
-      const apiMessages = history.map(msg => ({
+      const apiMessages = aiSettings.rememberChatHistory ? history.map(msg => ({
         role: msg.sender === 'user' ? 'user' : 'assistant',
         content: msg.text
-      }));
+      })) : [];
+      
       apiMessages.push({ role: 'user', content: userMessage });
 
       const apiUrl = '/api';
-      const aiSettings = useSettingsStore.getState().aiMentor;
       const response = await fetch(`${apiUrl}/mentor`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -192,7 +215,7 @@ export default function MentorPage() {
               className={styles.sidebarToggleBtn}
               title={isSidebarOpen ? "Close Sidebar" : "Open Sidebar"}
             >
-              {isSidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
+              {isSidebarOpen ? <PanelLeftClose size={26} /> : <PanelLeft size={26} />}
             </button>
             {/* Subtle trading animation at top */}
             <div className={styles.marketTicker}>
@@ -318,6 +341,7 @@ export default function MentorPage() {
                   <Mic size={20} />
                 </button>
                 <textarea 
+                  ref={textareaRef}
                   placeholder="Ask about investing, budgeting, scams, savings..." 
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
@@ -325,6 +349,7 @@ export default function MentorPage() {
                   onFocus={() => setIsFocused(true)}
                   onBlur={() => setIsFocused(false)}
                   rows={1}
+                  style={{ maxHeight: '200px', overflowY: 'auto' }}
                 />
                 <button 
                   className={styles.sendBtn} 

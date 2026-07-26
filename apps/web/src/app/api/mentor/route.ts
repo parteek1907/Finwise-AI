@@ -23,33 +23,27 @@ export async function POST(req: Request) {
 
     let aiPreferencesContext = "";
     if (aiSettings) {
-      const mode = aiSettings.mode || 'Advisor';
+      const knowledgeLevel = aiSettings.knowledgeLevel || 'Intermediate';
       const len = aiSettings.responseLength || 'Balanced';
-      const personality = aiSettings.personality || aiSettings.aiPersonality || 'Encouraging';
+      const personality = aiSettings.aiPersonality || 'Friendly';
 
-      const modeInstruction = mode === 'Coach'
-        ? 'Act as an energetic financial coach focusing on habits, motivation, budgeting milestones, and personal accountability.'
-        : mode === 'Analyst'
-        ? 'Act as a quantitative financial analyst focusing strictly on numerical precision, metrics, data tables, ROI, and mathematical trade-offs.'
-        : mode === 'Tutor'
-        ? 'Act as an empathetic financial tutor explaining core financial concepts step-by-step using clear, simple analogies.'
-        : 'Act as a strategic wealth advisor focusing on long-term portfolio growth, risk management, and structured planning.';
+      const knowledgeInstruction = knowledgeLevel === 'Beginner'
+        ? 'Act as an empathetic financial tutor explaining core concepts simply without heavy jargon, focusing on analogies and basics.'
+        : knowledgeLevel === 'Advanced'
+        ? 'Act as a quantitative financial analyst focusing strictly on numerical precision, advanced metrics, and deep financial analysis.'
+        : 'Act as a standard strategic wealth advisor giving balanced guidance with standard financial metrics.';
 
-      const lengthInstruction = len === 'Concise' 
+      const lengthInstruction = len === 'Short' 
         ? 'CRITICAL: Keep your response extremely brief, punchy, and to the point. Maximum 2-3 short sentences or bullet points (under 80 words total).' 
         : len === 'Detailed' 
         ? 'Provide a thorough, comprehensive breakdown with step-by-step calculations, sub-headings, and detailed pros/cons.' 
         : 'Keep your response balanced and structured (2-3 short scannable paragraphs with key takeaways).';
 
-      const personalityInstruction = personality === 'Direct' 
-        ? 'Be sharp, direct, concise, and no-nonsense. Zero filler or unnecessary fluff.' 
-        : personality === 'Analytical' 
-        ? 'Use objective, data-centric, logical language focused strictly on facts and statistics.' 
-        : personality === 'Socratic' 
-        ? 'Use the Socratic method: explain the core idea, then ask 1-2 thoughtful guiding questions at the end to help the user evaluate their options.' 
-        : 'Maintain a warm, encouraging, positive coaching tone with supportive reinforcement.';
+      const personalityInstruction = personality === 'Professional' 
+        ? 'Be sharp, direct, structured, and no-nonsense. Provide executive-level communication.' 
+        : 'Maintain a warm, conversational, friendly coaching tone with supportive reinforcement.';
 
-      aiPreferencesContext = `\n\nUser AI Settings & Persona Controls:\n- Mode: ${mode} (${modeInstruction})\n- Response Length: ${len} (${lengthInstruction})\n- Personality: ${personality} (${personalityInstruction})\n`;
+      aiPreferencesContext = `\n\nUser AI Settings & Persona Controls:\n- Knowledge Level: ${knowledgeLevel} (${knowledgeInstruction})\n- Response Length: ${len} (${lengthInstruction})\n- Personality: ${personality} (${personalityInstruction})\n`;
     }
 
     const nameToUse = userName || "Alex";

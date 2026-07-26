@@ -213,13 +213,13 @@
 
 .sidebarToggleBtn {
   position: absolute;
-  top: 1rem;
-  left: 1rem;
+  top: 0.5rem;
+  left: 0.5rem;
   z-index: 10;
   background: transparent;
   border: none;
   color: #8c9091;
-  padding: 0.5rem;
+  padding: 1rem;
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -587,10 +587,10 @@
 
 .inputWrapper {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   background-color: white;
   border: 1px solid #E5E7EB;
-  border-radius: 9999px;
+  border-radius: 24px;
   padding: 0.5rem 0.5rem 0.5rem 1rem;
   transition: all 0.2s;
   box-shadow: 0 4px 20px rgba(0,0,0,0.03);

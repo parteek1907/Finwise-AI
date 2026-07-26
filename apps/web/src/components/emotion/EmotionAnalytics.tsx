@@ -65,12 +65,12 @@ export const EmotionAnalytics: React.FC<EmotionAnalyticsProps> = ({ stats }) => 
         <div className={styles.chartCard}>
           <h3>Emotion Distribution</h3>
           <div className={styles.chartWrapper}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={380}>
               <PieChart>
                 <Pie
                   data={pieData}
                   cx="50%"
-                  cy="50%"
+                  cy="45%"
                   innerRadius={60}
                   outerRadius={100}
                   paddingAngle={5}
@@ -84,7 +84,7 @@ export const EmotionAnalytics: React.FC<EmotionAnalyticsProps> = ({ stats }) => 
                   formatter={(value: any) => [`${value} instances`, 'Count']}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
                 />
-                <Legend verticalAlign="bottom" height={36} />
+                <Legend verticalAlign="bottom" wrapperStyle={{ paddingTop: '20px', fontSize: '12px' }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -94,7 +94,7 @@ export const EmotionAnalytics: React.FC<EmotionAnalyticsProps> = ({ stats }) => 
         <div className={styles.chartCard}>
           <h3>Top Behavioral Biases</h3>
           <div className={styles.chartWrapper}>
-            <ResponsiveContainer width="100%" height={300}>
+            <ResponsiveContainer width="100%" height={380}>
               <BarChart
                 data={barData}
                 layout="vertical"
@@ -102,12 +102,12 @@ export const EmotionAnalytics: React.FC<EmotionAnalyticsProps> = ({ stats }) => 
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f3f4f6" />
                 <XAxis type="number" hide />
-                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#6b7280' }} width={120} />
+                <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 14, fill: '#4b5563', fontWeight: 500 }} width={140} />
                 <RechartsTooltip 
                   cursor={{ fill: '#f9fafb' }}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
                 />
-                <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]}>
+                <Bar dataKey="count" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={48}>
                   {barData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
@@ -124,9 +124,10 @@ export const EmotionAnalytics: React.FC<EmotionAnalyticsProps> = ({ stats }) => 
             <ResponsiveContainer width="100%" height={300}>
               <LineChart data={stats.emotionTrend} margin={{ top: 5, right: 20, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
+                <XAxis dataKey="id" tickFormatter={(val) => stats.emotionTrend.find(d => d.id === val)?.date || val} axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} />
                 <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: '#9ca3af' }} domain={[0, 100]} />
                 <RechartsTooltip 
+                  labelFormatter={(val) => stats.emotionTrend.find(d => d.id === val)?.date || val}
                   contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 15px rgba(0,0,0,0.1)' }}
                 />
                 <Line type="monotone" dataKey="confidence" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />

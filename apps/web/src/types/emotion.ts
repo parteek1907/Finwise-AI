@@ -1,4 +1,4 @@
-export type RiskLevel = 'Low' | 'Medium' | 'High' | 'Very High';
+export type RiskLevel = 'Low' | 'Medium' | 'High' | 'Very High' | 'None';
 
 export interface EmotionAnalysis {
   emotion: string;
@@ -22,6 +22,6 @@ export interface EmotionStats {
   mostCommonEmotion: string;
   biasFrequencies: Record<string, number>;
   emotionDistribution: Record<string, number>;
-  riskTrend: { date: string; riskScore: number }[];
-  emotionTrend: { date: string; confidence: number }[];
+  riskTrend: { id?: string; date: string; riskScore: number }[];
+  emotionTrend: { id?: string; date: string; confidence: number }[];
 }

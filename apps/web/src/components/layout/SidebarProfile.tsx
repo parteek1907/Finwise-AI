@@ -45,11 +45,17 @@ export function SidebarProfile({ isCollapsed = false }: { isCollapsed?: boolean 
   const getAvatarUrl = () => {
     if (user?.photoURL && !imgError) return user.photoURL;
     if (profile.avatar && !imgError) return profile.avatar;
-    const name = user?.displayName || profile.name || user?.email || profile.email || 'User';
+    const providerData = user?.providerData;
+    const googleProfile = providerData?.find((p: any) => p.providerId === 'google.com');
+    const realGoogleName = googleProfile?.displayName;
+    const name = profile.name || realGoogleName || user?.displayName || user?.email || profile.email || 'User';
     return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=19533B&color=fff`;
   };
 
-  const displayName = user?.displayName || profile.name || 'User';
+  const providerData = user?.providerData;
+  const googleProfile = providerData?.find((p: any) => p.providerId === 'google.com');
+  const realGoogleName = googleProfile?.displayName;
+  const displayName = profile.name || realGoogleName || user?.displayName || 'User';
   const displayEmail = user?.email || profile.email || '';
 
   return (

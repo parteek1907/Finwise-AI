@@ -39,17 +39,36 @@ export function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        const rawName = firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : '');
-        const formattedName = rawName ? rawName.charAt(0).toUpperCase() + rawName.slice(1) : '';
+        const providerData = firebaseUser.providerData;
+        const googleProfile = providerData?.find((p: any) => p.providerId === 'google.com');
+        const realGoogleName = googleProfile?.displayName;
+
+        const rawName = realGoogleName || firebaseUser.displayName || (firebaseUser.email ? firebaseUser.email.split('@')[0] : '');
+        const emailPrefix = firebaseUser.email ? firebaseUser.email.split('@')[0] : '';
+        const formattedEmailPrefix = emailPrefix ? emailPrefix.charAt(0).toUpperCase() + emailPrefix.slice(1) : '';
         const userEmail = firebaseUser.email || '';
         const userAvatar = firebaseUser.photoURL || '';
 
-        updateUser({ name: formattedName || 'User' });
-        updateProfile({
-          name: formattedName || 'User',
-          email: userEmail,
-          avatar: userAvatar,
-        });
+        const storeProfile = useSettingsStore.getState().profile;
+        const currentName = storeProfile.name;
+        const currentEmail = storeProfile.email;
+        
+        const isDifferentUser = currentEmail && currentEmail !== userEmail;
+        const isStuckName = currentName === 'Aditya Tanwar' || currentName === firebaseUser.displayName || currentName === formattedEmailPrefix;
+
+        if (!currentName || isDifferentUser || isStuckName) {
+          updateUser({ name: rawName || 'User' });
+          updateProfile({
+            name: rawName || 'User',
+            email: userEmail,
+            avatar: userAvatar,
+          });
+        } else {
+          updateProfile({
+            email: userEmail,
+            avatar: userAvatar,
+          });
+        }
       }
     });
 

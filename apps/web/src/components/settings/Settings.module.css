@@ -702,3 +702,95 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* Phone Input Split */
+.phoneInputContainer {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.countryCodeDropdownWrapper {
+  position: relative;
+  flex: 0 0 100px;
+}
+
+.countryCodeSelect {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--color-border, #E5E7EB);
+  background-color: var(--color-surface-bg, #F9FAFB);
+  font-size: 0.95rem;
+  color: var(--color-text-primary, #111827);
+  outline: none;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.countryCodeSelect:focus,
+.countryCodeSelect:hover {
+  border-color: #19533B;
+  box-shadow: 0 0 0 3px rgba(25, 83, 59, 0.1);
+  background-color: #FFFFFF;
+}
+
+.countryCodeList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 250px;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+  z-index: 10;
+}
+
+.phoneNumberInput {
+  flex: 1;
+}
+
+/* Location Autocomplete */
+.autocompleteWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.autocompleteList {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  list-style: none;
+  padding: 0.5rem 0;
+  margin: 0;
+  z-index: 10;
+}
+
+.autocompleteItem {
+  padding: 0.75rem 1rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  color: #111827;
+  transition: background-color 0.2s;
+}
+
+.autocompleteItem:hover {
+  background-color: #F9FAFB;
+}

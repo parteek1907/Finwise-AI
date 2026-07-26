@@ -268,9 +268,9 @@ button {
 }
 
 /* Performance Optimization: Complete Motion & Lag Reduction */
-html[data-reduce-animations="true"] *,
-html[data-reduce-animations="true"] *::before,
-html[data-reduce-animations="true"] *::after {
+html[data-reduce-animations="true"] *:not([class*="toggle"]):not([class*="Toggle"]):not([class*="toggleKnob"]),
+html[data-reduce-animations="true"] *:not([class*="toggle"]):not([class*="Toggle"]):not([class*="toggleKnob"])::before,
+html[data-reduce-animations="true"] *:not([class*="toggle"]):not([class*="Toggle"]):not([class*="toggleKnob"])::after {
   animation: none !important;
   animation-duration: 0.01ms !important;
   animation-iteration-count: 1 !important;

@@ -6,7 +6,7 @@ export const useEmotion = () => {
   const [history, setHistory] = useState<EmotionHistory[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [currentAnalysis, setCurrentAnalysis] = useState<EmotionAnalysis | null>(null);
+  const [currentAnalysis, setCurrentAnalysis] = useState<EmotionHistory | null>(null);
   const [stats, setStats] = useState<EmotionStats | null>(null);
 
   useEffect(() => {
@@ -27,9 +27,10 @@ export const useEmotion = () => {
 
     const totalAnalyses = data.length;
     let totalConfidence = 0;
+    let relevantCount = 0;
     
     // Risk weighting
-    const riskScores: Record<string, number> = { 'Low': 1, 'Medium': 2, 'High': 3, 'Very High': 4 };
+    const riskScores: Record<string, number> = { 'Low': 1, 'Medium': 2, 'High': 3, 'Very High': 4, 'None': 0 };
     let totalRiskScore = 0;
 
     const emotionCounts: Record<string, number> = {};
@@ -41,23 +42,27 @@ export const useEmotion = () => {
     const reversedData = [...data].reverse();
 
     reversedData.forEach(entry => {
+      if (entry.emotion === 'Irrelevant') return;
+
       totalConfidence += entry.confidence;
-      totalRiskScore += riskScores[entry.risk];
+      totalRiskScore += riskScores[entry.risk] || 0;
+      relevantCount++;
+      
+      const dateObj = new Date(entry.timestamp);
+      const shortDate = `${dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+      riskTrend.push({ id: entry.id, date: shortDate, riskScore: riskScores[entry.risk] || 0 });
+      emotionTrend.push({ id: entry.id, date: shortDate, confidence: entry.confidence });
 
       emotionCounts[entry.emotion] = (emotionCounts[entry.emotion] || 0) + 1;
       
       entry.biases.forEach(bias => {
         biasCounts[bias] = (biasCounts[bias] || 0) + 1;
       });
-
-      const shortDate = new Date(entry.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-      riskTrend.push({ date: shortDate, riskScore: riskScores[entry.risk] });
-      emotionTrend.push({ date: shortDate, confidence: entry.confidence });
     });
 
-    const averageConfidence = Math.round(totalConfidence / totalAnalyses);
-    const avgRiskNum = Math.round(totalRiskScore / totalAnalyses);
-    const averageRisk = Object.keys(riskScores).find(key => riskScores[key] === avgRiskNum) as any || 'Medium';
+    const averageConfidence = relevantCount > 0 ? Math.round(totalConfidence / relevantCount) : 0;
+    const avgRiskNum = relevantCount > 0 ? Math.round(totalRiskScore / relevantCount) : 0;
+    const averageRisk = avgRiskNum > 0 ? (Object.keys(riskScores).find(key => riskScores[key] === avgRiskNum) as any || 'Medium') : 'None';
 
     let mostCommonEmotion = '';
     let maxCount = 0;
@@ -69,10 +74,10 @@ export const useEmotion = () => {
     }
 
     setStats({
-      totalAnalyses,
+      totalAnalyses: relevantCount,
       averageRisk,
       averageConfidence,
-      mostCommonEmotion,
+      mostCommonEmotion: mostCommonEmotion || 'N/A',
       biasFrequencies: biasCounts,
       emotionDistribution: emotionCounts,
       riskTrend,
@@ -87,8 +92,8 @@ export const useEmotion = () => {
     
     try {
       const result = await analyzeEmotion(query);
-      setCurrentAnalysis(result);
-      saveEmotion(query, result);
+      const savedResult = saveEmotion(query, result);
+      setCurrentAnalysis(savedResult);
       loadHistory(); // reload to update stats and history list
     } catch (err: any) {
       setError(err.message || 'Failed to analyze emotion.');

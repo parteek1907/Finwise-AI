@@ -537,3 +537,72 @@
   flex-shrink: 0;
   margin-top: 2px;
 }
+
+/* AI Mentor CTA */
+.mentorCtaContainer {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: linear-gradient(145deg, #f0fdf4, #dcfce7);
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.mentorCtaContent {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.mentorCtaIcon {
+  color: #16a34a;
+  flex-shrink: 0;
+}
+
+.mentorCtaTitle {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #166534;
+  margin: 0 0 0.25rem 0;
+}
+
+.mentorCtaDesc {
+  font-size: 0.85rem;
+  color: #15803d;
+  margin: 0;
+}
+
+.mentorCtaBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #16a34a;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.mentorCtaBtn:hover {
+  background-color: #15803d;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+  .mentorCtaContainer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .mentorCtaBtn {
+    width: 100%;
+    justify-content: center;
+  }
+}

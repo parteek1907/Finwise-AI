@@ -29,6 +29,30 @@ import styles from './Settings.module.css';
 
 type TabType = 'profile' | 'aiMentor' | 'financial' | 'notifications' | 'security' | 'appearance' | 'privacy';
 
+const COUNTRY_CODES = [
+  { code: '+1', country: 'US/Canada' },
+  { code: '+44', country: 'UK' },
+  { code: '+91', country: 'India' },
+  { code: '+61', country: 'Australia' },
+  { code: '+49', country: 'Germany' },
+  { code: '+33', country: 'France' },
+  { code: '+81', country: 'Japan' },
+  { code: '+86', country: 'China' },
+  { code: '+971', country: 'UAE' },
+  { code: '+65', country: 'Singapore' }
+];
+
+const SUGGESTED_LOCATIONS = [
+  "Chandigarh, India", "Chennai, India", "Chicago, USA", "Cape Town, South Africa", 
+  "Delhi, India", "Dallas, USA", "Denver, USA", "Dubai, UAE",
+  "London, UK", "Los Angeles, USA", "Lisbon, Portugal",
+  "Mumbai, India", "Miami, USA", "Melbourne, Australia",
+  "New York, USA", "New Delhi, India", "Nairobi, Kenya",
+  "Paris, France", "Pune, India", "Perth, Australia",
+  "San Francisco, USA", "Seattle, USA", "Sydney, Australia",
+  "Tokyo, Japan", "Toronto, Canada", "Taipei, Taiwan"
+];
+
 function ToggleSwitch({ checked, onChange, ariaLabel = "Toggle option" }: { checked: boolean; onChange: (val: boolean) => void; ariaLabel?: string }) {
   return (
     <button
@@ -77,25 +101,64 @@ export function SettingsLayout() {
 
   const { chats, createNewChat, user: appUser } = useAppStore();
 
+  // Initial Setup
+  const initialName = profile.name || appUser.name || 'John Doe';
+  const initialEmail = profile.email || appUser.email || 'johndoe@example.com';
+  const initialLocation = (profile.location === 'Chandigarh, India') ? '' : profile.location;
+  
+  let initialPhone = profile.phone || '';
+  if (initialPhone === '+91 9996334595' || initialPhone.includes('9996334595')) {
+    initialPhone = '';
+  }
+  const foundCode = COUNTRY_CODES.find(c => initialPhone.startsWith(c.code));
+  const initialCountryCode = foundCode ? foundCode.code : '+1';
+  const initialPhoneNumber = foundCode ? initialPhone.replace(foundCode.code, '').trim() : initialPhone.trim();
+
   // Local Form States
   const [profileForm, setProfileForm] = useState({
-    name: profile.name || appUser.name || '',
-    email: profile.email || appUser.email || '',
-    phone: profile.phone || '',
-    location: profile.location || '',
+    name: initialName,
+    email: initialEmail,
     avatar: profile.avatar || '',
   });
+  
+  const [countryCode, setCountryCode] = useState(initialCountryCode);
+  const [phoneNumber, setPhoneNumber] = useState(initialPhoneNumber);
+  const [locationQuery, setLocationQuery] = useState(initialLocation);
+  const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+  const locationRef = useRef<HTMLDivElement>(null);
+
+  const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+  const countryRef = useRef<HTMLDivElement>(null);
 
   // Sync local form with store when store updates (e.g., after Firebase auth loads)
   useEffect(() => {
-    setProfileForm({
-      name: profile.name || appUser.name || '',
-      email: profile.email || appUser.email || '',
-      phone: profile.phone || '',
-      location: profile.location || '',
-      avatar: profile.avatar || '',
-    });
-  }, [profile.name, profile.email, profile.phone, profile.location, profile.avatar, appUser.name, appUser.email]);
+    if (profile.name || appUser.name) {
+      setProfileForm(prev => ({
+        ...prev,
+        name: profile.name || appUser.name || prev.name,
+        email: profile.email || appUser.email || prev.email,
+        avatar: profile.avatar || prev.avatar,
+      }));
+    }
+  }, [profile.name, profile.email, profile.avatar, appUser.name, appUser.email]);
+
+  // Click outside listener for dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (locationRef.current && !locationRef.current.contains(event.target as Node)) {
+        setShowLocationDropdown(false);
+      }
+      if (countryRef.current && !countryRef.current.contains(event.target as Node)) {
+        setShowCountryDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const filteredLocations = SUGGESTED_LOCATIONS.filter(loc => 
+    loc.toLowerCase().includes(locationQuery.toLowerCase())
+  );
 
   const [profileErrors, setProfileErrors] = useState<{ name?: string; email?: string }>({});
 
@@ -158,7 +221,15 @@ export function SettingsLayout() {
     }
 
     setProfileErrors({});
-    updateProfile(profileForm);
+    
+    const finalPhone = phoneNumber ? `${countryCode} ${phoneNumber}` : '';
+    
+    updateProfile({ 
+      ...profileForm, 
+      phone: finalPhone, 
+      location: locationQuery 
+    });
+    
     if (auth.currentUser) {
       import('firebase/auth').then(({ updateProfile: updateFirebaseProfile }) => {
         if (auth.currentUser) {
@@ -389,22 +460,78 @@ export function SettingsLayout() {
 
                   <div className={styles.inputGroup}>
                     <label htmlFor="phone">Phone Number</label>
-                    <input
-                      id="phone"
-                      type="tel"
-                      value={profileForm.phone}
-                      onChange={(e) => setProfileForm({ ...profileForm, phone: e.target.value })}
-                    />
+                    <div className={styles.phoneInputContainer}>
+                      <div className={styles.countryCodeDropdownWrapper} ref={countryRef}>
+                        <div 
+                          className={styles.countryCodeSelect} 
+                          onClick={() => setShowCountryDropdown(!showCountryDropdown)}
+                        >
+                          {countryCode}
+                        </div>
+                        {showCountryDropdown && (
+                          <ul className={styles.countryCodeList}>
+                            {COUNTRY_CODES.map(c => (
+                              <li 
+                                key={c.code}
+                                className={styles.autocompleteItem}
+                                onClick={() => {
+                                  setCountryCode(c.code);
+                                  setShowCountryDropdown(false);
+                                }}
+                              >
+                                {c.code} {c.country}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
+                      <input
+                        id="phone"
+                        type="tel"
+                        maxLength={10}
+                        placeholder="Enter 10 digit number"
+                        value={phoneNumber}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 10);
+                          setPhoneNumber(val);
+                        }}
+                        className={styles.phoneNumberInput}
+                      />
+                    </div>
                   </div>
 
-                  <div className={styles.inputGroup}>
+                  <div className={styles.inputGroup} ref={locationRef}>
                     <label htmlFor="location">Location</label>
-                    <input
-                      id="location"
-                      type="text"
-                      value={profileForm.location}
-                      onChange={(e) => setProfileForm({ ...profileForm, location: e.target.value })}
-                    />
+                    <div className={styles.autocompleteWrapper}>
+                      <input
+                        id="location"
+                        type="text"
+                        placeholder="Type to search location..."
+                        value={locationQuery}
+                        onChange={(e) => {
+                          setLocationQuery(e.target.value);
+                          setShowLocationDropdown(true);
+                        }}
+                        onFocus={() => setShowLocationDropdown(true)}
+                        autoComplete="off"
+                      />
+                      {showLocationDropdown && filteredLocations.length > 0 && (
+                        <ul className={styles.autocompleteList}>
+                          {filteredLocations.map(loc => (
+                            <li 
+                              key={loc}
+                              className={styles.autocompleteItem}
+                              onClick={() => {
+                                setLocationQuery(loc);
+                                setShowLocationDropdown(false);
+                              }}
+                            >
+                              {loc}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -523,17 +650,12 @@ export function SettingsLayout() {
                   <h4>Remember Chat History</h4>
                   <p>Allow the AI Mentor to retain context across your conversation sessions.</p>
                 </div>
-                <button
-                  type="button"
-                  className={`${styles.toggleSwitch} ${
-                    aiMentor.rememberChatHistory ? styles.toggleOn : ''
-                  }`}
-                  onClick={() => {
-                    const next = !aiMentor.rememberChatHistory;
+                <ToggleSwitch
+                  checked={aiMentor.rememberChatHistory}
+                  onChange={(next) => {
                     updateAIMentor({ rememberChatHistory: next });
                     showToast(`Chat history retention ${next ? 'enabled' : 'disabled'}`);
                   }}
-                  aria-pressed={aiMentor.rememberChatHistory}
                 />
               </div>
             </div>
