@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { BookOpen, CheckCircle, Loader2 } from 'lucide-react';
+import { BookOpen, CheckCircle, Loader2, Lightbulb } from 'lucide-react';
 import { Quote } from '../../types/market';
 import { useTradeExecution } from '../../hooks/usePortfolio';
 import { formatCurrency } from '../../utils/formatters';
@@ -15,6 +15,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
   const [quantity, setQuantity] = useState<number>(1);
   const [reflection, setReflection] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showMentor, setShowMentor] = useState(false);
   
   const { submitOrder, isSubmitting, error } = useTradeExecution();
 
@@ -68,8 +69,13 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
           <input 
             type="number" 
             min="1"
+            max="999"
             value={quantity} 
-            onChange={(e) => setQuantity(Number(e.target.value))}
+            onChange={(e) => {
+              const val = Number(e.target.value);
+              if (val > 999) setQuantity(999);
+              else setQuantity(val);
+            }}
           />
         </div>
         <div className={styles.inputGroup}>
@@ -102,19 +108,54 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
 
       {error && <div className={styles.errorMessage}>{error}</div>}
 
-      <button 
-        className={success ? styles.successBtn : styles.submitOrderBtn}
-        onClick={handleSubmit}
-        disabled={isSubmitting || quantity <= 0 || success}
-      >
-        {isSubmitting ? (
-          <><Loader2 size={16} className={styles.spinner} /> Processing...</>
-        ) : success ? (
-          <><CheckCircle size={16} /> Order Filled</>
-        ) : (
-          `Submit ${side} Order`
-        )}
-      </button>
+      <div className={styles.actionButtons}>
+        <button 
+          className={styles.mentorBtn}
+          onClick={() => setShowMentor(true)}
+        >
+          <Lightbulb size={16} />
+          AI Mentor
+        </button>
+
+        <button 
+          className={success ? styles.successBtn : styles.submitOrderBtn}
+          onClick={handleSubmit}
+          disabled={isSubmitting || quantity <= 0 || success}
+        >
+          {isSubmitting ? (
+            <><Loader2 size={16} className={styles.spinner} /> Processing...</>
+          ) : success ? (
+            <><CheckCircle size={16} /> Order Filled</>
+          ) : (
+            `Submit ${side} Order`
+          )}
+        </button>
+      </div>
+
+      {showMentor && (
+        <div className={styles.mentorOverlay}>
+          <div className={styles.mentorModal}>
+            <div className={styles.mentorHeader}>
+              <div className={styles.mentorTitle}>
+                <Lightbulb size={20} className={styles.mentorIcon} />
+                <h3>FinWise AI Mentor</h3>
+              </div>
+              <button onClick={() => setShowMentor(false)} className={styles.closeBtn}>×</button>
+            </div>
+            <div className={styles.mentorContent}>
+              <p>Based on your current action (<strong>{side} {quantity} shares of {quote.symbol}</strong>):</p>
+              <ul>
+                <li>Is this aligned with your long-term goals?</li>
+                <li>Consider the volatility of {quote.symbol} before sizing your position.</li>
+                <li>Avoid trading based on FOMO (Fear Of Missing Out).</li>
+              </ul>
+              <div className={styles.mentorTip}>
+                <strong>Pro Tip:</strong> Ensure you are properly diversified across different sectors to mitigate risk.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

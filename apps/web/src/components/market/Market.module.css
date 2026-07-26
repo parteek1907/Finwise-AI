@@ -70,18 +70,24 @@
 .price strong {
   font-size: 0.95rem;
   color: #111827;
+  line-height: normal;
+  padding: 0.1em 0;
 }
 
 .positiveText {
   color: #16a34a;
   font-size: 0.85rem;
   font-weight: 500;
+  line-height: normal;
+  padding: 0.1em 0;
 }
 
 .negativeText {
   color: #dc2626;
   font-size: 0.85rem;
   font-weight: 500;
+  line-height: normal;
+  padding: 0.1em 0;
 }
 
 /* Search Bar */
@@ -185,4 +191,58 @@
   text-align: center;
   color: #6b7280;
   font-size: 0.9rem;
+}
+
+.searchGroup {
+  margin-bottom: 0.5rem;
+}
+
+.searchGroup:last-child {
+  margin-bottom: 0;
+}
+
+.searchGroupHeader {
+  padding: 0.5rem 1rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #94a3b8;
+  background: #f8fafc;
+  letter-spacing: 0.05em;
+}
+
+/* Tabs */
+.moversTabs {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0 0 1rem 0;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.moversTab {
+  background: #f1f5f9;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #64748b;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.moversTab:hover {
+  background: #e2e8f0;
+}
+
+.moversTabActive {
+  background: #0f172a;
+  border: none;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: white;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
 }

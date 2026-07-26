@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
+import { normalizeToUSD } from '@/lib/currencyConverter';
 
 const yahooFinance = new YahooFinance();
 
@@ -25,20 +26,35 @@ export async function GET(
       return NextResponse.json({ error: 'Symbol not found' }, { status: 404 });
     }
 
-    const price = quote.regularMarketPrice || 0;
-    const previousClose = quote.regularMarketPreviousClose || price;
-    const change = quote.regularMarketChange || (price - previousClose);
-    const changePercent = quote.regularMarketChangePercent || (change / previousClose) * 100;
+    const rawPrice = quote.regularMarketPrice || 0;
+    const rawPreviousClose = quote.regularMarketPreviousClose || rawPrice;
+    const rawChange = quote.regularMarketChange || (rawPrice - rawPreviousClose);
+    const rawHigh = quote.regularMarketDayHigh || rawPrice;
+    const rawLow = quote.regularMarketDayLow || rawPrice;
+    const rawOpen = quote.regularMarketOpen || rawPrice;
+
+    // Normalize all prices to USD so the frontend formatting logic multiplier works correctly
+    const currency = quote.currency || 'USD';
+    const price = await normalizeToUSD(rawPrice, currency);
+    const previousClose = await normalizeToUSD(rawPreviousClose, currency);
+    const change = await normalizeToUSD(rawChange, currency);
+    const high = await normalizeToUSD(rawHigh, currency);
+    const low = await normalizeToUSD(rawLow, currency);
+    const open = await normalizeToUSD(rawOpen, currency);
+
+    const changePercent = quote.regularMarketChangePercent || (rawChange / rawPreviousClose) * 100;
 
     return NextResponse.json({
       symbol: quote.symbol,
       name: quote.shortName || quote.longName || symbol,
+      exchange: quote.exchange || quote.fullExchangeName || 'MARKET',
+      currency: currency,
       price,
       change,
       changePercent,
-      high: quote.regularMarketDayHigh || price,
-      low: quote.regularMarketDayLow || price,
-      open: quote.regularMarketOpen || price,
+      high,
+      low,
+      open,
       previousClose,
     });
   } catch (error: any) {

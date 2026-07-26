@@ -6,6 +6,8 @@ export interface Quote {
   changePercent: number;
   volume: number;
   marketCap: number;
+  exchange?: string;
+  currency?: string;
   // Future AI Fields
   aiInsight?: string;
   riskLevel?: 'Low' | 'Medium' | 'High';

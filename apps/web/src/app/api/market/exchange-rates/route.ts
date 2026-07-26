@@ -19,9 +19,9 @@ export async function GET() {
     });
 
     // Fallbacks just in case the API misses something
-    if (!rates['INR']) rates['INR'] = 83;
-    if (!rates['EUR']) rates['EUR'] = 0.92;
-    if (!rates['GBP']) rates['GBP'] = 0.79;
+    if (!rates['INR']) rates['INR'] = 96.56;
+    if (!rates['EUR']) rates['EUR'] = 0.88;
+    if (!rates['GBP']) rates['GBP'] = 0.75;
 
     return NextResponse.json(rates);
   } catch (error: any) {
@@ -29,9 +29,9 @@ export async function GET() {
     // Return mock fallbacks if API fails
     return NextResponse.json({
       USD: 1,
-      INR: 83,
-      EUR: 0.92,
-      GBP: 0.79
+      INR: 96.56,
+      EUR: 0.88,
+      GBP: 0.75
     });
   }
 }

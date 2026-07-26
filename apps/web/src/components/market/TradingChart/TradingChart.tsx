@@ -17,11 +17,8 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { CURRENCY_MAP } from '../../../utils/formatters';
 
 import { ChartLoading } from './ChartLoading';
-import { ChartLegend } from './ChartLegend';
-import { PriceBadge } from './PriceBadge';
-import { ChartToolbar } from './ChartToolbar';
+import { ChartHeader } from './ChartHeader';
 import { ChartTooltip } from './ChartTooltip';
-import { IndicatorsMenu } from './IndicatorsMenu';
 import { ErrorCard } from '../../common/ErrorCard';
 import { EmptyState } from '../../common/EmptyState';
 
@@ -57,7 +54,6 @@ interface TradingChartProps {
   timeframe: string;
   candles: any[];
   quote: any;
-  marketStatus: any;
   loading: boolean;
   error: string | null;
   onTimeframeChange: (tf: any) => void;
@@ -71,7 +67,6 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   timeframe,
   candles,
   quote,
-  marketStatus,
   loading,
   error,
   onTimeframeChange,
@@ -359,21 +354,13 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   return (
     <div className={styles.chartWrapper}>
       
-      <div className={styles.chartHeader}>
-        <ChartLegend quote={quote} status={marketStatus} />
-        {quote && (
-          <PriceBadge 
-            symbol={quote.symbol} 
-            price={quote.price} 
-            changePercent={quote.changePercent} 
-          />
-        )}
-      </div>
-
-      <div className={styles.chartControls}>
-        <ChartToolbar selectedTimeframe={timeframe as any} onSelect={onTimeframeChange} />
-        <IndicatorsMenu indicators={indicators} onToggle={toggleIndicator} />
-      </div>
+      <ChartHeader 
+        quote={quote}
+        selectedTimeframe={timeframe as any}
+        onSelectTimeframe={onTimeframeChange}
+        indicators={indicators}
+        onToggleIndicator={toggleIndicator}
+      />
 
       <div className={styles.chartContainer}>
         {loading ? (

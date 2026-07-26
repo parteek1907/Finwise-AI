@@ -18,6 +18,8 @@ import { SearchBar } from '@/components/market/SearchBar';
 import { TradingChart, ChartMarker } from '@/components/market/TradingChart/TradingChart';
 import { TradePanel } from '@/components/trade/TradePanel';
 import { PortfolioTable } from '@/components/portfolio/PortfolioTable';
+import { EducationalInsights } from '@/components/market/EducationalInsights';
+import { RiskAnalysis } from '@/components/portfolio/RiskAnalysis';
 
 // Types & Utils
 import { Timeframe } from '@/constants/symbols';
@@ -26,7 +28,7 @@ import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
 export default function SimulatorPage() {
   const [activeTab, setActiveTab] = useState<'Trade' | 'Portfolio'>('Trade');
-  const [portfolioTab, setPortfolioTab] = useState<'Holdings' | 'History'>('Holdings');
+  const [portfolioTab, setPortfolioTab] = useState<'Holdings' | 'History' | 'Analytics'>('Holdings');
   const [selectedSymbol, setSelectedSymbol] = useState<string>('VOO');
   const [timeframe, setTimeframe] = useState<Timeframe>('1M');
 
@@ -37,7 +39,6 @@ export default function SimulatorPage() {
   const {
     candles,
     quote,
-    marketStatus,
     loading: chartLoading,
     error: chartError,
     refresh,
@@ -45,19 +46,7 @@ export default function SimulatorPage() {
   } = useChart(selectedSymbol, timeframe);
 
   // Generate markers from trades for the current symbol
-  const markers: ChartMarker[] = trades
-    .filter(t => t.symbol === selectedSymbol)
-    .map(t => {
-      const isBuy = t.side === 'BUY';
-      return {
-        time: Math.floor(new Date(t.executedAt).getTime() / 1000),
-        position: isBuy ? 'belowBar' : 'aboveBar',
-        color: isBuy ? '#16a34a' : '#dc2626',
-        shape: isBuy ? 'arrowUp' : 'arrowDown',
-        text: `${isBuy ? 'BUY' : 'SELL'} @ ${formatCurrency(t.executionPrice)}`
-      } as ChartMarker;
-    })
-    .sort((a, b) => (a.time as number) - (b.time as number));
+  const markers: ChartMarker[] = [];
 
   // Example educational insights (in a real app, this would be more dynamic)
   const showInsight = trades.length > 0;
@@ -121,7 +110,6 @@ export default function SimulatorPage() {
                     timeframe={timeframe}
                     candles={candles}
                     quote={quote}
-                    marketStatus={marketStatus}
                     loading={chartLoading}
                     error={chartError}
                     onTimeframeChange={setTimeframe}
@@ -129,19 +117,20 @@ export default function SimulatorPage() {
                     realTimeTick={realTimeTick}
                   />
                   
-                  {showInsight && (
-                    <div style={{ marginTop: '1rem', padding: '1rem', backgroundColor: '#eff6ff', color: '#1d4ed8', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 500 }}>
-                      💡 <strong>FinWise Insight:</strong> You've recently traded {selectedSymbol}. Ensure this aligns with your long-term diversification strategy!
-                    </div>
-                  )}
+
                   
                   {chartLoading || portfolioLoading ? (
                     <div style={{padding: '1.5rem'}}><SkeletonLoader type="card" /></div>
                   ) : (
-                    <TradePanel 
-                      quote={quote} 
-                      buyingPower={summary.buyingPower} 
-                    />
+                    <>
+                      <TradePanel 
+                        quote={quote} 
+                        buyingPower={summary.buyingPower} 
+                      />
+                      <div style={{ padding: '0 1.5rem 1.5rem 1.5rem' }}>
+                        <EducationalInsights symbol={selectedSymbol} />
+                      </div>
+                    </>
                   )}
                 </>
               )}
@@ -151,13 +140,18 @@ export default function SimulatorPage() {
                   {portfolioLoading ? (
                     <div style={{padding: '1.5rem'}}><SkeletonLoader type="table" count={5} /></div>
                   ) : (
-                    <PortfolioTable 
-                      holdings={holdings}
-                      trades={trades}
-                      summary={summary}
-                      activeTab={portfolioTab}
-                      onTabChange={setPortfolioTab}
-                    />
+                    <>
+                      <PortfolioTable 
+                        holdings={holdings}
+                        trades={trades}
+                        summary={summary}
+                        activeTab={portfolioTab}
+                        onTabChange={setPortfolioTab as any}
+                      />
+                      {portfolioTab === 'Analytics' && (
+                        <RiskAnalysis holdings={holdings} />
+                      )}
+                    </>
                   )}
                 </>
               )}

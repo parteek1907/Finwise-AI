@@ -1,9 +1,9 @@
 .chartWrapper {
   position: relative;
   width: 100%;
-  height: 500px;
+  height: 600px; /* Increased chart height */
   background-color: white;
-  border-radius: 20px;
+  border-radius: 12px;
   border: 1px solid rgba(0,0,0,0.05);
   box-shadow: 0 4px 30px rgba(0,0,0,0.03);
   display: flex;
@@ -11,13 +11,154 @@
   overflow: hidden;
 }
 
-.chartHeader {
+/* Compact Header */
+.compactHeader {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  align-items: flex-start;
-  padding: 1.5rem;
-  z-index: 10;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
   background: white;
+  z-index: 10;
+  gap: 1rem;
+}
+
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.headerInfoGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.headerTitleWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+}
+
+.headerSymbol {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.headerName {
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.headerTags {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.tag {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.tagLive {
+  background: #dcfce7;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.tagClosed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.headerPriceCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.headerPriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.headerPriceText {
+  font-family: var(--font-heading);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: normal;
+  padding: 0.1em 0;
+}
+
+.marketStatusUnder {
+  display: flex;
+  justify-content: center;
+  margin-top: -0.25rem;
+}
+
+.marketStatusOpen {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #16a34a;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.marketStatusClosed {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.headerChangePosText {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #16a34a;
+  line-height: normal;
+  padding: 0.1em 0;
+}
+
+.headerChangeNegText {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #dc2626;
+  line-height: normal;
+  padding: 0.1em 0;
+}
+
+.divider {
+  width: 1px;
+  height: 24px;
+  background-color: rgba(0,0,0,0.1);
+  margin: 0 0.5rem;
+  align-self: center;
+}
+
+.headerCenter {
+  display: flex;
+  justify-content: center;
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .chartContainer {
@@ -151,6 +292,8 @@
   font-weight: 700;
   color: #111827;
   letter-spacing: -0.02em;
+  line-height: normal;
+  padding: 0.1em 0;
 }
 
 .badgeChangePos, .badgeChangeNeg {
@@ -158,6 +301,7 @@
   font-weight: 600;
   padding: 0.2rem 0.5rem;
   border-radius: 6px;
+  line-height: normal;
 }
 
 .badgeChangePos {

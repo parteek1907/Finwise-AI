@@ -32,16 +32,25 @@ export const getMarketQuote = getQuote;
 
 export const getMarketMovers = async (): Promise<MarketMover[]> => {
   try {
-    const response = await fetch('http://localhost:8000/api/market/movers');
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.warn("Backend not available for movers, falling back to mock.");
-  }
+    // Dynamically fetch live data for our default movers list instead of a static mock
+    const symbols = MOCK_MOVERS.map(m => m.symbol);
+    const quotes = await Promise.all(symbols.map(sym => getQuote(sym)));
+    
+    // Convert Quotes to MarketMovers and sort by absolute change percentage
+    const liveMovers: MarketMover[] = quotes.map(q => ({
+      symbol: q.symbol,
+      name: q.name,
+      price: q.price,
+      changePercent: q.changePercent,
+      isUp: q.change >= 0
+    }));
 
-  await delay(600);
-  return MOCK_MOVERS;
+    return liveMovers.sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
+  } catch (error) {
+    console.warn("Failed to fetch live movers, falling back to mock.", error);
+    await delay(600);
+    return MOCK_MOVERS;
+  }
 };
 
 export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<Candle[]> => {
@@ -98,11 +107,36 @@ export const searchSymbols = async (query: string): Promise<Quote[]> => {
 
 export const getMarketStatus = async (): Promise<MarketStatus> => {
   await delay(200);
-  // Mock logic: market is open if it's a weekday between 9:30 AM and 4:00 PM EST
-  // For simplicity, we just return true.
+  
+  const now = new Date();
+  const dayOfWeek = now.getUTCDay();
+  const utcHours = now.getUTCHours();
+  const utcMinutes = now.getUTCMinutes();
+  
+  // Market is closed on Saturday (6) and Sunday (0)
+  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+  
+  // EST is UTC-5 (or UTC-4 during daylight savings, simplifying for mock logic)
+  // Let's assume market is open 13:30 to 20:00 UTC (9:30 AM to 4:00 PM EST roughly)
+  const isMarketHours = (utcHours > 13 || (utcHours === 13 && utcMinutes >= 30)) && utcHours < 20;
+
+  const isOpen = !isWeekend && isMarketHours;
+  
+  const nextCloseTime = new Date();
+  if (isOpen) {
+    nextCloseTime.setUTCHours(20, 0, 0, 0);
+  } else {
+    // If closed, next close time would be next weekday at 20:00 UTC
+    let daysToAdd = 1;
+    if (dayOfWeek === 5) daysToAdd = 3;
+    if (dayOfWeek === 6) daysToAdd = 2;
+    nextCloseTime.setDate(now.getDate() + daysToAdd);
+    nextCloseTime.setUTCHours(20, 0, 0, 0);
+  }
+
   return {
-    isOpen: true,
-    nextCloseTime: new Date(new Date().setHours(16, 0, 0, 0)).toISOString()
+    isOpen,
+    nextCloseTime: nextCloseTime.toISOString()
   };
 };
 

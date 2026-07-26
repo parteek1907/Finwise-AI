@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Quote, MarketMover, Candle } from '../types/market';
 import { getMarketQuote, getMarketMovers, getChartData, searchSymbols } from '../services/market';
 import { Timeframe } from '../constants/symbols';
+import { useMarketStore } from '../store/useMarketStore';
 
 export const useMarketQuote = (symbol: string) => {
   const [quote, setQuote] = useState<Quote | null>(null);
@@ -39,9 +40,11 @@ export const useMarketQuote = (symbol: string) => {
 };
 
 export const useMarketMovers = () => {
-  const [movers, setMovers] = useState<MarketMover[]>([]);
+  const [baseMovers, setBaseMovers] = useState<MarketMover[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const { quotes, subscribe, unsubscribe } = useMarketStore();
 
   useEffect(() => {
     let mounted = true;
@@ -49,7 +52,11 @@ export const useMarketMovers = () => {
       try {
         setLoading(true);
         const data = await getMarketMovers();
-        if (mounted) setMovers(data);
+        if (mounted) {
+          setBaseMovers(data);
+          // Subscribe to all movers for live updates
+          data.forEach(mover => subscribe(mover.symbol));
+        }
       } catch (err: any) {
         if (mounted) setError(err.message || 'Failed to fetch movers');
       } finally {
@@ -59,30 +66,25 @@ export const useMarketMovers = () => {
     
     fetchMovers();
 
-    // Simulate live active market by ticking prices every second
-    const interval = setInterval(() => {
-      if (!mounted) return;
-      setMovers(currentMovers => 
-        currentMovers.map(mover => {
-          const volatility = mover.price * 0.0005; // 0.05% volatility per tick
-          const change = (Math.random() * volatility * 2) - volatility;
-          const newPrice = Math.max(0, mover.price + change);
-          const newChangePercent = mover.changePercent + (change / mover.price) * 100;
-          return {
-            ...mover,
-            price: newPrice,
-            changePercent: newChangePercent,
-            isUp: newChangePercent >= 0
-          };
-        })
-      );
-    }, 1000);
-
     return () => { 
       mounted = false; 
-      clearInterval(interval);
+      baseMovers.forEach(mover => unsubscribe(mover.symbol));
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Dynamically compute movers with live quotes
+  const movers = baseMovers.map(mover => {
+    const quote = quotes[mover.symbol];
+    if (!quote) return mover;
+    
+    return {
+      ...mover,
+      price: quote.price,
+      changePercent: quote.changePercent,
+      isUp: quote.changePercent >= 0
+    };
+  });
 
   return { movers, loading, error };
 };

@@ -1,36 +1,33 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Asset, Candle, Quote, MarketStatus } from '../types/market';
-import { getCandles, getQuote, getMarketStatus, getWatchlist } from '../services/market';
+import { getCandles, getWatchlist } from '../services/market';
 import { Timeframe } from '../constants/symbols';
-import { useSettingsStore } from '../store/useSettingsStore';
-import { CURRENCY_MAP } from '../utils/formatters';
+import { useMarketStore } from '../store/useMarketStore';
 
 export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') => {
-  
   const [candles, setCandles] = useState<Candle[]>([]);
-  const [quote, setQuote] = useState<Quote | null>(null);
-  const [marketStatus, setMarketStatus] = useState<MarketStatus | null>(null);
   const [watchlist, setWatchlist] = useState<Asset[]>([]);
-  
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [realTimeTick, setRealTimeTick] = useState<{price: number, time: number, volume: number} | null>(null);
+  const { 
+    quotes, 
+    liveTicks, 
+    subscribe, 
+    unsubscribe,
+    initialize 
+  } = useMarketStore();
+
+  const quote = quotes[asset] || null;
+  const realTimeTick = liveTicks[asset] || null;
 
   const fetchChartData = useCallback(async () => {
     if (!asset) return;
     setLoading(true);
     setError(null);
     try {
-      const [candleData, quoteData, statusData] = await Promise.all([
-        getCandles(asset, timeframe),
-        getQuote(asset),
-        getMarketStatus()
-      ]);
-      
+      const candleData = await getCandles(asset, timeframe);
       setCandles(candleData);
-      setQuote(quoteData);
-      setMarketStatus(statusData);
     } catch (err: any) {
       setError(err.message || 'Failed to load chart data');
     } finally {
@@ -48,6 +45,10 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
   }, []);
 
   useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  useEffect(() => {
     fetchChartData();
   }, [fetchChartData]);
 
@@ -55,83 +56,20 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
     fetchWatchlist();
   }, [fetchWatchlist]);
 
-  // WebSocket Connection for Real-Time ticks
+  // Subscribe to central market store for live updates
   useEffect(() => {
     if (!asset) return;
-
-    // Use ws:// for http, or wss:// for https
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    // Actually the backend is at 8000
-    const ws = new WebSocket(`ws://localhost:8000/api/market/ws/${asset}`);
-    let mockInterval: NodeJS.Timeout;
-
-    const startMockTicks = () => {
-      if (mockInterval) clearInterval(mockInterval);
-      mockInterval = setInterval(() => {
-        setQuote(prev => {
-          if (!prev) return prev;
-          
-          // Random price fluctuation +/- 0.1%
-          const change = prev.price * (Math.random() * 0.002 - 0.001);
-          const newPrice = Number((prev.price + change).toFixed(2));
-          
-          setRealTimeTick({
-            price: newPrice,
-            time: Math.floor(Date.now() / 1000),
-            volume: 100 // dummy volume increment
-          });
-          
-          const prevClose = prev.price - prev.change;
-          
-          return {
-            ...prev, 
-            price: newPrice,
-            change: newPrice - prevClose,
-            changePercent: ((newPrice - prevClose) / prevClose) * 100
-          };
-        });
-      }, 1000); // every 1 second
-    };
-
-    ws.onerror = () => {
-      // WS failed (e.g., backend not running), fallback to mock ticks
-      startMockTicks();
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        if (data.price) {
-          setRealTimeTick(data);
-          // Also update the quote state so the UI badge updates
-          setQuote(prev => {
-            if (!prev) return null;
-            const prevClose = prev.price - prev.change;
-            return {
-              ...prev, 
-              price: data.price,
-              change: data.price - prevClose,
-              changePercent: ((data.price - prevClose) / prevClose) * 100
-            };
-          });
-        }
-      } catch (err) {
-        console.error('WS parse error', err);
-      }
-    };
-
+    subscribe(asset);
     return () => {
-      ws.close();
-      if (mockInterval) clearInterval(mockInterval);
+      unsubscribe(asset);
     };
-  }, [asset]);
+  }, [asset, subscribe, unsubscribe]);
 
   return {
     asset,
     timeframe,
     candles,
     quote,
-    marketStatus,
     watchlist,
     loading,
     error,

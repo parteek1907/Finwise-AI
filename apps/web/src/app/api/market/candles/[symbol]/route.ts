@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import YahooFinance from 'yahoo-finance2';
+import { normalizeToUSD } from '@/lib/currencyConverter';
 
 const yahooFinance = new YahooFinance();
 
@@ -64,18 +65,23 @@ export async function GET(
       return NextResponse.json([]);
     }
 
-    const candles = chart.quotes
-      .filter(q => q.open !== null && q.close !== null)
-      .map(q => ({
+    const currency = chart.meta.currency || 'USD';
+    
+    // Process promises concurrently for each candle
+    const candlesPromises = chart.quotes
+      .filter((q: any) => q.open !== null && q.close !== null)
+      .map(async (q: any) => ({
         time: (interval === '1d' || interval === '1mo') 
           ? q.date.toISOString().split('T')[0] // 'YYYY-MM-DD'
           : Math.floor(q.date.getTime() / 1000), // Unix timestamp for intraday
-        open: q.open,
-        high: q.high,
-        low: q.low,
-        close: q.close,
+        open: await normalizeToUSD(q.open, currency),
+        high: await normalizeToUSD(q.high, currency),
+        low: await normalizeToUSD(q.low, currency),
+        close: await normalizeToUSD(q.close, currency),
         volume: q.volume || 0
       }));
+
+    const candles = await Promise.all(candlesPromises);
 
     return NextResponse.json(candles);
   } catch (error: any) {
