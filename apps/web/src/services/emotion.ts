@@ -2,11 +2,9 @@ import { EmotionAnalysis, EmotionHistory, RiskLevel } from '../types/emotion';
 
 const STORAGE_KEY = 'finwise_emotion_session_v3'; // Changed key to clear history
 
-// Call the backend AI endpoint
+// Call the Next.js API route directly
 export const analyzeEmotion = async (query: string): Promise<EmotionAnalysis> => {
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
-  
-  const response = await fetch(`${API_URL}/api/emotion-ai`, {
+  const response = await fetch(`/api/emotion-ai`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
