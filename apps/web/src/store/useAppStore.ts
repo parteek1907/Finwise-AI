@@ -57,6 +57,8 @@ export interface AppState {
   addXP: (amount: number) => void;
   addGoal: (goal: Omit<Goal, 'id' | 'current' | 'status'>) => void;
   updateGoal: (id: string, amount: number) => void;
+  updateGoalDetails: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
   completeLesson: (id: string) => void;
   addMessage: (chatId: string, message: Omit<MentorMessage, 'id' | 'timestamp'>) => void;
   createNewChat: (title?: string) => string;
@@ -71,7 +73,7 @@ const INITIAL_USER: User = {
   avatar: '',
   archetype: 'The Guardian',
   healthScore: 85,
-  xp: 1250,
+  xp: 0,
   streak: 14,
 };
 
@@ -151,6 +153,14 @@ export const useAppStore = create<AppState>((set) => ({
 
   updateGoal: (id, amount) => set((state) => ({
     goals: state.goals.map(g => g.id === id ? { ...g, current: Math.min(g.target, g.current + amount) } : g)
+  })),
+
+  updateGoalDetails: (id, updates) => set((state) => ({
+    goals: state.goals.map(g => g.id === id ? { ...g, ...updates } : g)
+  })),
+
+  deleteGoal: (id) => set((state) => ({
+    goals: state.goals.filter(g => g.id !== id)
   })),
 
   completeLesson: (id) => set((state) => {

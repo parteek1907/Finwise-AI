@@ -18,6 +18,7 @@ app.add_middleware(
 
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+from datetime import datetime
 import time
 import random
 import os
@@ -32,6 +33,7 @@ load_dotenv(".env.local")
 
 from firebase_admin import auth as firebase_admin_auth
 from auth_utils import get_current_user, login_with_email_password
+from firebase_config import db
 
 # Initialize Groq client
 client = Groq(
@@ -62,6 +64,9 @@ class AuthLoginRequest(BaseModel):
 class SocialAuthRequest(BaseModel):
     id_token: str
 
+class LessonCompletionRequest(BaseModel):
+    xp_earned: int
+
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "message": "Finwise AI Backend is running"}
@@ -73,6 +78,14 @@ def register_user(request: AuthRegisterRequest):
             email=request.email,
             password=request.password
         )
+        
+        # Initialize user in Firestore with Level 0 and XP 0
+        db.collection("users").document(user.uid).set({
+            "email": request.email,
+            "xp": 0,
+            "level": 0
+        })
+        
         return {"uid": user.uid, "email": user.email, "message": "User created successfully"}
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -89,14 +102,101 @@ def login_user(request: AuthLoginRequest):
 def verify_social_token(request: SocialAuthRequest):
     try:
         decoded_token = firebase_admin_auth.verify_id_token(request.id_token)
+        uid = decoded_token.get("uid")
+        email = decoded_token.get("email")
+        
+        # Check if user exists in Firestore, if not create them with Level 0 and XP 0
+        user_ref = db.collection("users").document(uid)
+        if not user_ref.get().exists:
+            user_ref.set({
+                "email": email,
+                "xp": 0,
+                "level": 0
+            })
+
         return {
-            "uid": decoded_token.get("uid"),
-            "email": decoded_token.get("email"),
+            "uid": uid,
+            "email": email,
             "name": decoded_token.get("name"),
             "message": "Token verified successfully"
         }
     except Exception as e:
         raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")
+
+@app.post("/api/user/complete-lesson")
+def complete_lesson(request: LessonCompletionRequest, user_token=Depends(get_current_user)):
+    try:
+        if request.xp_earned < 0:
+            raise HTTPException(status_code=400, detail="XP earned must be positive")
+            
+        uid = user_token.get("uid")
+        user_ref = db.collection("users").document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            current_xp = 0
+            current_level = 0
+            user_ref.set({
+                "email": user_token.get("email", ""),
+                "xp": current_xp,
+                "level": current_level
+            })
+        else:
+            data = user_doc.to_dict()
+            current_xp = data.get("xp", 0)
+            current_level = data.get("level", 0)
+            
+        new_xp = current_xp + request.xp_earned
+        import math
+        new_level = math.floor((-1 + math.sqrt(1 + 8 * new_xp / 100)) / 2)
+        
+        leveled_up = new_level > current_level
+        
+        user_ref.update({
+            "xp": new_xp,
+            "level": new_level
+        })
+        
+        xp_for_next_level = 50 * (new_level + 1) * (new_level + 2)
+        
+        return {
+            "message": "Lesson completed successfully",
+            "xp": new_xp,
+            "level": new_level,
+            "leveled_up": leveled_up,
+            "previous_level": current_level,
+            "xp_required_for_next_level": xp_for_next_level
+        }
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/user/progress")
+def get_user_progress(user_token=Depends(get_current_user)):
+    try:
+        uid = user_token.get("uid")
+        user_ref = db.collection("users").document(uid)
+        user_doc = user_ref.get()
+        
+        if not user_doc.exists:
+            return {
+                "xp": 0, 
+                "level": 0,
+                "xp_required_for_next_level": 100
+            }
+            
+        data = user_doc.to_dict()
+        current_xp = data.get("xp", 0)
+        current_level = data.get("level", 0)
+        
+        return {
+            "xp": current_xp,
+            "level": current_level,
+            "xp_required_for_next_level": 50 * (current_level + 1) * (current_level + 2)
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/mentor")
 def mentor_endpoint(request: ChatRequest):
@@ -119,7 +219,8 @@ def mentor_endpoint(request: ChatRequest):
         "2. Structure: Break down complex ideas using scannable bullet points. Use standard hyphens (-) or unicode bullets (•) for lists.\n"
         "3. FORMATTING RESTRICTION (CRITICAL): NEVER use the asterisk symbol (*) for bolding or bullet points. It breaks the UI. Do not bold text at all.\n"
         "4. Conversational Flow: If the user makes a casual remark or just says thanks, do NOT force financial advice or 'Next steps'. Just acknowledge them naturally and be a good conversationalist.\n"
-        "5. Keep your responses under 3 short paragraphs."
+        "5. Keep your responses under 3 short paragraphs.\n"
+        "6. GOAL MANAGEMENT (CRITICAL): If the user explicitly asks you to add, remove, deposit, or deduct funds from one of their goals, you MUST output the following exact tag anywhere in your response text: `[ACTION: UPDATE_GOAL, goal_id: \"{id}\", amount: {amount}]`. Use a negative amount to remove funds. For example: `[ACTION: UPDATE_GOAL, goal_id: \"g1\", amount: 500]`."
     )
     
     # Format messages for Groq API
@@ -168,12 +269,17 @@ def scam_detect_endpoint(request: ScamDetectRequest):
     system_prompt = (
         "You are an expert cybersecurity and financial fraud analyst. "
         "Your task is to analyze the provided text or image to determine if it is a scam or phishing attempt. "
+        "CRITICAL INSTRUCTIONS FOR IMAGES: "
+        "1. You must thoroughly scan and read EVERY SINGLE WORD of text visible in the image. Examine the sender details, URLs, grammar, urgency cues, and requested actions. "
+        "2. If the user uploads an image that is completely irrelevant to finance, scams, or communication (e.g., a picture of a dog, a landscape, a random selfie), you MUST explicitly state that it is irrelevant. In this case, set 'isScam' to false, 'probability' to 0, and use the 'lesson' field to tell the user: 'This image appears to be irrelevant to financial scams. Please upload a screenshot of an email, text message, or financial offer.' "
+        "3. IF the image contains a legitimate, safe financial context (e.g., a personal portfolio dashboard, a banking app screenshot showing balances, or a standard stock chart without a suspicious 'get rich quick' overlay), you MUST recognize it as safe. Set 'isScam' to false, 'probability' to 0, and use the 'lesson' field to confirm: 'This appears to be a legitimate financial dashboard or portfolio. No scam elements detected.' "
+        "4. IF the image contains ANY suspicious financial context, crypto offer, unsolicited investment opportunity, or phishing communication, you must thoroughly analyze it for fraud. Do NOT mark everything financial as a scam—only flag it if there are actual red flags (unrealistic promises, urgency, unknown senders)."
         "You MUST output your response in valid JSON format ONLY with the following schema:\n"
         "{\n"
         "  \"isScam\": boolean,\n"
         "  \"probability\": number (0-100),\n"
-        "  \"redFlags\": [{\"title\": \"short title\", \"description\": \"detailed explanation\"}],\n"
-        "  \"lesson\": \"A short educational tip about this type of scam\"\n"
+        "  \"redFlags\": [{\"title\": \"short title\", \"description\": \"detailed explanation of the exact text/visual cue found in the image\"}],\n"
+        "  \"lesson\": \"A short educational tip or the irrelevant image message\"\n"
         "}\n"
     )
     
@@ -187,12 +293,12 @@ def scam_detect_endpoint(request: ScamDetectRequest):
             image_bytes = base64.b64decode(b64_string)
             image_part = types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
             
-            prompt_text = "Analyze this screenshot for signs of a scam."
+            prompt_text = "Perform a deep, OCR-level analysis of this image. Read every single word, analyze the context, and determine if it's a financial scam or an irrelevant image."
             if request.text:
                 prompt_text += f" Context/Text: {request.text}"
                 
             response = gemini_client.models.generate_content(
-                model='gemini-1.5-flash',
+                model='gemini-flash-latest',
                 contents=[prompt_text, image_part],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
@@ -225,6 +331,44 @@ def scam_detect_endpoint(request: ScamDetectRequest):
 
 class TitleRequest(BaseModel):
     message: str
+
+class GoalSuggestionRequest(BaseModel):
+    goal: Dict
+
+@app.post("/api/goal-suggestions")
+def goal_suggestions_endpoint(request: GoalSuggestionRequest):
+    goal = request.goal
+    prompt = (
+        f"You are a financial AI. The user has a financial goal:\n"
+        f"Name: {goal.get('name')}\n"
+        f"Category: {goal.get('category')}\n"
+        f"Target: ${goal.get('target', 0)}\n"
+        f"Current Saved: ${goal.get('current', 0)}\n"
+        f"Deadline: {goal.get('deadline')}\n\n"
+        "Based on this exact progress and deadline, provide exactly 2 highly relevant, specific, and actionable suggestions to help the user achieve this goal faster. "
+        "Return the response in ONLY valid JSON format matching this schema:\n"
+        "{\n"
+        "  \"suggestions\": [\n"
+        "    {\"title\": \"Short Title\", \"description\": \"Detailed 1-2 sentence suggestion.\"}\n"
+        "  ]\n"
+        "}"
+    )
+    
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "user", "content": prompt}],
+            model="llama-3.1-8b-instant",
+            response_format={"type": "json_object"},
+            temperature=0.3
+        )
+        import json
+        return json.loads(chat_completion.choices[0].message.content)
+    except Exception as e:
+        print(f"Error calling Groq API: {e}")
+        return {"suggestions": [
+            {"title": "Automate Contributions", "description": "Set up a recurring transfer on payday to ensure consistent progress."},
+            {"title": "Review Budget", "description": "Look for unused subscriptions to cancel and reallocate to this goal."}
+        ]}
 
 @app.post("/api/chat-title")
 def chat_title_endpoint(request: TitleRequest):
@@ -264,6 +408,7 @@ def emotion_ai_endpoint(request: EmotionRequest):
         "If they are completely resolute and acting blindly (e.g., 'I am going all in!'), confidence should be high (80-100%)."
         "\n- Biases: MUST specifically identify well-known behavioral finance/cognitive biases (e.g., Gullibility, Greed, FOMO, Confirmation Bias, Trust Bias, Loss Aversion). "
         "Do not just say 'Uncertainty'. Dig deeper into their psychological vulnerability."
+        "\nCRITICAL INSTRUCTION FOR RISK: You must act as the most serious, strict financial risk analyst. If the user asks a genuine, purely educational, or harmless question without any personal financial exposure (e.g., 'What is a stock?', 'How do mutual funds work?'), you MUST strictly set 'risk' to 'Low'. However, if the user expresses ANY level of doubt, uncertainty, or describes a situation involving their own money or a specific investment (e.g., 'My friend told me to invest, should I?', 'I am buying crypto'), you MUST provide the correct, serious risk analysis (Medium, High, or Very High based on the exposure)."
         "\nCRITICAL INSTRUCTION: If the user asks an irrelevant, non-financial question (e.g., 'hello', 'am i gay', 'what is the weather', 'who are you'), "
         "you MUST NOT analyze them financially. You MUST set 'emotion' to 'Irrelevant', 'confidence' to 0, 'risk' to 'None', 'biases' to [], "
         "and 'summary' to 'This query is not related to finance, investing, or market psychology.', and provide an empty array for recommendations.\n"

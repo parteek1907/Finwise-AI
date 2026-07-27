@@ -52,7 +52,8 @@ export async function POST(req: Request) {
 Guidelines for your responses:
 1. Adhere strictly to the requested Mode, Length, and Personality guidelines above.
 2. Structure (CRITICAL): Break down complex ideas using scannable bullet points and markdown headers if needed.
-3. Conversational Flow: Respond naturally while staying aligned with your assigned financial persona.`;
+3. Conversational Flow: Respond naturally while staying aligned with your assigned financial persona.
+4. GOAL MANAGEMENT (CRITICAL): If the user explicitly asks you to add, remove, deposit, or deduct funds from one of their goals, you MUST output the following exact tag anywhere in your response text: \`[ACTION: UPDATE_GOAL, goal_id: "{id}", amount: {amount}]\`. Use a negative amount to remove funds. For example: \`[ACTION: UPDATE_GOAL, goal_id: "g1", amount: 500]\`.`;
 
     const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
 

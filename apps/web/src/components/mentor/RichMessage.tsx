@@ -37,7 +37,14 @@ export function RichMessage({ content }: RichMessageProps) {
     // Bullet points
     .replace(/^[\s]*[-*]\s+(.*)$/gm, '<li style="margin-bottom: 0.5rem; color: #374151;">$1</li>')
     // Numbered lists
-    .replace(/^[\s]*\d+\.\s+(.*)$/gm, '<li class="ol-item" style="margin-bottom: 0.5rem; color: #374151;">$1</li>');
+    .replace(/^[\s]*\d+\.\s+(.*)$/gm, '<li class="ol-item" style="margin-bottom: 0.5rem; color: #374151;">$1</li>')
+    // Action Tags
+    .replace(/\[ACTION:\s*UPDATE_GOAL,\s*goal_id:\s*"([^"]+)",\s*amount:\s*([-\d]+)\]/gi, (match, gId, amt) => {
+       const amount = parseInt(amt, 10);
+       const isAdd = amount > 0;
+       const displayAmount = Math.abs(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+       return `<div style="margin: 1rem 0; padding: 1rem; background-color: ${isAdd ? '#f0fdf4' : '#fff1f2'}; border: 1px solid ${isAdd ? '#bbf7d0' : '#fecdd3'}; border-radius: 8px; display: flex; align-items: center; gap: 12px; color: ${isAdd ? '#166534' : '#9f1239'}; font-weight: 600;">✓ Successfully ${isAdd ? 'added' : 'removed'} ${displayAmount} ${isAdd ? 'to' : 'from'} your goal!</div>`;
+    });
 
   // Wrap lists
   preProcessed = preProcessed

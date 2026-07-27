@@ -17,11 +17,9 @@ export function FinalCTA() {
               And Build Your Future<br />
               Financial Confidence
             </h2>
-            <Link href="/auth">
-              <button className={styles.ctaButton}>
-                Get Started Free
-                <ArrowRight size={16} />
-              </button>
+            <Link href="/auth" className={styles.ctaButton}>
+              Get Started Free
+              <ArrowRight size={16} />
             </Link>
           </div>
           <Image

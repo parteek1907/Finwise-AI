@@ -137,20 +137,21 @@ export function Header() {
 				
 				{/* Right: Sign In CTA */}
 				<div className="hidden md:flex items-center absolute right-0 top-1/2 -translate-y-1/2">
-					<Link href="/signin">
-						<Button 
-							variant="outline" 
-							className="group relative h-10 overflow-hidden rounded-full border-primary/20 text-sm font-semibold tracking-wide text-foreground transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] hover:border-primary active:scale-[0.98] cursor-pointer"
-							style={{ paddingLeft: '40px', paddingRight: '40px' }}
-						>
-							{/* Smooth bottom-up fill background */}
-							<span className="absolute inset-0 bg-primary translate-y-[101%] rounded-full transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:translate-y-0 group-active:duration-1000 group-active:bg-primary/90" />
-							
-							{/* Button Text */}
-							<span className="relative z-10 transition-colors duration-500 group-hover:text-primary-foreground">
-								Sign In
-							</span>
-						</Button>
+					<Link 
+						href="/signin"
+						className={cn(
+							buttonVariants({ variant: "outline" }),
+							"group relative h-10 overflow-hidden rounded-full border-primary/20 text-sm font-semibold tracking-wide text-foreground transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] hover:border-primary active:scale-[0.98] cursor-pointer"
+						)}
+						style={{ paddingLeft: '40px', paddingRight: '40px' }}
+					>
+						{/* Smooth bottom-up fill background */}
+						<span className="absolute inset-0 bg-primary translate-y-[101%] rounded-full transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:translate-y-0 group-active:duration-1000 group-active:bg-primary/90" />
+						
+						{/* Button Text */}
+						<span className="relative z-10 transition-colors duration-500 group-hover:text-primary-foreground">
+							Sign In
+						</span>
 					</Link>
 				</div>
 				
@@ -189,10 +190,11 @@ export function Header() {
 						))}
 					</div>
 					<div className="flex flex-col gap-3 mt-4 pt-4 border-t border-border">
-						<Link href="/signin" className="w-full">
-							<Button variant="outline" className="w-full h-11 rounded-full border-primary/20">
-								Sign In
-							</Button>
+						<Link 
+							href="/signin" 
+							className={cn(buttonVariants({ variant: "outline" }), "w-full h-11 rounded-full border-primary/20")}
+						>
+							Sign In
 						</Link>
 					</div>
 				</div>

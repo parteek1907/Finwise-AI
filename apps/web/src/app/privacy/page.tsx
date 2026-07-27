@@ -1,6 +1,6 @@
 import React from "react";
-import { Header } from "@/components/ui/header-2";
-import { Footer } from "@/components/landing/Footer";
+import { Header } from "@/components/ui/header-final";
+import { FooterFinal } from "@/components/landing/FooterFinal";
 
 export default function PrivacyPolicy() {
   return (
@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
           </section>
         </div>
       </main>
-      <Footer />
+      <FooterFinal />
     </div>
   );
 }

@@ -26,11 +26,15 @@ const LEADERBOARD = [
 export default function AchievementsPage() {
   const user = useAppStore(state => state.user);
   
-  // Current Level Calculation (Every 1000 XP = 1 Level)
-  const currentLevel = Math.floor(user.xp / 1000) + 1;
-  const xpForNextLevel = currentLevel * 1000;
-  const xpProgress = user.xp % 1000;
-  const progressPercent = (xpProgress / 1000) * 100;
+  // Level Calculation: Total XP = 50 * Level * (Level + 1)
+  // Therefore Level = floor((-1 + sqrt(1 + 8 * Total XP / 100)) / 2)
+  const currentLevel = Math.floor((-1 + Math.sqrt(1 + 8 * user.xp / 100)) / 2);
+  const currentLevelBaseXp = 50 * currentLevel * (currentLevel + 1);
+  const xpForNextLevel = 50 * (currentLevel + 1) * (currentLevel + 2);
+  const xpNeededForNextLevel = xpForNextLevel - currentLevelBaseXp;
+  
+  const xpProgress = user.xp - currentLevelBaseXp;
+  const progressPercent = (xpProgress / xpNeededForNextLevel) * 100;
 
   return (
     <AppLayout>
@@ -68,7 +72,7 @@ export default function AchievementsPage() {
                 <div className={styles.progressBar}>
                   <div className={styles.progressFill} style={{width: `${progressPercent}%`}}></div>
                 </div>
-                <span className={styles.xpSub}>{1000 - xpProgress} XP until Level {currentLevel + 1}</span>
+                <span className={styles.xpSub}>{xpNeededForNextLevel - xpProgress} XP until Level {currentLevel + 1}</span>
               </div>
             </div>
 

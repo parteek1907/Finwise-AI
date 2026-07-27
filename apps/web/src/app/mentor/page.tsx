@@ -153,9 +153,20 @@ export default function MentorPage() {
       const data = await response.json();
       
       setIsTyping(false);
+      
+      let aiResponseText = data.content || "I'm having trouble thinking right now.";
+      
+      // Intercept tool calls
+      const updateGoalMatch = aiResponseText.match(/\[ACTION:\s*UPDATE_GOAL,\s*goal_id:\s*"([^"]+)",\s*amount:\s*([-\d]+)\]/i);
+      if (updateGoalMatch) {
+         const gId = updateGoalMatch[1];
+         const amount = parseInt(updateGoalMatch[2], 10);
+         updateGoal(gId, amount);
+      }
+      
       addMessage(currentChatId, { 
         sender: 'ai', 
-        text: data.content || "I'm having trouble thinking right now."
+        text: aiResponseText
       });
     } catch (error) {
       console.error("Error fetching AI response:", error);

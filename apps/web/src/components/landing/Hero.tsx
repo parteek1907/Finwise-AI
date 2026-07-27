@@ -15,13 +15,11 @@ export function Hero() {
           <span className={styles.heroLine}>AND THEN MASTER</span>
           <span className={styles.heroLastLine}>
             <span className={styles.heroOutlineText}>YOUR MONEY</span>
-            <Link href="/auth">
-              <button className={styles.heroCTAButton}>
-                <span className={styles.heroCTAArrow}>
-                  <ArrowRight size={18} />
-                </span>
-                <span>START LEARNING</span>
-              </button>
+            <Link href="/auth" className={styles.heroCTAButton}>
+              <span className={styles.heroCTAArrow}>
+                <ArrowRight size={18} />
+              </span>
+              <span>START LEARNING</span>
             </Link>
           </span>
         </h1>
