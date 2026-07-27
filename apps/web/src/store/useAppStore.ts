@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-
+import { persist } from 'zustand/middleware';
 // Types
 export interface User {
   name: string;
@@ -46,6 +46,27 @@ export interface ChatSession {
   updatedAt: string;
 }
 
+export interface CourseProgress {
+  lessonId: string;
+  currentChapterIdx: number;
+  miniQuizAnswers: Record<number, number>; // chapterIdx -> optionIdx
+  status: 'In Progress' | 'Completed';
+  lastAccessed: string;
+}
+
+export interface ExamAttempt {
+  score: number; // Percentage
+  date: string;
+  passed: boolean;
+}
+
+export interface FinalExamState {
+  answers: Record<number, number>;
+  flagged: number[];
+  attempts: ExamAttempt[];
+  status: 'Locked' | 'Available' | 'In Progress' | 'Passed';
+}
+
 export interface AppState {
   user: User;
   goals: Goal[];
@@ -53,12 +74,21 @@ export interface AppState {
   chats: ChatSession[];
   activeChatId: string | null;
   
+  // Learning Engine State
+  courseProgress: Record<string, CourseProgress>;
+  finalExamState: FinalExamState;
+  lessonChats: Record<string, { id: string; sender: 'user' | 'ai'; text: string }[]>;
+  
   // Actions
   addXP: (amount: number) => void;
   addGoal: (goal: Omit<Goal, 'id' | 'current' | 'status'>) => void;
   updateGoal: (id: string, amount: number) => void;
   updateGoalDetails: (id: string, updates: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
+  updateCourseProgress: (lessonId: string, data: Partial<CourseProgress>) => void;
+  updateFinalExamState: (data: Partial<FinalExamState>) => void;
+  updateLessonChat: (lessonId: string, messages: { id: string; sender: 'user' | 'ai'; text: string }[]) => void;
+  clearLessonChat: (lessonId: string) => void;
   completeLesson: (id: string) => void;
   addMessage: (chatId: string, message: Omit<MentorMessage, 'id' | 'timestamp'>) => void;
   createNewChat: (title?: string) => string;
@@ -130,88 +160,141 @@ const INITIAL_MESSAGES: MentorMessage[] = [];
 
 const INITIAL_CHATS: ChatSession[] = [];
 
-export const useAppStore = create<AppState>((set) => ({
-  user: INITIAL_USER,
-  goals: INITIAL_GOALS,
-  lessons: recalculateLocks(INITIAL_LESSONS),
-  chats: INITIAL_CHATS,
-  activeChatId: null,
+export const useAppStore = create<AppState>()(
+  persist(
+    (set) => ({
+      user: INITIAL_USER,
+      goals: INITIAL_GOALS,
+      lessons: recalculateLocks(INITIAL_LESSONS),
+      chats: INITIAL_CHATS,
+      activeChatId: null,
+      courseProgress: {},
+      finalExamState: {
+        answers: {},
+        flagged: [],
+        attempts: [],
+        status: 'Locked'
+      },
+      lessonChats: {},
 
-  addXP: (amount) => set((state) => ({ 
-    user: { ...state.user, xp: state.user.xp + amount } 
-  })),
+      addXP: (amount) => set((state) => ({ 
+        user: { ...state.user, xp: state.user.xp + amount } 
+      })),
 
-  addGoal: (goalData) => set((state) => {
-    const newGoal: Goal = {
-      ...goalData,
-      id: `g${Date.now()}`,
-      current: 0,
-      status: 'Planning'
-    };
-    return { goals: [...state.goals, newGoal] };
-  }),
-
-  updateGoal: (id, amount) => set((state) => ({
-    goals: state.goals.map(g => g.id === id ? { ...g, current: Math.min(g.target, g.current + amount) } : g)
-  })),
-
-  updateGoalDetails: (id, updates) => set((state) => ({
-    goals: state.goals.map(g => g.id === id ? { ...g, ...updates } : g)
-  })),
-
-  deleteGoal: (id) => set((state) => ({
-    goals: state.goals.filter(g => g.id !== id)
-  })),
-
-  completeLesson: (id) => set((state) => {
-    const lesson = state.lessons.find(l => l.id === id);
-    if (!lesson || lesson.status === 'Completed') return state;
-    
-    const newLessons = state.lessons.map(l => l.id === id ? { ...l, status: 'Completed' } : l) as Lesson[];
-    
-    return {
-      lessons: recalculateLocks(newLessons),
-      user: { ...state.user, xp: state.user.xp + lesson.xp }
-    };
-  }),
-
-  addMessage: (chatId, message) => set((state) => ({
-    chats: state.chats.map(chat => {
-      if (chat.id === chatId) {
-        return {
-          ...chat,
-          updatedAt: new Date().toISOString(),
-          messages: [...chat.messages, { ...message, id: `m${Date.now()}`, timestamp: new Date().toISOString() }]
+      addGoal: (goalData) => set((state) => {
+        const newGoal: Goal = {
+          ...goalData,
+          id: `g${Date.now()}`,
+          current: 0,
+          status: 'Planning'
         };
-      }
-      return chat;
-    })
-  })),
+        return { goals: [...state.goals, newGoal] };
+      }),
 
-  createNewChat: (title = 'New Chat') => {
-    const newChatId = `chat_${Date.now()}`;
-    set((state) => ({
-      chats: [
-        {
-          id: newChatId,
-          title,
-          messages: [],
-          updatedAt: new Date().toISOString()
-        },
-        ...state.chats
-      ],
-      activeChatId: newChatId
-    }));
-    return newChatId;
-  },
+      updateGoal: (id, amount) => set((state) => ({
+        goals: state.goals.map(g => g.id === id ? { ...g, current: Math.min(g.target, g.current + amount) } : g)
+      })),
 
-  setActiveChat: (id) => set({ activeChatId: id }),
+      updateGoalDetails: (id, updates) => set((state) => ({
+        goals: state.goals.map(g => g.id === id ? { ...g, ...updates } : g)
+      })),
 
-  updateChatTitle: (id, title) => set((state) => ({
-    chats: state.chats.map(chat => chat.id === id ? { ...chat, title } : chat)
-  })),
+      deleteGoal: (id) => set((state) => ({
+        goals: state.goals.filter(g => g.id !== id)
+      })),
 
-  updateUser: (data) => set((state) => ({
-    user: { ...state.user, ...data }
-  }))
-}));
+      updateCourseProgress: (lessonId, data) => set((state) => {
+        const existing = state.courseProgress[lessonId] || {
+          lessonId,
+          currentChapterIdx: 0,
+          miniQuizAnswers: {},
+          status: 'In Progress',
+          lastAccessed: new Date().toISOString()
+        };
+        return {
+          courseProgress: {
+            ...state.courseProgress,
+            [lessonId]: { ...existing, ...data, lastAccessed: new Date().toISOString() }
+          }
+        };
+      }),
+
+      updateFinalExamState: (data) => set((state) => ({
+        finalExamState: { ...state.finalExamState, ...data }
+      })),
+
+      updateLessonChat: (lessonId, messages) => set((state) => ({
+        lessonChats: { ...state.lessonChats, [lessonId]: messages }
+      })),
+
+      clearLessonChat: (lessonId) => set((state) => {
+        const newChats = { ...state.lessonChats };
+        delete newChats[lessonId];
+        return { lessonChats: newChats };
+      }),
+
+      completeLesson: (id) => set((state) => {
+        const lesson = state.lessons.find(l => l.id === id);
+        if (!lesson || lesson.status === 'Completed') return state;
+        
+        const newLessons = state.lessons.map(l => l.id === id ? { ...l, status: 'Completed' } : l) as Lesson[];
+        
+        // Check if all lessons are completed to unlock final exam
+        const allCompleted = newLessons.every(l => l.status === 'Completed');
+        const currentExamStatus = state.finalExamState.status;
+        
+        return {
+          lessons: recalculateLocks(newLessons),
+          user: { ...state.user, xp: state.user.xp + lesson.xp },
+          finalExamState: {
+            ...state.finalExamState,
+            status: (allCompleted && currentExamStatus === 'Locked') ? 'Available' : currentExamStatus
+          }
+        };
+      }),
+
+      addMessage: (chatId, message) => set((state) => ({
+        chats: state.chats.map(chat => {
+          if (chat.id === chatId) {
+            return {
+              ...chat,
+              updatedAt: new Date().toISOString(),
+              messages: [...chat.messages, { ...message, id: `m${Date.now()}`, timestamp: new Date().toISOString() }]
+            };
+          }
+          return chat;
+        })
+      })),
+
+      createNewChat: (title = 'New Chat') => {
+        const newChatId = `chat_${Date.now()}`;
+        set((state) => ({
+          chats: [
+            {
+              id: newChatId,
+              title,
+              messages: [],
+              updatedAt: new Date().toISOString()
+            },
+            ...state.chats
+          ],
+          activeChatId: newChatId
+        }));
+        return newChatId;
+      },
+
+      setActiveChat: (id) => set({ activeChatId: id }),
+
+      updateChatTitle: (id, title) => set((state) => ({
+        chats: state.chats.map(chat => chat.id === id ? { ...chat, title } : chat)
+      })),
+
+      updateUser: (data) => set((state) => ({
+        user: { ...state.user, ...data }
+      }))
+    }),
+    {
+      name: 'finwise-storage',
+    }
+  )
+);

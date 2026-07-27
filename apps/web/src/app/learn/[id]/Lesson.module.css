@@ -24,18 +24,59 @@
 
 .contentLayout {
   display: flex;
-  gap: 3rem;
-  align-items: flex-start;
+  justify-content: center;
+  position: relative;
+  transition: padding-right 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.contentLayout.chatExpanded {
+  padding-right: 420px;
 }
 
 /* Main Content */
 .mainContent {
-  flex: 1;
-  min-width: 0;
+  width: 100%;
+  max-width: 800px;
   background-color: var(--color-card-bg);
   border-radius: 24px;
   padding: 3rem;
   box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.selectionTooltip {
+  position: fixed;
+  z-index: 1000;
+  transform: translate(-50%, -120%);
+  background: #111827;
+  color: white;
+  border: 1px solid #374151;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+  transition: all 0.2s;
+  pointer-events: auto;
+}
+
+.selectionTooltip:hover {
+  background: #374151;
+  transform: translate(-50%, -125%);
+}
+
+.selectionTooltip::after {
+  content: '';
+  position: absolute;
+  bottom: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px 6px 0;
+  border-style: solid;
+  border-color: #111827 transparent transparent transparent;
 }
 
 .meta {
@@ -230,120 +271,4 @@
   border-radius: 9999px;
 }
 
-/* Sidebar */
-.sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  position: sticky;
-  top: 100px;
-  width: 320px; /* Default width when chat is closed */
-}
 
-.aiCard, .nextLessonCard {
-  background-color: var(--color-card-bg);
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-}
-
-.aiCard {
-  background: linear-gradient(180deg, var(--color-card-bg) 0%, #eff6ff 100%);
-  border: 1px solid #bfdbfe;
-}
-
-.aiHeader {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #3b82f6;
-  margin-bottom: 0.75rem;
-}
-
-.aiHeader h3 {
-  margin: 0;
-  font-size: 1.1rem;
-}
-
-.aiCard p {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-  margin-bottom: 1.5rem;
-}
-
-.quickPrompts {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.promptBtn {
-  background-color: rgba(255,255,255,0.7);
-  border: 1px solid rgba(59,130,246,0.2);
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
-  text-align: left;
-  font-size: 0.85rem;
-  color: #1e3a8a;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.2s;
-}
-
-.promptBtn:hover {
-  background-color: white;
-  border-color: #3b82f6;
-  transform: translateX(4px);
-}
-
-.chatBtn {
-  width: 100%;
-  background-color: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.85rem;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.chatBtn:hover {
-  background-color: #2563eb;
-}
-
-.nextLessonCard h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1.1rem;
-}
-
-.nextLesson {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.nextIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background-color: var(--color-surface-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-text-secondary);
-}
-
-.nextLesson h4 {
-  margin: 0 0 0.25rem 0;
-  font-size: 0.95rem;
-}
-
-.nextLesson span {
-  font-size: 0.8rem;
-  color: var(--color-text-secondary);
-}

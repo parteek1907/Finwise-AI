@@ -75,7 +75,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
         style={{ position: 'relative' }}
         {...props}
       >
-        <div style={{ position: 'relative' }}>
+        <div style={{ position: 'relative', height: '30px' }}>
           {/* Hover Highlight */}
           <div
             style={{
@@ -95,7 +95,7 @@ const Tabs = React.forwardRef<HTMLDivElement, TabsProps>(
           <div
             style={{
               position: 'absolute',
-              bottom: '-6px',
+              top: '36px',
               height: '2px',
               backgroundColor: 'var(--tab-indicator-bg, #0e0f11)',
               transition: 'all 300ms ease-out',
