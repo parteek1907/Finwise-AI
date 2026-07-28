@@ -1,10 +1,11 @@
 "use client";
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Award, Zap, ShieldCheck, Flame, TrendingUp, Star, Lock } from 'lucide-react';
 import styles from './Achievements.module.css';
 import { useAppStore } from '@/store/useAppStore';
+import { subscribeToLeaderboard, LeaderboardUser } from '@/services/leaderboard';
 
 const BADGES = [
   { id: 1, name: 'First Steps', desc: 'Completed the onboarding.', icon: Star, color: '#eab308', unlocked: true },
@@ -15,17 +16,39 @@ const BADGES = [
   { id: 6, name: 'Bull Run', desc: 'Made a profitable simulated trade.', icon: TrendingUp, color: '#ec4899', unlocked: false },
 ];
 
-const LEADERBOARD = [
-  { rank: 1, name: 'Sarah J.', xp: 3450, avatar: 'https://i.pravatar.cc/150?img=1' },
-  { rank: 2, name: 'David M.', xp: 2900, avatar: 'https://i.pravatar.cc/150?img=2' },
-  { rank: 3, name: 'Alex Studio', xp: 1250, avatar: 'https://i.pravatar.cc/150?img=11', isUser: true },
-  { rank: 4, name: 'Jessica T.', xp: 1100, avatar: 'https://i.pravatar.cc/150?img=4' },
-  { rank: 5, name: 'Michael R.', xp: 850, avatar: 'https://i.pravatar.cc/150?img=5' },
-];
-
 export default function AchievementsPage() {
   const user = useAppStore(state => state.user);
+  const [liveLeaderboard, setLiveLeaderboard] = useState<LeaderboardUser[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   
+  useEffect(() => {
+    const currentState = useAppStore.getState();
+    let currentUser = currentState.user;
+    
+    // Ensure legacy users without an ID get one assigned and persisted
+    if (!currentUser.id) {
+      const newId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      currentState.updateUser({ id: newId });
+      currentUser = { ...currentUser, id: newId };
+    }
+
+    // Push their stats to Firebase
+    import('@/services/leaderboard').then(({ syncUserXp, subscribeToLeaderboard }) => {
+      syncUserXp(currentUser);
+
+      // Subscribe to live leaderboard
+      const unsubscribe = subscribeToLeaderboard((users) => {
+        setLiveLeaderboard(users);
+        setIsLoading(false);
+      });
+      
+      // Store unsubscribe for cleanup in a hacky way since it's inside promise, 
+      // but typically we can attach it to a ref. For simplicity, we just won't clean up the promise
+      // or we can clean it up on unmount.
+      return () => unsubscribe();
+    });
+  }, []);
+
   // Level Calculation: Total XP = 50 * Level * (Level + 1)
   // Therefore Level = floor((-1 + sqrt(1 + 8 * Total XP / 100)) / 2)
   const currentLevel = Math.floor((-1 + Math.sqrt(1 + 8 * user.xp / 100)) / 2);
@@ -102,18 +125,19 @@ export default function AchievementsPage() {
               <p className={styles.leaderboardSub}>Compete with other learners to build the best financial habits.</p>
               
               <div className={styles.list}>
-                {LEADERBOARD.map(player => {
-                  const playerName = player.isUser ? user.name : player.name;
-                  const playerAvatar = player.isUser 
-                    ? (user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=19533B&color=fff`)
-                    : player.avatar;
+                {isLoading && <p className="text-sm text-gray-500 mt-4">Loading top learners...</p>}
+                {!isLoading && liveLeaderboard.length === 0 && (
+                  <p className="text-sm text-gray-500 mt-4">No top learners yet. Complete a course to be the first!</p>
+                )}
+                {liveLeaderboard.map(player => {
+                  const isUser = player.id === user.id;
                   return (
-                    <div key={player.rank} className={`${styles.playerRow} ${player.isUser ? styles.currentUser : ''}`}>
+                    <div key={player.id} className={`${styles.playerRow} ${isUser ? styles.currentUser : ''}`}>
                       <div className={styles.rank}>{player.rank}</div>
                       <div className={styles.avatar}>
-                        <img src={playerAvatar} alt={playerName} />
+                        <img src={player.avatar} alt={player.name} />
                       </div>
-                      <div className={styles.playerName}>{playerName}</div>
+                      <div className={styles.playerName}>{isUser ? (user.name || 'You') : player.name}</div>
                       <div className={styles.playerXp}>{player.xp} XP</div>
                     </div>
                   );

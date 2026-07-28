@@ -1,7 +1,9 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { syncUserXp } from '../services/leaderboard';
 // Types
 export interface User {
+  id?: string;
   name: string;
   email: string;
   avatar: string;
@@ -9,6 +11,7 @@ export interface User {
   healthScore: number;
   xp: number;
   streak: number;
+  lastCourseDate?: string;
 }
 
 export interface Goal {
@@ -98,13 +101,14 @@ export interface AppState {
 }
 
 const INITIAL_USER: User = {
+  id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
   name: '',
   email: '',
   avatar: '',
   archetype: 'The Guardian',
   healthScore: 85,
   xp: 0,
-  streak: 14,
+  streak: 1,
 };
 
 const INITIAL_GOALS: Goal[] = [
@@ -162,7 +166,7 @@ const INITIAL_CHATS: ChatSession[] = [];
 
 export const useAppStore = create<AppState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: INITIAL_USER,
       goals: INITIAL_GOALS,
       lessons: recalculateLocks(INITIAL_LESSONS),
@@ -233,7 +237,8 @@ export const useAppStore = create<AppState>()(
         return { lessonChats: newChats };
       }),
 
-      completeLesson: (id) => set((state) => {
+      completeLesson: (id) => {
+        set((state) => {
         const lesson = state.lessons.find(l => l.id === id);
         if (!lesson || lesson.status === 'Completed') return state;
         
@@ -243,17 +248,46 @@ export const useAppStore = create<AppState>()(
         const allCompleted = newLessons.every(l => l.status === 'Completed');
         const currentExamStatus = state.finalExamState.status;
         
+        // Streak Logic
+        const today = new Date().toISOString().split('T')[0];
+        let newStreak = state.user.streak;
+        
+        if (!state.user.lastCourseDate) {
+          // First course ever
+          newStreak = 1;
+        } else if (state.user.lastCourseDate !== today) {
+          const lastDate = new Date(state.user.lastCourseDate);
+          const currentDate = new Date(today);
+          const diffTime = Math.abs(currentDate.getTime() - lastDate.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          
+          if (diffDays === 1) {
+            newStreak += 1; // Completed next day
+          } else if (diffDays > 1) {
+            newStreak = 1; // Streak broken
+          }
+        }
+        
         return {
           lessons: recalculateLocks(newLessons),
-          user: { ...state.user, xp: state.user.xp + lesson.xp },
+          user: { 
+            ...state.user, 
+            id: state.user.id || `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+            xp: state.user.xp + lesson.xp,
+            streak: newStreak,
+            lastCourseDate: today
+          },
           finalExamState: {
             ...state.finalExamState,
             status: (allCompleted && currentExamStatus === 'Locked') ? 'Available' : currentExamStatus
           }
         };
-      }),
+      });
+      // Fire async sync after state update
+      syncUserXp(get().user);
+    },
 
-      addMessage: (chatId, message) => set((state) => ({
+    addMessage: (chatId, message) => set((state) => ({
         chats: state.chats.map(chat => {
           if (chat.id === chatId) {
             return {
