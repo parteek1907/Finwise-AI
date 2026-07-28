@@ -14,6 +14,8 @@ interface ChartHeaderProps {
   onSelectTimeframe: (tf: Timeframe) => void;
   indicators: Indicator[];
   onToggleIndicator: (id: string) => void;
+  chartType?: 'candle' | 'line' | 'area';
+  onChartTypeChange?: (type: 'candle' | 'line' | 'area') => void;
 }
 
 export const ChartHeader: React.FC<ChartHeaderProps> = ({
@@ -21,7 +23,9 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
   selectedTimeframe,
   onSelectTimeframe,
   indicators,
-  onToggleIndicator
+  onToggleIndicator,
+  chartType = 'candle',
+  onChartTypeChange
 }) => {
   const [indicatorsOpen, setIndicatorsOpen] = React.useState(false);
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency || 'USD');
@@ -34,6 +38,11 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
   const isPositive = quote.change >= 0;
   
   const timeframes: Timeframe[] = ['1D', '5D', '1M', '3M', '6M', '1Y', 'ALL'];
+  const chartTypes = [
+    { id: 'candle', label: 'Candlestick' },
+    { id: 'line', label: 'Line' },
+    { id: 'area', label: 'Area' }
+  ] as const;
 
   return (
     <div className={styles.compactHeader}>
@@ -104,6 +113,20 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
             ))}
           </div>
           
+          <div className={styles.divider} />
+
+          <div className={styles.chartTypeWrapper}>
+            <select 
+              value={chartType} 
+              onChange={(e) => onChartTypeChange?.(e.target.value as any)}
+              className={styles.chartTypeSelect}
+            >
+              {chartTypes.map(ct => (
+                <option key={ct.id} value={ct.id}>{ct.label}</option>
+              ))}
+            </select>
+          </div>
+
           <div className={styles.divider} />
 
           <div className={styles.indicatorsWrapper}>

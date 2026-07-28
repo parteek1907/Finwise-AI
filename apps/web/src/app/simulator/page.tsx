@@ -32,6 +32,8 @@ export default function SimulatorPage() {
   const [selectedSymbol, setSelectedSymbol] = useState<string>('VOO');
   const [timeframe, setTimeframe] = useState<Timeframe>('1M');
 
+  const [chartType, setChartType] = useState<'candle' | 'line' | 'area'>('candle');
+
   // Fetch Data
   const { movers, loading: moversLoading, error: moversError } = useMarketMovers();
   const { holdings, trades, summary, loading: portfolioLoading } = usePortfolio();
@@ -115,6 +117,8 @@ export default function SimulatorPage() {
                     onTimeframeChange={setTimeframe}
                     markers={markers}
                     realTimeTick={realTimeTick}
+                    chartType={chartType}
+                    onChartTypeChange={setChartType}
                   />
                   
 

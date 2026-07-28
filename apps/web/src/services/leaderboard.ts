@@ -28,8 +28,12 @@ export const syncUserXp = async (user: User) => {
       lastActive: new Date().toISOString()
     }, { merge: true });
     
-  } catch (error) {
-    console.error('Failed to sync user XP to leaderboard:', error);
+  } catch (error: any) {
+    if (error?.code === 'unavailable' || error?.message?.includes('offline')) {
+      console.warn('Firebase: Client is offline, skipping syncUserXp');
+    } else {
+      console.error('Failed to sync user XP to leaderboard:', error);
+    }
   }
 };
 
@@ -44,8 +48,12 @@ export const fetchUserData = async (uid: string) => {
       return docSnap.data();
     }
     return null;
-  } catch (error) {
-    console.error('Failed to fetch user data:', error);
+  } catch (error: any) {
+    if (error?.code === 'unavailable' || error?.message?.includes('offline')) {
+      console.warn('Firebase: Client is offline, skipping fetchUserData');
+    } else {
+      console.error('Failed to fetch user data:', error);
+    }
     return null;
   }
 };
@@ -81,8 +89,12 @@ export const subscribeToLeaderboard = (onUpdate: (users: LeaderboardUser[]) => v
     }));
 
     onUpdate(rankedLeaderboard);
-  }, (error) => {
-    console.error('Error listening to leaderboard:', error);
+  }, (error: any) => {
+    if (error?.code === 'unavailable' || error?.message?.includes('offline')) {
+      console.warn('Firebase: Client is offline, leaderboard subscription suspended');
+    } else {
+      console.error('Error listening to leaderboard:', error);
+    }
   });
 
   return unsubscribe;

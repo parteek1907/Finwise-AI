@@ -1,8 +1,6 @@
 import { create } from 'zustand';
 import { Quote, MarketStatus } from '../types/market';
-import { getMarketStatus, getQuote } from '../services/market';
-
-import { getMarketRegion, getExchangeStatus } from '../utils/market-hours';
+import { getQuote } from '../services/market';
 
 interface RealTimeTick {
   symbol: string;
@@ -24,66 +22,11 @@ interface MarketState {
   unsubscribe: (symbol: string) => void;
 }
 
+// Keep polling intervals outside of zustand state
+const pollingIntervals: Record<string, NodeJS.Timeout> = {};
+
 export const useMarketStore = create<MarketState>((set, get) => {
-  let tickInterval: NodeJS.Timeout | null = null;
-
-  const startTickInterval = () => {
-    if (tickInterval) return;
-    
-    // Simulate real-time updates for all subscribed symbols every 1s
-    tickInterval = setInterval(() => {
-      const state = get();
-
-      const updatedQuotes = { ...state.quotes };
-      const updatedTicks = { ...state.liveTicks };
-      let hasChanges = false;
-
-      state.activeSymbols.forEach(symbol => {
-        const quote = updatedQuotes[symbol];
-        if (quote) {
-          // Check if market is open for this specific symbol
-          const region = getMarketRegion(quote.exchange);
-          const status = getExchangeStatus(region);
-          
-          if (!status.isOpen) return; // Freeze if closed
-
-          // Random price fluctuation +/- 0.1%
-          const change = quote.price * (Math.random() * 0.002 - 0.001);
-          const newPrice = Number((quote.price + change).toFixed(2));
-          const prevClose = quote.price - quote.change;
-
-          updatedQuotes[symbol] = {
-            ...quote,
-            price: newPrice,
-            change: newPrice - prevClose,
-            changePercent: ((newPrice - prevClose) / prevClose) * 100
-          };
-
-          updatedTicks[symbol] = {
-            symbol,
-            price: newPrice,
-            time: Math.floor(Date.now() / 1000),
-            volume: 100
-          };
-          hasChanges = true;
-        }
-      });
-
-      if (hasChanges) {
-        set({ quotes: updatedQuotes, liveTicks: updatedTicks });
-      }
-    }, 1000);
-  };
-
-  const stopTickInterval = () => {
-    if (tickInterval) {
-      clearInterval(tickInterval);
-      tickInterval = null;
-    }
-  };
-
   return {
-    marketStatus: null,
     quotes: {},
     liveTicks: {},
     loading: true,
@@ -91,17 +34,7 @@ export const useMarketStore = create<MarketState>((set, get) => {
     activeSymbols: new Set(),
 
     initialize: async () => {
-      try {
-        set({ loading: true });
-        // We no longer fetch a global market status.
-        // The store handles open/closed per symbol based on getExchangeStatus.
-        set({ loading: false });
-        
-        // Start the polling loop immediately, it will skip closed symbols inside
-        startTickInterval();
-      } catch (err: any) {
-        set({ error: err.message, loading: false });
-      }
+      set({ loading: false, error: null });
     },
 
     subscribe: async (symbol: string) => {
@@ -110,18 +43,48 @@ export const useMarketStore = create<MarketState>((set, get) => {
       newSymbols.add(symbol);
       set({ activeSymbols: newSymbols });
 
-      if (!state.quotes[symbol]) {
+      const fetchAndUpdate = async () => {
         try {
-          const initialQuote = await getQuote(symbol);
-          set(prev => ({
-            quotes: { ...prev.quotes, [symbol]: initialQuote }
-          }));
+          const quote = await getQuote(symbol);
+          
+          set(prev => {
+            const prevQuote = prev.quotes[symbol];
+            
+            // Only generate a chart tick if the price actually changed to avoid spamming the chart
+            // with identical prices, unless it's the very first quote
+            let newLiveTicks = prev.liveTicks;
+            if (!prevQuote || prevQuote.price !== quote.price) {
+              newLiveTicks = {
+                ...prev.liveTicks,
+                [symbol]: {
+                  symbol,
+                  price: quote.price,
+                  time: Date.now(),
+                  volume: quote.volume || Math.floor(Math.random() * 500) + 100
+                }
+              };
+            }
+
+            return {
+              quotes: { ...prev.quotes, [symbol]: quote },
+              liveTicks: newLiveTicks
+            };
+          });
         } catch (error) {
           console.error(`Failed to fetch quote for ${symbol}`, error);
         }
+      };
+
+      // Fetch initial quote immediately
+      if (!state.quotes[symbol]) {
+        await fetchAndUpdate();
       }
 
-      startTickInterval();
+      // Start polling every 5 seconds if not already polling
+      if (!pollingIntervals[symbol]) {
+        console.log(`Started polling for ${symbol}`);
+        pollingIntervals[symbol] = setInterval(fetchAndUpdate, 5000);
+      }
     },
 
     unsubscribe: (symbol: string) => {
@@ -130,8 +93,11 @@ export const useMarketStore = create<MarketState>((set, get) => {
       newSymbols.delete(symbol);
       set({ activeSymbols: newSymbols });
 
-      if (newSymbols.size === 0) {
-        stopTickInterval();
+      // Stop polling
+      if (pollingIntervals[symbol]) {
+        clearInterval(pollingIntervals[symbol]);
+        delete pollingIntervals[symbol];
+        console.log(`Stopped polling for ${symbol}`);
       }
     }
   };

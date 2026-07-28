@@ -15,7 +15,12 @@ def initialize_firebase():
             print("Warning: Firebase credentials not found. Initializing without explicit certificate.")
             firebase_admin.initialize_app()
     
-    db = firestore.client()
+    try:
+        db = firestore.client()
+    except Exception as e:
+        print(f"Warning: Failed to initialize firestore client. Firebase features will be disabled. Error: {e}")
+        db = None
+        
     return db, auth
 
 db, firebase_auth = initialize_firebase()

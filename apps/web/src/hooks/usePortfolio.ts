@@ -8,7 +8,7 @@ import { executeOrder } from '../services/trade';
 import { getQuote } from '../services/market';
 import { calculatePortfolioSummary } from '../utils/calculations';
 import { formatCurrency } from '../utils/formatters';
-import { INITIAL_BUYING_POWER } from '../mocks/portfolio';
+import { INITIAL_HOLDINGS, INITIAL_TRADES, INITIAL_BUYING_POWER } from '../mocks/portfolio';
 import { useMarketStore } from '../store/useMarketStore';
 
 // Internal global state for static trade history and holding records
@@ -26,10 +26,10 @@ interface PortfolioState {
 const usePortfolioStore = create<PortfolioState>()(
   persist(
     (set) => ({
-      baseHoldings: [],
-      trades: [],
+      baseHoldings: INITIAL_HOLDINGS,
+      trades: INITIAL_TRADES,
       buyingPower: INITIAL_BUYING_POWER,
-      isInitialized: false,
+      isInitialized: true,
       setInitialized: (val) => set({ isInitialized: val }),
       setBaseHoldings: (h) => set({ baseHoldings: h }),
       setTrades: (t) => set({ trades: t }),
@@ -111,38 +111,8 @@ export const usePortfolio = () => {
   const store = usePortfolioStore();
   const { quotes, subscribe, unsubscribe } = useMarketStore();
   
-  const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  
-  useEffect(() => {
-    if (store.isInitialized) return;
-    
-    let mounted = true;
-    const fetchInitialData = async () => {
-      try {
-        setIsFetching(true);
-        const [initialHoldings, initialTrades] = await Promise.all([
-          getPortfolioHoldings(),
-          getTradeHistory()
-        ]);
-        
-        if (mounted) {
-          store.setBaseHoldings(initialHoldings);
-          store.setTrades(initialTrades);
-          store.setInitialized(true);
-        }
-      } catch (err: any) {
-        if (mounted) setError(err.message || 'Failed to fetch portfolio data');
-      } finally {
-        if (mounted) setIsFetching(false);
-      }
-    };
-    
-    fetchInitialData();
-    return () => { mounted = false; };
-  }, [store.isInitialized, store]);
-
-  const loading = !store.isInitialized || isFetching;
+  const loading = false;
+  const error = null;
 
   // Subscribe to all holdings in the market store to get live updates
   useEffect(() => {

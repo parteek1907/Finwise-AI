@@ -60,6 +60,8 @@ interface TradingChartProps {
   markers?: ChartMarker[];
   orderLines?: OrderLine[];
   realTimeTick?: { price: number; time: number; volume: number } | null;
+  chartType?: 'candle' | 'line' | 'area';
+  onChartTypeChange?: (type: 'candle' | 'line' | 'area') => void;
 }
 
 export const TradingChart: React.FC<TradingChartProps> = ({ 
@@ -72,12 +74,14 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   onTimeframeChange,
   markers = [], 
   orderLines = [],
-  realTimeTick
+  realTimeTick,
+  chartType = 'candle',
+  onChartTypeChange
 }) => {
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
-  const candleSeriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
+  const mainSeriesRef = useRef<ISeriesApi<any> | null>(null);
   const volumeSeriesRef = useRef<ISeriesApi<"Histogram"> | null>(null);
   
   // Indicator series refs
@@ -136,29 +140,60 @@ export const TradingChart: React.FC<TradingChartProps> = ({
     });
     chartRef.current = chart;
 
-    // 2. Add Candlestick Series
-    const candleSeries = chart.addCandlestickSeries({
-      upColor: '#16a34a',
-      downColor: '#dc2626',
-      borderVisible: false,
-      wickUpColor: '#16a34a',
-      wickDownColor: '#dc2626',
-    });
-    candleSeriesRef.current = candleSeries;
+    // 2. Add Main Series (Candle, Line, or Area)
+    let mainSeries: ISeriesApi<any>;
+    let formattedData: any[];
 
-    const formattedCandles = candles.map(c => ({
-      time: c.time as Time,
-      open: c.open * currencyRate,
-      high: c.high * currencyRate,
-      low: c.low * currencyRate,
-      close: c.close * currencyRate,
-    }));
-    candleSeries.setData(formattedCandles);
+    if (chartType === 'line') {
+      mainSeries = chart.addLineSeries({
+        color: '#2962FF',
+        lineWidth: 2,
+      });
+      formattedData = candles.map(c => ({
+        time: c.time as Time,
+        value: c.close * currencyRate,
+      }));
+    } else if (chartType === 'area') {
+      mainSeries = chart.addAreaSeries({
+        lineColor: '#2962FF',
+        topColor: 'rgba(41, 98, 255, 0.28)',
+        bottomColor: 'rgba(41, 98, 255, 0.05)',
+        lineWidth: 2,
+      });
+      formattedData = candles.map(c => ({
+        time: c.time as Time,
+        value: c.close * currencyRate,
+      }));
+    } else {
+      mainSeries = chart.addCandlestickSeries({
+        upColor: '#16a34a',
+        downColor: '#dc2626',
+        borderVisible: false,
+        wickUpColor: '#16a34a',
+        wickDownColor: '#dc2626',
+      });
+      formattedData = candles.map(c => ({
+        time: c.time as Time,
+        open: c.open * currencyRate,
+        high: c.high * currencyRate,
+        low: c.low * currencyRate,
+        close: c.close * currencyRate,
+      }));
+    }
+
+    mainSeriesRef.current = mainSeries;
+    mainSeries.setData(formattedData);
     
-    if (formattedCandles.length > 0) {
-      liveCandleRef.current = { 
-        ...formattedCandles[formattedCandles.length - 1],
-        volume: candles[candles.length - 1].volume || 0 
+    if (formattedData.length > 0) {
+      // Store the base data for live updates
+      const lastBaseCandle = candles[candles.length - 1];
+      liveCandleRef.current = {
+        time: lastBaseCandle.time as Time,
+        open: lastBaseCandle.open * currencyRate,
+        high: lastBaseCandle.high * currencyRate,
+        low: lastBaseCandle.low * currencyRate,
+        close: lastBaseCandle.close * currencyRate,
+        volume: lastBaseCandle.volume || 0 
       };
     }
 
@@ -215,7 +250,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
     // 6. Set Markers
     if (markers.length > 0) {
-      candleSeries.setMarkers(markers.map(m => ({
+      mainSeries.setMarkers(markers.map(m => ({
         time: m.time as Time,
         position: m.position,
         color: m.color,
@@ -223,12 +258,12 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         text: m.text,
       })));
     } else {
-      candleSeries.setMarkers([]);
+      mainSeries.setMarkers([]);
     }
 
     // 7. Set Order Lines
     orderLines.forEach(line => {
-      candleSeries.createPriceLine({
+      mainSeries.createPriceLine({
         price: line.price * currencyRate,
         color: line.color,
         lineWidth: 2,
@@ -252,7 +287,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         return;
       }
 
-      const data = param.seriesData.get(candleSeries) as CandlestickData;
+      const data = param.seriesData.get(mainSeries) as any;
       if (!data) {
         setTooltipData(null);
         return;
@@ -290,10 +325,10 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
       setTooltipData({
         time: dateStr,
-        open: data.open / currencyRate,
-        high: data.high / currencyRate,
-        low: data.low / currencyRate,
-        close: data.close / currencyRate,
+        open: data.open !== undefined ? data.open / currencyRate : data.value / currencyRate,
+        high: data.high !== undefined ? data.high / currencyRate : data.value / currencyRate,
+        low: data.low !== undefined ? data.low / currencyRate : data.value / currencyRate,
+        close: data.close !== undefined ? data.close / currencyRate : data.value / currencyRate,
         volume: volData.value,
         x,
         y,
@@ -305,27 +340,75 @@ export const TradingChart: React.FC<TradingChartProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize);
       chart.remove();
+      chartRef.current = null;
+      mainSeriesRef.current = null;
+      volumeSeriesRef.current = null;
+      smaSeriesRef.current = null;
+      emaSeriesRef.current = null;
     };
-  }, [candles, indicators, loading, currencyRate]);
+  }, [candles, indicators, loading, currencyRate, chartType]);
 
   // Handle Real-Time Tick Update
   useEffect(() => {
-    if (!realTimeTick || !candleSeriesRef.current || !liveCandleRef.current) return;
+    if (!realTimeTick || !mainSeriesRef.current || !liveCandleRef.current) return;
     
     const live = liveCandleRef.current;
     const newPrice = realTimeTick.price * currencyRate;
     
-    // Update the existing candle instead of spawning a new one
-    const newCandle = {
-      time: live.time,
-      open: Number(live.open),
-      high: Math.max(Number(live.high), newPrice),
-      low: Math.min(Number(live.low), newPrice),
-      close: newPrice,
-      volume: live.volume || (realTimeTick.volume || 100)
-    };
+    const tickMs = realTimeTick.time; // ms
+    let tickChartTime: Time;
     
-    candleSeriesRef.current.update(newCandle);
+    if (['1M', '3M', '6M', '1Y', 'ALL'].includes(timeframe)) {
+      // Daily charts: format as 'YYYY-MM-DD'
+      tickChartTime = new Date(tickMs).toISOString().split('T')[0] as Time;
+    } else if (timeframe === '1D') {
+      // 5-minute periods for 1D chart
+      const periodSec = 5 * 60;
+      tickChartTime = (Math.floor((tickMs / 1000) / periodSec) * periodSec) as Time;
+    } else {
+      // 15-minute periods for 5D chart
+      const periodSec = 15 * 60;
+      tickChartTime = (Math.floor((tickMs / 1000) / periodSec) * periodSec) as Time;
+    }
+    
+    let newCandle: any;
+    
+    if (tickChartTime !== live.time && tickChartTime > live.time) {
+      newCandle = {
+        time: tickChartTime,
+        open: newPrice,
+        high: newPrice,
+        low: newPrice,
+        close: newPrice,
+        volume: realTimeTick.volume || 0
+      };
+    } else {
+      // Update existing candle
+      newCandle = {
+        time: live.time,
+        open: Number(live.open),
+        high: Math.max(Number(live.high), newPrice),
+        low: Math.min(Number(live.low), newPrice),
+        close: newPrice,
+        volume: (live.volume || 0) + (realTimeTick.volume || 0)
+      };
+    }
+    
+    if (chartType === 'line' || chartType === 'area') {
+      mainSeriesRef.current.update({
+        time: newCandle.time,
+        value: newCandle.close
+      } as any);
+    } else {
+      mainSeriesRef.current.update({
+        time: newCandle.time,
+        open: newCandle.open,
+        high: newCandle.high,
+        low: newCandle.low,
+        close: newCandle.close
+      } as any);
+    }
+    
     liveCandleRef.current = newCandle;
     
     if (volumeSeriesRef.current) {
@@ -335,7 +418,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         color: newPrice >= newCandle.open ? 'rgba(22, 163, 74, 0.5)' : 'rgba(220, 38, 38, 0.5)'
       });
     }
-  }, [realTimeTick]);
+  }, [realTimeTick, timeframe, chartType]);
 
   if (!asset) {
     return (
@@ -360,6 +443,8 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         onSelectTimeframe={onTimeframeChange}
         indicators={indicators}
         onToggleIndicator={toggleIndicator}
+        chartType={chartType}
+        onChartTypeChange={onChartTypeChange}
       />
 
       <div className={styles.chartContainer}>

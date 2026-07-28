@@ -11,6 +11,7 @@ export const getQuote = async (symbol: string): Promise<Quote> => {
   if (symbol === 'BTC') fetchSymbol = 'BTC-USD';
   if (symbol === 'ETH') fetchSymbol = 'ETH-USD';
   if (symbol === 'SOL') fetchSymbol = 'SOL-USD';
+  
   try {
     const response = await fetch(`/api/market/quote/${fetchSymbol}`);
     if (response.ok) {
@@ -58,7 +59,9 @@ export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<
   if (symbol === 'BTC') fetchSymbol = 'BTC-USD';
   if (symbol === 'ETH') fetchSymbol = 'ETH-USD';
   if (symbol === 'SOL') fetchSymbol = 'SOL-USD';
+  
   try {
+    // Yahoo Finance supports ETFs and Crypto for free, so we use Next.js proxy
     const response = await fetch(`/api/market/candles/${fetchSymbol}?timeframe=${timeframe}`);
     if (response.ok) {
       const data = await response.json();
@@ -82,7 +85,7 @@ export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<
   // Filter based on timeframe from the end of the array
   let pointsToReturn = allCandles.length;
   switch (timeframe) {
-    case '1D': pointsToReturn = 1; break; // In a real app 1D would have intraday minute data. For daily candles we just return a few? Actually the user prompt said "1D 5D 1M 3M 6M 1Y ALL". Let's assume daily candles for all of them, just returning different lengths.
+    case '1D': pointsToReturn = 1; break; 
     case '5D': pointsToReturn = 5; break;
     case '1M': pointsToReturn = 30; break;
     case '3M': pointsToReturn = 90; break;
@@ -98,11 +101,24 @@ export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<
 export const getChartData = getCandles;
 
 export const searchSymbols = async (query: string): Promise<Quote[]> => {
-  await delay(300);
   const upperQuery = query.toUpperCase();
-  return Object.values(MOCK_QUOTES).filter(q => 
+  const matches = Object.values(MOCK_QUOTES).filter(q => 
     q.symbol.includes(upperQuery) || q.name.toUpperCase().includes(upperQuery)
   );
+
+  // Fetch live prices for search results in parallel
+  const liveResults = await Promise.all(
+    matches.map(async (mockQuote) => {
+      try {
+        const liveQuote = await getQuote(mockQuote.symbol);
+        return { ...mockQuote, ...liveQuote }; // Merge to preserve any mock fields like aiInsight
+      } catch {
+        return mockQuote;
+      }
+    })
+  );
+
+  return liveResults;
 };
 
 export const getMarketStatus = async (): Promise<MarketStatus> => {
