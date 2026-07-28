@@ -227,11 +227,12 @@ export default function LearnPage() {
                     </div>
                     <div className={styles.cardActions}>
                       <button 
-                        className={`${styles.actionBtn} ${styles.btnPrimary}`}
-                        onClick={() => router.push(`/learn/exam`)}
-                        style={{ background: '#10b981', color: 'white', border: 'none' }}
+                        className={`${styles.actionBtn} ${finalExamState.status === 'Locked' ? styles.btnDisabled : styles.btnPrimary}`}
+                        onClick={() => finalExamState.status !== 'Locked' && router.push(`/learn/exam`)}
+                        disabled={finalExamState.status === 'Locked'}
+                        style={finalExamState.status !== 'Locked' ? { background: '#10b981', color: 'white', border: 'none' } : {}}
                       >
-                        {finalExamState.status === 'Passed' ? 'Review Exam' : 'Start Final Exam'}
+                        {finalExamState.status === 'Locked' ? 'Complete all lessons to unlock' : (finalExamState.status === 'Passed' ? 'Review Exam' : 'Start Final Exam')}
                       </button>
                     </div>
                   </div>

@@ -186,7 +186,7 @@ export const useAppStore = create<AppState>()(
         timeRemaining: null,
         warnings: 0,
         attempts: [],
-        status: 'Available'
+        status: 'Locked'
       },
       lessonChats: {},
 
