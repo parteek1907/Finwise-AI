@@ -69,13 +69,23 @@ export function AppLayout({ children }: AppLayoutProps) {
         const isStuckName = currentName === 'Aditya Tanwar' || currentName === firebaseUser.displayName || currentName === formattedEmailPrefix;
 
         if (!currentName || isDifferentUser || isStuckName) {
-          updateUser({ name: rawName || 'User' });
+          updateUser({ 
+            name: rawName || 'User', 
+            id: firebaseUser.uid, 
+            email: userEmail, 
+            avatar: userAvatar 
+          });
           updateProfile({
             name: rawName || 'User',
             email: userEmail,
             avatar: userAvatar,
           });
         } else {
+          updateUser({ 
+            id: firebaseUser.uid,
+            email: userEmail, 
+            avatar: userAvatar 
+          });
           updateProfile({
             email: userEmail,
             avatar: userAvatar,

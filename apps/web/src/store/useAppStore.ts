@@ -323,9 +323,13 @@ export const useAppStore = create<AppState>()(
         chats: state.chats.map(chat => chat.id === id ? { ...chat, title } : chat)
       })),
 
-      updateUser: (data) => set((state) => ({
-        user: { ...state.user, ...data }
-      }))
+      updateUser: (data) => {
+        set((state) => ({
+          user: { ...state.user, ...data }
+        }));
+        // Ensure profile updates (including login/UID assignment) push to the global DB
+        syncUserXp(get().user);
+      }
     }),
     {
       name: 'finwise-storage',
