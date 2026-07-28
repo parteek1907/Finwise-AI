@@ -361,12 +361,11 @@ CRITICAL INSTRUCTIONS:
         >
           <div style={{ width: '100%', height: 566 * scale, position: 'relative', overflow: 'hidden', borderRadius: '12px' }}>
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
+              initial={{ scale: 0.9 * scale, opacity: 0 }}
+              animate={{ scale: scale, opacity: 1 }}
               style={{ 
                 width: 800, 
                 height: 566, 
-                transform: `scale(${scale})`, 
                 transformOrigin: 'top left',
                 position: 'absolute',
                 top: 0,
