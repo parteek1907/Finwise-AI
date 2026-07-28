@@ -22,31 +22,23 @@ export default function AchievementsPage() {
   const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
-    const currentState = useAppStore.getState();
-    let currentUser = currentState.user;
-    
-    // Ensure legacy users without an ID get one assigned and persisted
-    if (!currentUser.id) {
-      const newId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-      currentState.updateUser({ id: newId });
-      currentUser = { ...currentUser, id: newId };
-    }
+    let unsubscribeFn: (() => void) | null = null;
 
-    // Push their stats to Firebase
     import('@/services/leaderboard').then(({ syncUserXp, subscribeToLeaderboard }) => {
+      // Sync current user to Firebase (service guards against non-auth IDs)
+      const currentUser = useAppStore.getState().user;
       syncUserXp(currentUser);
 
-      // Subscribe to live leaderboard
-      const unsubscribe = subscribeToLeaderboard((users) => {
+      // Subscribe to live leaderboard updates
+      unsubscribeFn = subscribeToLeaderboard((users) => {
         setLiveLeaderboard(users);
         setIsLoading(false);
       });
-      
-      // Store unsubscribe for cleanup in a hacky way since it's inside promise, 
-      // but typically we can attach it to a ref. For simplicity, we just won't clean up the promise
-      // or we can clean it up on unmount.
-      return () => unsubscribe();
     });
+
+    return () => {
+      if (unsubscribeFn) unsubscribeFn();
+    };
   }, []);
 
   // Level Calculation: Total XP = 50 * Level * (Level + 1)
@@ -83,7 +75,7 @@ export default function AchievementsPage() {
                   <h2 className={styles.levelText}>Level {currentLevel}</h2>
                 </div>
                 <div className={styles.streakBadge}>
-                  <Flame size={18} /> {user.streak} Day Streak
+                  <Flame size={18} /> {user.streak > 0 ? `${user.streak} Day Streak` : 'No Streak'}
                 </div>
               </div>
 

@@ -101,14 +101,13 @@ export interface AppState {
 }
 
 const INITIAL_USER: User = {
-  id: `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
   name: '',
   email: '',
   avatar: '',
   archetype: 'The Guardian',
   healthScore: 85,
   xp: 0,
-  streak: 1,
+  streak: 0,
 };
 
 const INITIAL_GOALS: Goal[] = [
@@ -327,8 +326,11 @@ export const useAppStore = create<AppState>()(
         set((state) => ({
           user: { ...state.user, ...data }
         }));
-        // Ensure profile updates (including login/UID assignment) push to the global DB
-        syncUserXp(get().user);
+        // Only sync to Firebase if user has a real Auth UID (not a local fallback)
+        const currentUser = get().user;
+        if (currentUser.id && !currentUser.id.startsWith('user_')) {
+          syncUserXp(currentUser);
+        }
       }
     }),
     {

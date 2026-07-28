@@ -15,7 +15,8 @@ export interface LeaderboardUser {
  * Pushes the local user's XP and profile info to the global Firestore leaderboard
  */
 export const syncUserXp = async (user: User) => {
-  if (!user.id) return;
+  // Only sync users with a real Firebase Auth UID
+  if (!user.id || user.id.startsWith('user_')) return;
 
   try {
     const userRef = doc(db, 'users', user.id);
@@ -44,6 +45,9 @@ export const subscribeToLeaderboard = (onUpdate: (users: LeaderboardUser[]) => v
     const leaderboard: LeaderboardUser[] = [];
     
     snapshot.forEach((doc) => {
+      // Filter out legacy local/anonymous IDs. We only want real authenticated Firebase UIDs.
+      if (doc.id.startsWith('user_')) return;
+
       const data = doc.data();
       leaderboard.push({
         id: doc.id,
