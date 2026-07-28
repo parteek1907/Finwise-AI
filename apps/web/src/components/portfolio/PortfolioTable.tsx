@@ -3,7 +3,7 @@ import { PortfolioHolding, PortfolioSummary } from '../../types/portfolio';
 import { Trade } from '../../types/trade';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import NumberFlow from '@number-flow/react';
+import NumberFlow from '@/components/ui/ClientNumberFlow';
 import { EmptyState } from '../common/EmptyState';
 import { SellModal } from './SellModal';
 import styles from './Portfolio.module.css';

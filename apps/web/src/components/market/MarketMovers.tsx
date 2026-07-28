@@ -5,7 +5,7 @@ import { SkeletonLoader } from '../common/SkeletonLoader';
 import { ErrorCard } from '../common/ErrorCard';
 import { formatPercentage, formatCurrency } from '../../utils/formatters';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import NumberFlow from '@number-flow/react';
+import NumberFlow from '@/components/ui/ClientNumberFlow';
 import styles from './Market.module.css';
 
 const AnimatedNumberFlow = ({ value, format }: { value: number, format?: any }) => {

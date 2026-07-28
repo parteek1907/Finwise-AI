@@ -9,7 +9,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { motion } from 'framer-motion';
-import NumberFlow from "@number-flow/react";
+import NumberFlow from "@/components/ui/ClientNumberFlow";
 import { 
   ArrowUpRight, 
   MessageSquare,

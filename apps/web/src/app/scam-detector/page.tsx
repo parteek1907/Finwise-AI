@@ -279,7 +279,7 @@ export default function ScamDetectorPage() {
                 >
                   <div className={styles.radar}></div>
                   <h3>Scanning...</h3>
-                  <p>Cross-referencing global scam databases using Groq Vision...</p>
+                  <p>Cross-referencing global scam databases using Gemini...</p>
                 </motion.div>
               )}
 

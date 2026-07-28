@@ -7,7 +7,7 @@ import { Check, Star } from "lucide-react";
 import Link from "next/link";
 import { useState, useRef } from "react";
 import confetti from "canvas-confetti";
-import NumberFlow from "@number-flow/react";
+import NumberFlow from "@/components/ui/ClientNumberFlow";
 import { useToast } from "@/components/ui/toast";
 
 interface PricingPlan {

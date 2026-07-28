@@ -4,7 +4,7 @@ import { Timeframe } from '../../../constants/symbols';
 import { getMarketRegion, getExchangeStatus } from '../../../utils/market-hours';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { CURRENCY_MAP } from '../../../utils/formatters';
-import NumberFlow from '@number-flow/react';
+import NumberFlow from '@/components/ui/ClientNumberFlow';
 import { ChevronDown, BarChart2 } from 'lucide-react';
 import styles from './TradingChart.module.css';
 

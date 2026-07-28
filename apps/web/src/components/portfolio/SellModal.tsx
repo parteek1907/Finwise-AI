@@ -3,7 +3,7 @@ import { PortfolioHolding } from '../../types/portfolio';
 import { useTradeExecution } from '../../hooks/usePortfolio';
 import { formatCurrency } from '../../utils/formatters';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import NumberFlow from '@number-flow/react';
+import NumberFlow from '@/components/ui/ClientNumberFlow';
 import { X, Loader2, CheckCircle, AlertTriangle } from 'lucide-react';
 import styles from './SellModal.module.css';
 
