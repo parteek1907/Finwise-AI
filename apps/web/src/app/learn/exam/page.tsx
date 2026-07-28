@@ -653,7 +653,7 @@ export default function FinalExamPage() {
                     <div className={styles.reviewQuestion}>{q.question}</div>
                     
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                      {q.options.map((opt, optIdx) => {
+                      {q.options.map((opt: string, optIdx: number) => {
                         const isCorrectOption = optIdx === res?.correctAnswerIndex;
                         const isSelected = optIdx === userAnswer;
                         
