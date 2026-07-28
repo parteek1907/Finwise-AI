@@ -296,7 +296,7 @@ export default function LearnPage() {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
               onClick={(e) => e.stopPropagation()}
-              style={{ background: '#f9fafb', padding: '40px', borderRadius: '24px', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.3)', width: 'auto' }}
+              style={{ background: '#f9fafb', padding: '40px', borderRadius: '24px', position: 'relative', display: 'flex', flexDirection: 'column', alignItems: 'center', boxShadow: '0 24px 64px rgba(0,0,0,0.3)', width: '100%', maxWidth: '880px' }}
             >
               <button 
                 onClick={() => setSelectedCertLesson(null)}
