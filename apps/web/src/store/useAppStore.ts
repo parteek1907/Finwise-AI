@@ -98,6 +98,8 @@ export interface AppState {
   setActiveChat: (id: string) => void;
   updateChatTitle: (id: string, title: string) => void;
   updateUser: (data: Partial<User>) => void;
+  updateUserFromCloud: (data: Partial<User>) => void; // Update without syncing back
+  resetUser: () => void;
 }
 
 const INITIAL_USER: User = {
@@ -331,6 +333,16 @@ export const useAppStore = create<AppState>()(
         if (currentUser.id && !currentUser.id.startsWith('user_')) {
           syncUserXp(currentUser);
         }
+      },
+
+      updateUserFromCloud: (data) => {
+        set((state) => ({
+          user: { ...state.user, ...data }
+        }));
+      },
+
+      resetUser: () => {
+        set({ user: INITIAL_USER });
       }
     }),
     {

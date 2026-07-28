@@ -7,13 +7,13 @@ import styles from './Achievements.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { subscribeToLeaderboard, LeaderboardUser } from '@/services/leaderboard';
 
-const BADGES = [
-  { id: 1, name: 'First Steps', desc: 'Completed the onboarding.', icon: Star, color: '#eab308', unlocked: true },
-  { id: 2, name: 'Avid Saver', desc: 'Reached 25% of an emergency fund goal.', icon: ShieldCheck, color: '#22c55e', unlocked: true },
-  { id: 3, name: '7-Day Streak', desc: 'Logged in for 7 consecutive days.', icon: Flame, color: '#f97316', unlocked: true },
-  { id: 4, name: 'Market Scholar', desc: 'Completed 5 investing modules.', icon: Award, color: '#3b82f6', unlocked: false },
-  { id: 5, name: 'Scam Buster', desc: 'Correctly identified 3 scams.', icon: Zap, color: '#8b5cf6', unlocked: false },
-  { id: 6, name: 'Bull Run', desc: 'Made a profitable simulated trade.', icon: TrendingUp, color: '#ec4899', unlocked: false },
+const getBadges = (xp: number, streak: number) => [
+  { id: 1, name: 'First Steps', desc: 'Completed the onboarding.', icon: Star, color: '#eab308', unlocked: xp > 0 },
+  { id: 2, name: 'Avid Saver', desc: 'Reached 25% of an emergency fund goal.', icon: ShieldCheck, color: '#22c55e', unlocked: xp >= 150 },
+  { id: 3, name: '7-Day Streak', desc: 'Logged in for 7 consecutive days.', icon: Flame, color: '#f97316', unlocked: streak >= 7 },
+  { id: 4, name: 'Market Scholar', desc: 'Completed 5 investing modules.', icon: Award, color: '#3b82f6', unlocked: xp >= 500 },
+  { id: 5, name: 'Scam Buster', desc: 'Correctly identified 3 scams.', icon: Zap, color: '#8b5cf6', unlocked: xp >= 1000 },
+  { id: 6, name: 'Bull Run', desc: 'Made a profitable simulated trade.', icon: TrendingUp, color: '#ec4899', unlocked: xp >= 1500 },
 ];
 
 export default function AchievementsPage() {
@@ -95,7 +95,7 @@ export default function AchievementsPage() {
             <div className={styles.badgesSection}>
               <h3>Earned Badges</h3>
               <div className={styles.badgesGrid}>
-                {BADGES.map(badge => (
+                {getBadges(user.xp, user.streak).map(badge => (
                   <div key={badge.id} className={`${styles.badgeCard} ${!badge.unlocked ? styles.lockedCard : ''}`}>
                     <div className={styles.badgeIconBox} style={{
                       backgroundColor: badge.unlocked ? `${badge.color}20` : 'var(--color-surface-bg)',

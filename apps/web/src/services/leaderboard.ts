@@ -34,6 +34,23 @@ export const syncUserXp = async (user: User) => {
 };
 
 /**
+ * Fetches the user's global profile from Firestore
+ */
+export const fetchUserData = async (uid: string) => {
+  try {
+    const userRef = doc(db, 'users', uid);
+    const docSnap = await import('firebase/firestore').then(mod => mod.getDoc(userRef));
+    if (docSnap.exists()) {
+      return docSnap.data();
+    }
+    return null;
+  } catch (error) {
+    console.error('Failed to fetch user data:', error);
+    return null;
+  }
+};
+
+/**
  * Subscribes to the top 50 users on the global leaderboard.
  * Returns an unsubscribe function.
  */

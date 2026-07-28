@@ -49,7 +49,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [isSidebarCollapsed]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         const providerData = firebaseUser.providerData;
         const googleProfile = providerData?.find((p: any) => p.providerId === 'google.com');
@@ -68,12 +68,21 @@ export function AppLayout({ children }: AppLayoutProps) {
         const isDifferentUser = currentEmail && currentEmail !== userEmail;
         const isStuckName = currentName === 'Aditya Tanwar' || currentName === firebaseUser.displayName || currentName === formattedEmailPrefix;
 
+        // 1. Fetch user data from Firebase to pull existing XP and Streak
+        const { fetchUserData } = await import('@/services/leaderboard');
+        const cloudData = await fetchUserData(firebaseUser.uid);
+
+        const updateUserFromCloud = useAppStore.getState().updateUserFromCloud;
+
         if (!currentName || isDifferentUser || isStuckName) {
-          updateUser({ 
+          updateUserFromCloud({ 
             name: rawName || 'User', 
             id: firebaseUser.uid, 
             email: userEmail, 
-            avatar: userAvatar 
+            avatar: userAvatar,
+            xp: cloudData?.xp || 0,
+            streak: cloudData?.streak || 0,
+            lastCourseDate: cloudData?.lastCourseDate || undefined
           });
           updateProfile({
             name: rawName || 'User',
@@ -81,21 +90,27 @@ export function AppLayout({ children }: AppLayoutProps) {
             avatar: userAvatar,
           });
         } else {
-          updateUser({ 
+          updateUserFromCloud({ 
             id: firebaseUser.uid,
             email: userEmail, 
-            avatar: userAvatar 
+            avatar: userAvatar,
+            xp: cloudData ? cloudData.xp : useAppStore.getState().user.xp,
+            streak: cloudData ? cloudData.streak : useAppStore.getState().user.streak,
+            lastCourseDate: cloudData?.lastCourseDate || useAppStore.getState().user.lastCourseDate
           });
           updateProfile({
             email: userEmail,
             avatar: userAvatar,
           });
         }
+      } else {
+        // User logged out - Reset local store so the next user doesn't inherit their XP
+        useAppStore.getState().resetUser();
       }
     });
 
     return () => unsubscribe();
-  }, [updateUser, updateProfile]);
+  }, [updateProfile]);
   
   
   // Mentor page gets 0 padding at bottom to allow chat to go all the way down
