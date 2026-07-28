@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { LessonSideChat } from '@/components/learn/LessonSideChat';
 import { LESSON_CONTENTS, LESSON_QUIZZES } from '@/mocks/lessons';
-import { LessonQuizModal } from '@/components/learn/LessonQuizModal';
 import { Certificate } from '@/components/learn/Certificate';
 import { Sparkles } from 'lucide-react';
 
@@ -38,10 +37,10 @@ export default function LessonPage() {
   const [miniQuizAnswers, setMiniQuizAnswers] = useState<Record<number, number>>(progress?.miniQuizAnswers || {});
   
   const [isCompleted, setIsCompleted] = useState(lesson.status === 'Completed');
-  const [showQuiz, setShowQuiz] = useState(false);
   const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
   const [isRevisiting, setIsRevisiting] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
   
   // Selection state
   const [selection, setSelection] = useState<{ text: string, x: number, y: number } | null>(null);
@@ -90,6 +89,35 @@ export default function LessonPage() {
     updateCourseProgress(lessonId, { miniQuizAnswers: newAnswers });
   };
 
+  const handleResetCourse = () => {
+    // Reset course progress completely
+    useAppStore.setState(state => {
+      const newLessons = [...state.lessons];
+      const idx = newLessons.findIndex(l => l.id === lessonId);
+      if (idx !== -1) {
+        newLessons[idx] = { ...newLessons[idx], status: 'In Progress' };
+      }
+      const newProgress = { ...state.courseProgress };
+      delete newProgress[lessonId];
+      return { lessons: newLessons, courseProgress: newProgress };
+    });
+    
+    // Also reset exam state
+    useAppStore.getState().updateFinalExamState({
+      activeExamId: null,
+      answers: {},
+      flagged: [],
+      visited: [],
+      timeRemaining: null,
+      warnings: 0,
+      attempts: [],
+      status: 'Available'
+    });
+    
+    // Reload the page to reflect all reset state cleanly
+    window.location.reload();
+  };
+
   const handleNext = () => {
     if (currentChapterIdx < courseChapters.length - 1) {
       setCurrentChapterIdx(prev => prev + 1);
@@ -100,7 +128,16 @@ export default function LessonPage() {
         setCurrentChapterIdx(0);
         window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
-        setShowQuiz(true);
+        useAppStore.getState().updateFinalExamState({ 
+          activeExamId: lessonId,
+          answers: {},
+          flagged: [],
+          visited: [],
+          timeRemaining: 1800,
+          warnings: 0,
+          status: 'Available'
+        });
+        router.push(`/learn/exam?lessonId=${lessonId}`);
       }
     }
   };
@@ -119,11 +156,7 @@ export default function LessonPage() {
     }
   };
 
-  const handleQuizSuccess = () => {
-    completeLesson(lesson.id);
-    updateCourseProgress(lessonId, { status: 'Completed' });
-    setIsCompleted(true);
-  };
+
 
   let specificContext = "Reading the chapter.";
   let contextMode: 'reading' | 'quiz' | 'summary' = 'reading';
@@ -301,16 +334,37 @@ export default function LessonPage() {
                   <span style={{ fontSize: '1.2rem', fontWeight: 600 }}>Lesson Completed</span>
                 </div>
                 
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                  <Certificate 
-                    userName={user.name}
-                    courseTitle={lesson.title}
-                    score={100}
-                    date={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
-                  />
-                </div>
+                {showCertificate ? (
+                  <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                    <Certificate 
+                      userName={user.name}
+                      courseTitle={lesson.title}
+                      score={100}
+                      date={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                    />
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px', background: 'white', borderRadius: '16px', border: '1px solid #e5e7eb', width: '100%', maxWidth: '600px' }}>
+                    <Award size={64} color="#10b981" style={{ margin: '0 auto 24px' }} />
+                    <h2 style={{ fontSize: '24px', margin: '0 0 16px' }}>Congratulations!</h2>
+                    <p style={{ color: '#4b5563', marginBottom: '32px' }}>You have successfully completed {lesson.title}.</p>
+                    <button 
+                      onClick={() => setShowCertificate(true)}
+                      style={{ padding: '16px 32px', background: '#111827', color: 'white', borderRadius: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', fontSize: '16px' }}
+                    >
+                      View Certificate
+                    </button>
+                  </div>
+                )}
 
-                <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', flexWrap: 'wrap', justifyContent: 'center', width: '100%', maxWidth: '800px' }}>
+                  <button 
+                    className={styles.completeBtn} 
+                    onClick={handleResetCourse}
+                    style={{ backgroundColor: '#fef2f2', color: '#dc2626', border: '1px solid #fecaca' }}
+                  >
+                    Reset Course
+                  </button>
                   <button 
                     className={styles.completeBtn} 
                     onClick={() => {
@@ -345,15 +399,17 @@ export default function LessonPage() {
         </div>
       </div>
 
-      {/* Render the side chat overlay */}
-      <LessonSideChat 
-        lessonId={lessonId}
-        lessonContext={lessonContextForAi}
-        contextMode={contextMode}
-        initialPrompt={initialPrompt}
-        onInitialPromptSent={() => setInitialPrompt(null)}
-        onStateChange={setIsChatExpanded}
-      />
+      {/* Render the side chat overlay only when learning for the first time */}
+      {(!isCompleted && !isRevisiting) && (
+        <LessonSideChat 
+          lessonId={lessonId}
+          lessonContext={lessonContextForAi}
+          contextMode={contextMode}
+          initialPrompt={initialPrompt}
+          onInitialPromptSent={() => setInitialPrompt(null)}
+          onStateChange={setIsChatExpanded}
+        />
+      )}
 
       {/* Render Text Selection Tooltip */}
       <AnimatePresence>
@@ -373,17 +429,6 @@ export default function LessonPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Render the Quiz Modal if active */}
-      {showQuiz && (
-        <LessonQuizModal 
-          questions={quizQuestions}
-          lessonTitle={lesson.title}
-          userName={user.name}
-          onClose={() => setShowQuiz(false)}
-          onSuccess={handleQuizSuccess}
-        />
-      )}
     </AppLayout>
   );
 }

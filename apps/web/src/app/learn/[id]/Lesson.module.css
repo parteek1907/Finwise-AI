@@ -244,18 +244,23 @@
 .completeBtn {
   background-color: var(--color-text-primary);
   color: white;
-  padding: 1rem 2.5rem;
-  border-radius: 9999px;
+  padding: 14px 28px;
+  border-radius: 12px;
   font-weight: 600;
-  font-size: 1.05rem;
+  font-size: 15px;
   border: none;
   cursor: pointer;
-  transition: transform 0.2s;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  white-space: nowrap;
 }
 
 .completeBtn:hover {
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   background-color: #333;
 }
 

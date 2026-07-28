@@ -64,8 +64,12 @@ export interface ExamAttempt {
 }
 
 export interface FinalExamState {
+  activeExamId?: string | null;
   answers: Record<number, number>;
   flagged: number[];
+  visited: number[];
+  timeRemaining: number | null;
+  warnings: number;
   attempts: ExamAttempt[];
   status: 'Locked' | 'Available' | 'In Progress' | 'Passed';
 }
@@ -175,10 +179,14 @@ export const useAppStore = create<AppState>()(
       activeChatId: null,
       courseProgress: {},
       finalExamState: {
+        activeExamId: null,
         answers: {},
         flagged: [],
+        visited: [],
+        timeRemaining: null,
+        warnings: 0,
         attempts: [],
-        status: 'Locked'
+        status: 'Available'
       },
       lessonChats: {},
 
@@ -347,6 +355,19 @@ export const useAppStore = create<AppState>()(
     }),
     {
       name: 'finwise-storage',
+      merge: (persistedState: any, currentState: AppState) => {
+        if (!persistedState) return currentState;
+        if (persistedState.lessons) {
+          const persistedIds = new Set(persistedState.lessons.map((l: any) => l.id));
+          INITIAL_LESSONS.forEach(initialLesson => {
+            if (!persistedIds.has(initialLesson.id)) {
+              persistedState.lessons.unshift(initialLesson);
+            }
+          });
+          persistedState.lessons = recalculateLocks(persistedState.lessons);
+        }
+        return { ...currentState, ...persistedState };
+      }
     }
   )
 );

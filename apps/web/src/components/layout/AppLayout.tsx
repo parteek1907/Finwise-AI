@@ -115,14 +115,17 @@ export function AppLayout({ children }: AppLayoutProps) {
   
   // Mentor page gets 0 padding at bottom to allow chat to go all the way down
   const isMentor = pathname === '/mentor';
+  const isExam = pathname === '/learn/exam';
 
   return (
     <MotionConfig reducedMotion={reduceAnimations ? "always" : "never"}>
-      <div className={`${styles.appContainer} ${isSidebarCollapsed ? styles.appContainerCollapsed : ''}`}>
-        <Sidebar 
-          isCollapsed={isSidebarCollapsed} 
-          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
-        />
+      <div className={`${styles.appContainer} ${isSidebarCollapsed ? styles.appContainerCollapsed : ''} ${isExam ? styles.appContainerExam : ''}`}>
+        {!isExam && (
+          <Sidebar 
+            isCollapsed={isSidebarCollapsed} 
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)} 
+          />
+        )}
         <div className={styles.mainWrapper}>
           <main 
             className={styles.mainWorkspace}

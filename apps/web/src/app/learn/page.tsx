@@ -164,6 +164,7 @@ export default function LearnPage() {
                     <div className={styles.thumbnailOverlay}>
                       {lesson.status === 'Completed' && <CheckCircle2 className={styles.statusIcon} color="#22c55e" />}
                       {lesson.status === 'Locked' && <Lock className={styles.statusIcon} color="#9ca3af" />}
+                      {lesson.status !== 'Completed' && lesson.status !== 'Locked' && <Play className={styles.statusIcon} color="#3b82f6" fill="#3b82f6" style={{ marginLeft: '2px', width: '16px', height: '16px' }} />}
                     </div>
                     <img 
                       src={getLessonImage(lesson.id)} 
@@ -226,12 +227,11 @@ export default function LearnPage() {
                     </div>
                     <div className={styles.cardActions}>
                       <button 
-                        className={`${styles.actionBtn} ${finalExamState.status === 'Locked' ? styles.btnDisabled : styles.btnPrimary}`}
-                        onClick={() => finalExamState.status !== 'Locked' && router.push(`/learn/exam`)}
-                        disabled={finalExamState.status === 'Locked'}
-                        style={{ background: finalExamState.status !== 'Locked' ? '#10b981' : undefined, color: finalExamState.status !== 'Locked' ? 'white' : undefined, border: finalExamState.status !== 'Locked' ? 'none' : undefined }}
+                        className={`${styles.actionBtn} ${styles.btnPrimary}`}
+                        onClick={() => router.push(`/learn/exam`)}
+                        style={{ background: '#10b981', color: 'white', border: 'none' }}
                       >
-                        {finalExamState.status === 'Locked' ? 'Complete lessons to unlock' : (finalExamState.status === 'Passed' ? 'Review Exam' : 'Start Final Exam')}
+                        {finalExamState.status === 'Passed' ? 'Review Exam' : 'Start Final Exam'}
                       </button>
                     </div>
                   </div>

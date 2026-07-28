@@ -2,7 +2,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Download, Share2, Loader2, Sparkles, X, Maximize2, Award, ChevronRight, CheckCircle2 } from 'lucide-react';
 import styles from './Certificate.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
-import html2canvas from 'html2canvas';
 
 interface CertificateProps {
   userName: string;
@@ -35,38 +34,81 @@ export const Certificate: React.FC<CertificateProps> = ({ userName, courseTitle,
   }, []);
 
   const handleDownload = async () => {
-    // Determine which ref to use based on mode (we might be in grid or full view)
-    const targetRef = certificateRef.current;
-    if (!targetRef) return;
-    
     setIsDownloading(true);
     try {
-      const canvas = await html2canvas(targetRef, { 
-        scale: 2, 
-        backgroundColor: '#ffffff', 
-        useCORS: true,
-        onclone: (clonedDocument) => {
-          // html2canvas renders the baseline slightly lower for all custom fonts,
-          // shifting the entire text layout down relative to the background image.
-          // By shifting the ENTIRE overlay container up, we keep the spacing between
-          // the name, course name, and logo identical, while fixing the overlap with the line.
-          const contentOverlay = clonedDocument.querySelector(`[class*="certContentOverlay"]`) as HTMLElement;
-          if (contentOverlay) {
-            contentOverlay.style.top = '-15px';
-          }
-          
-          // html2canvas also increases the gap between the logo image and the text below it
-          // because it renders the text baseline lower. We pull the text up manually.
-          const logoText = clonedDocument.querySelector(`[class*="logoTextOverlay"]`) as HTMLElement;
-          if (logoText) {
-            logoText.style.transform = 'translateY(-6px)';
-          }
-          const logoSubtitle = clonedDocument.querySelector(`[class*="logoSubtitle"]`) as HTMLElement;
-          if (logoSubtitle) {
-            logoSubtitle.style.transform = 'translateY(-8px)';
-          }
-        }
+      const canvas = document.createElement('canvas');
+      canvas.width = 1600;
+      canvas.height = 1132;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) throw new Error("Could not create canvas context");
+
+      // Scale for high-res output
+      ctx.scale(2, 2);
+
+      // Load background SVG
+      const bgImg = new Image();
+      bgImg.crossOrigin = "anonymous";
+      bgImg.src = `/certificate.svg?v=${Date.now()}`;
+      await new Promise((resolve, reject) => {
+        bgImg.onload = resolve;
+        bgImg.onerror = reject;
       });
+
+      // Draw background
+      ctx.drawImage(bgImg, 0, 0, 800, 566);
+
+      // Draw Text Elements
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+
+      // userName
+      ctx.font = '600 52px Georgia, "Times New Roman", serif';
+      ctx.fillStyle = '#19533B';
+      ctx.fillText(userName || "FinWise User", 400, 215);
+
+      // courseTitle
+      ctx.font = '700 26px Inter, sans-serif';
+      ctx.fillStyle = '#19533B';
+      (ctx as any).letterSpacing = '0.5px';
+      ctx.fillText(`"${courseTitle.toUpperCase()}"`, 400, 345);
+      (ctx as any).letterSpacing = '0px';
+
+      // date
+      ctx.font = '500 15px Inter, sans-serif';
+      ctx.fillStyle = '#4b5563';
+      ctx.fillText(date, 400, 395);
+
+      // Logo Image
+      const logoImg = new Image();
+      logoImg.crossOrigin = "anonymous";
+      logoImg.src = "/logo.png";
+      await new Promise((resolve) => {
+        logoImg.onload = resolve;
+        logoImg.onerror = resolve; // Continue even if logo fails
+      });
+      ctx.drawImage(logoImg, 380, 438, 40, 40);
+
+      // Logo Text
+      ctx.font = '800 26px Inter, sans-serif';
+      ctx.fillStyle = '#19533B';
+      (ctx as any).letterSpacing = '-0.5px';
+      ctx.fillText('FinWise', 400, 480);
+      (ctx as any).letterSpacing = '0px';
+
+      // Logo Subtitle
+      ctx.font = 'italic 13px Georgia, "Times New Roman", serif';
+      ctx.fillStyle = '#19533B';
+      (ctx as any).letterSpacing = '0.5px';
+      ctx.fillText('Academy of Financial Mastery', 400, 508);
+      (ctx as any).letterSpacing = '0px';
+
+      // Cert ID
+      const certId = `CERT ID: FW-${courseTitle.replace(/\s+/g, '').substring(0, 6).toUpperCase()}-${new Date(date).getFullYear()}`;
+      ctx.font = '600 9px Inter, sans-serif';
+      ctx.fillStyle = '#9ca3af';
+      (ctx as any).letterSpacing = '2px';
+      ctx.fillText(certId, 400, 525);
+
       const image = canvas.toDataURL("image/png", 1.0);
       const link = document.createElement("a");
       link.download = `FinWise_Certificate_${courseTitle.replace(/\s+/g, '_')}.png`;
@@ -90,7 +132,7 @@ export const Certificate: React.FC<CertificateProps> = ({ userName, courseTitle,
   // Reset modal state when opening
   useEffect(() => {
     if (showLinkedInModal) {
-      setShareStep('choose_caption');
+      setShareStep('choose_destination');
       if (!captionText) setCaptionMode('ai');
     }
   }, [showLinkedInModal]);
@@ -156,8 +198,8 @@ CRITICAL INSTRUCTIONS:
   const VisualCertificate = ({ hiddenForExport = false }: { hiddenForExport?: boolean }) => (
     <div 
       className={styles.certificateRoot} 
-      ref={hiddenForExport ? undefined : certificateRef}
-      style={hiddenForExport ? { position: 'absolute', top: '-9999px', left: '-9999px' } : {}}
+      ref={hiddenForExport ? certificateRef : undefined}
+      style={hiddenForExport ? { position: 'absolute', top: '-9999px', left: '-9999px', transform: 'none' } : {}}
     >
       <img src={`/certificate.svg?v=${Date.now()}`} alt="Certificate Background" className={styles.certBackground} />
       
@@ -197,7 +239,7 @@ CRITICAL INSTRUCTIONS:
             {shareStep === 'choose_caption' && (
               <>
                 <div className={styles.modalHeader}>
-                  <div className={styles.stepBadge}>Step 1 of 2</div>
+                  <div className={styles.stepBadge}>Step 2 of 2</div>
                   <h3>Prepare your caption</h3>
                   <p>Choose what you want to say when sharing your achievement.</p>
                 </div>
@@ -224,12 +266,15 @@ CRITICAL INSTRUCTIONS:
                 </div>
 
                 <div className={styles.modalFooter}>
+                  <button className={styles.secondaryBtn} onClick={() => setShareStep('choose_destination')}>
+                    Back
+                  </button>
                   <button 
                     className={styles.primaryBtn} 
-                    onClick={() => setShareStep('choose_destination')}
-                    disabled={!captionText.trim()}
+                    onClick={handleSharePost}
+                    disabled={!captionText.trim() || isDownloading}
                   >
-                    Continue <ChevronRight size={18} />
+                    {isDownloading ? 'Processing...' : 'Continue to LinkedIn'} <ChevronRight size={18} />
                   </button>
                 </div>
               </>
@@ -238,7 +283,7 @@ CRITICAL INSTRUCTIONS:
             {shareStep === 'choose_destination' && (
               <>
                 <div className={styles.modalHeader}>
-                  <div className={styles.stepBadge}>Step 2 of 2</div>
+                  <div className={styles.stepBadge}>Step 1 of 2</div>
                   <h3>How would you like to share?</h3>
                   <p>Add this to your professional profile or share it with your network.</p>
                 </div>
@@ -252,7 +297,7 @@ CRITICAL INSTRUCTIONS:
                     </div>
                   </button>
 
-                  <button className={styles.destCard} onClick={handleSharePost} disabled={isDownloading}>
+                  <button className={styles.destCard} onClick={() => setShareStep('choose_caption')}>
                     <div className={styles.destIconWrapper}><Share2 size={28} /></div>
                     <div className={styles.destContent}>
                       <h4>Share as Post</h4>
@@ -262,10 +307,8 @@ CRITICAL INSTRUCTIONS:
                   </button>
                 </div>
                 
-                <div className={styles.modalFooter}>
-                  <button className={styles.secondaryBtn} onClick={() => setShareStep('choose_caption')}>
-                    Back
-                  </button>
+                <div className={styles.modalFooter} style={{ display: 'none' }}>
+                  {/* Footer hidden for first step, actions are on the cards */}
                 </div>
               </>
             )}
@@ -308,6 +351,7 @@ CRITICAL INSTRUCTIONS:
   if (variant === 'grid') {
     return (
       <>
+        <VisualCertificate hiddenForExport={true} />
         <div 
           className={styles.wrapper} 
           ref={wrapperRef}
@@ -315,19 +359,23 @@ CRITICAL INSTRUCTIONS:
           onMouseLeave={() => setIsHovered(false)}
           style={{ cursor: 'pointer', borderRadius: '12px', overflow: 'hidden' }}
         >
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            style={{ 
-              width: 800, 
-              height: 566, 
-              transform: `scale(${scale})`, 
-              transformOrigin: 'top left',
-              marginBottom: `-${566 * (1 - scale)}px`
-            }}
-          >
-            <VisualCertificate />
-          </motion.div>
+          <div style={{ width: '100%', height: 566 * scale, position: 'relative', overflow: 'hidden', borderRadius: '12px' }}>
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              style={{ 
+                width: 800, 
+                height: 566, 
+                transform: `scale(${scale})`, 
+                transformOrigin: 'top left',
+                position: 'absolute',
+                top: 0,
+                left: 0
+              }}
+            >
+              <VisualCertificate />
+            </motion.div>
+          </div>
           
           <div 
             className={styles.premiumActionOverlay}
@@ -384,21 +432,26 @@ CRITICAL INSTRUCTIONS:
   }
 
   return (
-    <div className={styles.wrapper} ref={wrapperRef}>
-      <motion.div
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ duration: 0.5, type: 'spring' }}
-        style={{ 
-          width: 800, 
-          height: 566, 
-          transform: `scale(${scale})`, 
-          transformOrigin: 'top center',
-          marginBottom: `-${566 * (1 - scale)}px`
-        }}
-      >
-        <VisualCertificate />
-      </motion.div>
+    <>
+      <VisualCertificate hiddenForExport={true} />
+      <div className={styles.wrapper} ref={wrapperRef}>
+      <div style={{ width: '100%', maxWidth: '800px', height: 566 * scale, position: 'relative' }}>
+        <motion.div
+          initial={{ scale: 0.9 * scale, opacity: 0 }}
+          animate={{ scale: scale, opacity: 1 }}
+          transition={{ duration: 0.5, type: 'spring' }}
+          style={{ 
+            width: 800, 
+            height: 566, 
+            transformOrigin: 'top center',
+            position: 'absolute',
+            left: '50%',
+            marginLeft: '-400px'
+          }}
+        >
+          <VisualCertificate />
+        </motion.div>
+      </div>
 
       {/* Action Buttons */}
       <motion.div
@@ -418,5 +471,6 @@ CRITICAL INSTRUCTIONS:
 
       {linkedInModal}
     </div>
+    </>
   );
 };

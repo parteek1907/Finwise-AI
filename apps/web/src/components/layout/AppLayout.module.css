@@ -12,6 +12,10 @@
   grid-template-columns: 80px 1fr;
 }
 
+.appContainerExam {
+  grid-template-columns: 1fr;
+}
+
 .mainWrapper {
   display: flex;
   flex-direction: column;
