@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { Flag, CheckCircle2, XCircle, Award, ChevronRight, ChevronLeft, Clock, RotateCcw, BookOpen, AlertTriangle } from 'lucide-react';
@@ -34,7 +34,7 @@ type ExamResult = {
   }[];
 };
 
-export default function FinalExamPage() {
+function ExamContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const lessonId = searchParams.get('lessonId');
@@ -735,5 +735,13 @@ export default function FinalExamPage() {
 
       </div>
     </AppLayout>
+  );
+}
+
+export default function FinalExamPage() {
+  return (
+    <Suspense fallback={<div>Loading Exam...</div>}>
+      <ExamContent />
+    </Suspense>
   );
 }
