@@ -43,6 +43,24 @@ export const formatCurrency = (
   }).format(converted);
 };
 
+export const convertCurrency = (amount: number, fromCode: string, toCode: string): number => {
+  if (fromCode === toCode) return amount;
+  
+  let exchangeRates: Record<string, number> = {};
+  try {
+    exchangeRates = useSettingsStore.getState().financial?.exchangeRates || {};
+  } catch {
+    // ignore
+  }
+
+  const getRate = (code: string) => exchangeRates[code] || CURRENCY_MAP[code]?.rate || 1;
+  const fromRate = getRate(fromCode);
+  const toRate = getRate(toCode);
+
+  const amountInUSD = amount / fromRate;
+  return amountInUSD * toRate;
+};
+
 /**
  * Format a value in a specific currency WITHOUT exchange-rate conversion.
  * Used for goals that store amounts in the user's currency at creation time.

@@ -123,6 +123,7 @@ export interface AppState {
   updateUserFromCloud: (data: Partial<User>) => void; // Update without syncing back
   resetUser: () => void;
   resetStore: () => void;
+  seedDemoData: () => void;
 }
 
 const INITIAL_USER: User = {
@@ -511,6 +512,73 @@ export const useAppStore = create<AppState>()(
 
       resetUser: () => {
         set({ user: INITIAL_USER });
+      },
+
+      resetStore: () => {
+        set({ 
+          user: INITIAL_USER, 
+          goals: INITIAL_GOALS, 
+          lessons: INITIAL_LESSONS, 
+          courseProgress: {}, 
+          finalExamState: {
+            score: null,
+            passed: false,
+            lastAttemptDate: null,
+            totalAttempts: 0
+          }
+        });
+      },
+
+      seedDemoData: () => {
+        const demoGoals: Goal[] = [
+          {
+            id: 'demo-g1',
+            name: 'Tesla Model 3',
+            target: 45000,
+            current: 12500,
+            currency: 'USD',
+            status: 'On Track',
+            category: 'Vehicle',
+            deadline: new Date(new Date().setFullYear(new Date().getFullYear() + 2)).toISOString(),
+            contributions: [
+              { id: 'c1', date: new Date().toISOString(), amount: 12500, note: 'Initial savings' }
+            ],
+            createdAt: new Date().toISOString(),
+            notes: [],
+            aiInsights: []
+          },
+          {
+            id: 'demo-g2',
+            name: 'Emergency Fund',
+            target: 10000,
+            current: 8500,
+            currency: 'USD',
+            status: 'Near Target',
+            category: 'Emergency',
+            deadline: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
+            contributions: [
+              { id: 'c2', date: new Date().toISOString(), amount: 8500, note: 'Steady savings' }
+            ],
+            createdAt: new Date().toISOString(),
+            notes: [],
+            aiInsights: []
+          }
+        ];
+
+        const demoLessons = INITIAL_LESSONS.map((l, idx) => ({
+          ...l,
+          status: (idx < 3 ? 'Completed' : (idx === 3 ? 'In Progress' : l.status)) as any
+        }));
+
+        set((state) => ({
+          user: { ...state.user, xp: 850, streak: 12, name: 'Demo User' },
+          goals: demoGoals,
+          lessons: recalculateLocks(demoLessons),
+          courseProgress: {
+            'l1': { lessonId: 'l1', currentChapterIdx: 4, miniQuizAnswers: {}, status: 'Completed', lastAccessed: new Date().toISOString() },
+            'l2': { lessonId: 'l2', currentChapterIdx: 3, miniQuizAnswers: {}, status: 'Completed', lastAccessed: new Date().toISOString() }
+          }
+        }));
       }
     }),
     {

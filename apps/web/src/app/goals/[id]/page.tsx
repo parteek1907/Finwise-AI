@@ -8,7 +8,7 @@ import styles from './GoalDetail.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatCurrencyRaw, getCurrencySymbol, formatRelativeDate } from '@/utils/formatters';
+import { formatCurrencyRaw, getCurrencySymbol, formatRelativeDate, convertCurrency } from '@/utils/formatters';
 import {
   calculateGoalStatus,
   calculateProjectedCompletion,
@@ -86,12 +86,23 @@ export default function GoalDetailPage() {
   const goalCurrency = preferredCurrency; // Force preferred currency over legacy goal currency
   const fmt = (v: number) => formatCurrencyRaw(v, goalCurrency);
   const symbol = getCurrencySymbol(goalCurrency);
-  const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
-  const remaining = Math.max(0, goal.target - goal.current);
-  const isCompleted = goal.current >= goal.target;
+  const convertedCurrent = convertCurrency(goal.current, goal.currency || 'USD', goalCurrency);
+  const convertedTarget = convertCurrency(goal.target, goal.currency || 'USD', goalCurrency);
 
-  // Calculations
-  const goalData = { target: goal.target, current: goal.current, deadline: goal.deadline, createdAt: goal.createdAt, contributions: goal.contributions, completedAt: goal.completedAt };
+  const goalData = { 
+    ...goal,
+    target: convertedTarget,
+    current: convertedCurrent,
+    deadline: goal.deadline, 
+    createdAt: goal.createdAt, 
+    contributions: goal.contributions, 
+    completedAt: goal.completedAt 
+  };
+  
+  const progressPercent = Math.min(100, Math.round((convertedCurrent / convertedTarget) * 100));
+  const remaining = Math.max(0, convertedTarget - convertedCurrent);
+  const isCompleted = convertedCurrent >= convertedTarget;
+
   const projectedDate = calculateProjectedCompletion(goalData);
   const requiredMonthly = calculateRequiredMonthly(goalData);
   const monthlyRate = calculateMonthlyContributionRate(goalData);
@@ -125,7 +136,7 @@ export default function GoalDetailPage() {
   };
 
   const handleDiscuss = () => {
-    const prompt = `I'm currently working toward my ${goal.name} goal.\n\nTarget Amount: ${fmt(goal.target)}\nCurrent Savings: ${fmt(goal.current)}\nCompletion: ${progressPercent}%\nDeadline: ${new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}\nContributions: ${goal.contributions.length}\nMonthly Rate: ${fmt(Math.round(monthlyRate))}/mo\nRequired Monthly: ${fmt(requiredMonthly)}/mo\nHealth Score: ${healthScore.score}/100\n\nAnalyze my progress, identify risks, suggest ways to reach my goal faster, and recommend realistic adjustments without increasing financial stress.`;
+    const prompt = `I'm currently working toward my ${goal.name} goal.\n\nTarget Amount: ${fmt(convertedTarget)}\nCurrent Savings: ${fmt(convertedCurrent)}\nCompletion: ${progressPercent}%\nDeadline: ${new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}\nContributions: ${goal.contributions.length}\nMonthly Rate: ${fmt(Math.round(monthlyRate))}/mo\nRequired Monthly: ${fmt(requiredMonthly)}/mo\nHealth Score: ${healthScore.score}/100\n\nAnalyze my progress, identify risks, suggest ways to reach my goal faster, and recommend realistic adjustments without increasing financial stress.`;
     sessionStorage.setItem('mentorDraft', prompt);
     router.push('/mentor');
   };
@@ -209,7 +220,7 @@ export default function GoalDetailPage() {
             <div className={styles.completionStats}>
               <div className={styles.completionStat}>
                 <span className={styles.completionStatLabel}>Total Saved</span>
-                <strong>{fmt(goal.current)}</strong>
+                <strong>{fmt(convertedCurrent)}</strong>
               </div>
               <div className={styles.completionStat}>
                 <span className={styles.completionStatLabel}>Avg Monthly</span>
@@ -255,11 +266,11 @@ export default function GoalDetailPage() {
               <div className={styles.progressTop}>
                 <div>
                   <span className={styles.label}>Current Saved</span>
-                  <h2 className={styles.mainAmount}>{fmt(goal.current)}</h2>
+                  <h2 className={styles.mainAmount}>{fmt(convertedCurrent)}</h2>
                 </div>
                 <div style={{textAlign: 'right'}}>
                   <span className={styles.label}>Target Amount</span>
-                  <h2 className={styles.targetAmountLarge}>{fmt(goal.target)}</h2>
+                  <h2 className={styles.targetAmountLarge}>{fmt(convertedTarget)}</h2>
                 </div>
               </div>
               
@@ -368,7 +379,7 @@ export default function GoalDetailPage() {
                               {c.note && <span className={styles.historyNote}><StickyNote size={10} /> {c.note}</span>}
                             </div>
                             <div className={styles.historyRight}>
-                              <span className={styles.historyAmount}>+{fmt(c.amount)}</span>
+                              <span className={styles.historyAmount}>+{formatCurrencyRaw(convertCurrency(c.amount, goal.currency || 'USD', goalCurrency), goalCurrency)}</span>
                               <div className={styles.historyActions}>
                                 <button onClick={() => handleEditContribution(c.id)} title="Edit"><Pencil size={12} /></button>
                                 <button onClick={() => handleDeleteContribution(c.id)} title="Delete"><Trash size={12} /></button>

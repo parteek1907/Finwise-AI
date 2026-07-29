@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { DatePicker } from '@/components/ui/date-picker';
-import { formatCurrencyRaw, getCurrencySymbol } from '@/utils/formatters';
+import { formatCurrencyRaw, getCurrencySymbol, convertCurrency } from '@/utils/formatters';
 import { GOAL_TEMPLATES } from '@/utils/goalCalculations';
 
 const CATEGORY_OPTIONS = [
@@ -214,8 +214,8 @@ export default function GoalsPage() {
                   
                   <div className={styles.progressSection}>
                     <div className={styles.progressLabels}>
-                      <span className={styles.currentAmount}>{formatCurrencyRaw(goal.current, goalCurrency)}</span>
-                      <span className={styles.targetAmount}>of {formatCurrencyRaw(goal.target, goalCurrency)}</span>
+                      <span className={styles.currentAmount}>{formatCurrencyRaw(convertCurrency(goal.current, goal.currency || 'USD', goalCurrency), goalCurrency)}</span>
+                      <span className={styles.targetAmount}>of {formatCurrencyRaw(convertCurrency(goal.target, goal.currency || 'USD', goalCurrency), goalCurrency)}</span>
                     </div>
                     <div className={styles.progressBar}>
                       <motion.div 

@@ -287,11 +287,11 @@ function TestingCredentials() {
 
       <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
         <div 
-          onClick={() => copyToClipboard('team@finwise.ai', true)}
+          onClick={() => copyToClipboard('demo@finwise.ai', true)}
           className="group flex items-center gap-2 cursor-pointer"
         >
           <span className="text-[12px] font-medium text-[#303A3C]/50">Email:</span>
-          <span className="text-[13px] font-medium text-[#303A3C]">team@finwise.ai</span>
+          <span className="text-[13px] font-medium text-[#303A3C]">demo@finwise.ai</span>
           <div className="text-[#303A3C]/30 group-hover:text-[#303A3C] transition-colors ml-1">
             {copiedEmail ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
           </div>
@@ -300,11 +300,11 @@ function TestingCredentials() {
         <div className="hidden sm:block w-px h-4 bg-[#303A3C]/10" />
 
         <div 
-          onClick={() => copyToClipboard('password123', false)}
+          onClick={() => copyToClipboard('demo123', false)}
           className="group flex items-center gap-2 cursor-pointer"
         >
           <span className="text-[12px] font-medium text-[#303A3C]/50">Pass:</span>
-          <span className="text-[13px] font-medium text-[#303A3C]">password123</span>
+          <span className="text-[13px] font-medium text-[#303A3C]">demo123</span>
           <div className="text-[#303A3C]/30 group-hover:text-[#303A3C] transition-colors ml-1">
             {copiedPassword ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
           </div>

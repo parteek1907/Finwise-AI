@@ -8,6 +8,7 @@ import { AuthCanvasBackground } from "./auth-canvas-background";
 import { auth } from "@/lib/firebase";
 import { signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { useToast } from "@/components/ui/toast";
+import { useAppStore } from "@/store/useAppStore";
 
 export default function SignInSection() {
 
@@ -91,6 +92,9 @@ function AuthForm() {
         
         try {
           await signInWithEmailAndPassword(auth, email, password);
+          if (email.toLowerCase() === 'demo@finwise.ai') {
+            useAppStore.getState().seedDemoData();
+          }
           toast({ title: "Success", description: "Successfully signed in!" });
           window.location.href = '/dashboard';
         } catch (error: any) {

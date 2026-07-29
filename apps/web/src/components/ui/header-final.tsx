@@ -13,6 +13,8 @@ export function Header() {
 	const [open, setOpen] = React.useState(false);
 	const scrolled = useScroll(10);
 	const [activeSection, setActiveSection] = React.useState('');
+	const [isAuthenticated, setIsAuthenticated] = React.useState(false);
+	const [authLoaded, setAuthLoaded] = React.useState(false);
 
 	const links = [
 		{ label: 'Features', href: '#how-it-works' },
@@ -67,6 +69,18 @@ export function Header() {
 			document.body.style.overflow = '';
 		};
 	}, [open]);
+
+	React.useEffect(() => {
+		import('@/lib/firebase').then(({ auth }) => {
+			import('firebase/auth').then(({ onAuthStateChanged }) => {
+				const unsubscribe = onAuthStateChanged(auth, (user) => {
+					setIsAuthenticated(!!user);
+					setAuthLoaded(true);
+				});
+				return () => unsubscribe();
+			});
+		}).catch(console.error);
+	}, []);
 
 	return (
 		<header
@@ -137,22 +151,22 @@ export function Header() {
 				
 				{/* Right: Sign In CTA */}
 				<div className="hidden md:flex items-center absolute right-0 top-1/2 -translate-y-1/2">
-					<Link 
-						href="/signin"
-						className={cn(
-							buttonVariants({ variant: "outline" }),
-							"group relative h-10 overflow-hidden rounded-full border-primary/20 text-sm font-semibold tracking-wide text-foreground transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] hover:border-primary active:scale-[0.98] cursor-pointer"
-						)}
-						style={{ paddingLeft: '40px', paddingRight: '40px' }}
-					>
-						{/* Smooth bottom-up fill background */}
-						<span className="absolute inset-0 bg-primary translate-y-[101%] rounded-full transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:translate-y-0 group-active:duration-1000 group-active:bg-primary/90" />
-						
-						{/* Button Text */}
-						<span className="relative z-10 transition-colors duration-500 group-hover:text-primary-foreground">
-							Sign In
-						</span>
-					</Link>
+					{authLoaded && (
+						<Link 
+							href={isAuthenticated ? "/dashboard" : "/signin"}
+							className={cn(
+								buttonVariants({ variant: "outline" }),
+								"group relative h-10 overflow-hidden rounded-full border-primary/20 text-sm font-semibold tracking-wide text-foreground transition-all duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] hover:border-primary active:scale-[0.98] cursor-pointer"
+							)}
+							style={{ paddingLeft: '40px', paddingRight: '40px' }}
+						>
+							<span className="absolute inset-0 bg-primary translate-y-[101%] rounded-full transition-transform duration-700 ease-[cubic-bezier(0.19,1,0.22,1)] group-hover:translate-y-0 group-active:duration-1000 group-active:bg-primary/90" />
+							
+							<span className="relative z-10 transition-colors duration-500 group-hover:text-primary-foreground">
+								{isAuthenticated ? 'Dashboard' : 'Sign In'}
+							</span>
+						</Link>
+					)}
 				</div>
 				
 				{/* Mobile Menu Toggle */}
