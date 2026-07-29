@@ -9,7 +9,7 @@ const initialMarketData = [
   { symbol: "BTC", value: 5800000, change: "+2.1%", trend: "up", type: "currency_inr" },
   { symbol: "ETH", value: 276000, change: "-0.4%", trend: "down", type: "currency_inr" },
   { symbol: "NASDAQ", value: 16428.82, change: "+0.61%", trend: "up", type: "number" },
-  { symbol: "USD/INR", value: 83.45, change: "-0.12%", trend: "down", type: "number" },
+  { symbol: "USD/INR", value: 96.00, change: "+1.2%", trend: "up", type: "number" },
   { symbol: "GOLD", value: 72400, change: "+0.2%", trend: "up", type: "currency_inr" },
   { symbol: "S&P 500", value: 5234.18, change: "+0.86%", trend: "up", type: "number" },
 ];

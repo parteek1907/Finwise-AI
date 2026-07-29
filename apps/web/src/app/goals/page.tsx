@@ -178,7 +178,7 @@ export default function GoalsPage() {
             {goals.map(goal => {
               const Icon = CATEGORY_ICONS[goal.category] || Target;
               const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
-              const goalCurrency = goal.currency || preferredCurrency;
+              const displayCurrency = preferredCurrency;
               
               return (
                 <motion.div 
@@ -214,8 +214,8 @@ export default function GoalsPage() {
                   
                   <div className={styles.progressSection}>
                     <div className={styles.progressLabels}>
-                      <span className={styles.currentAmount}>{formatCurrencyRaw(convertCurrency(goal.current, goal.currency || 'USD', goalCurrency), goalCurrency)}</span>
-                      <span className={styles.targetAmount}>of {formatCurrencyRaw(convertCurrency(goal.target, goal.currency || 'USD', goalCurrency), goalCurrency)}</span>
+                      <span className={styles.currentAmount}>{formatCurrencyRaw(convertCurrency(goal.current, goal.currency || 'USD', displayCurrency), displayCurrency)}</span>
+                      <span className={styles.targetAmount}>of {formatCurrencyRaw(convertCurrency(goal.target, goal.currency || 'USD', displayCurrency), displayCurrency)}</span>
                     </div>
                     <div className={styles.progressBar}>
                       <motion.div 
