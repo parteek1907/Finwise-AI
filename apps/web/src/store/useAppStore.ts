@@ -514,21 +514,6 @@ export const useAppStore = create<AppState>()(
         set({ user: INITIAL_USER });
       },
 
-      resetStore: () => {
-        set({ 
-          user: INITIAL_USER, 
-          goals: INITIAL_GOALS, 
-          lessons: INITIAL_LESSONS, 
-          courseProgress: {}, 
-          finalExamState: {
-            score: null,
-            passed: false,
-            lastAttemptDate: null,
-            totalAttempts: 0
-          }
-        });
-      },
-
       seedDemoData: () => {
         const demoGoals: Goal[] = [
           {
@@ -553,7 +538,7 @@ export const useAppStore = create<AppState>()(
             target: 10000,
             current: 8500,
             currency: 'USD',
-            status: 'Near Target',
+            status: 'On Track',
             category: 'Emergency',
             deadline: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
             contributions: [
