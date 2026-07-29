@@ -33,7 +33,10 @@ export default function LessonPage() {
   const progress = courseProgressMap[lessonId];
 
   // Initialize state from deep progress tracking if available
-  const [currentChapterIdx, setCurrentChapterIdx] = useState(progress?.currentChapterIdx || 0);
+  const initialIdx = progress?.currentChapterIdx !== undefined 
+    ? Math.min(progress.currentChapterIdx, Math.max(0, courseChapters.length - 1)) 
+    : 0;
+  const [currentChapterIdx, setCurrentChapterIdx] = useState(initialIdx);
   const [miniQuizAnswers, setMiniQuizAnswers] = useState<Record<number, number>>(progress?.miniQuizAnswers || {});
   
   const [isCompleted, setIsCompleted] = useState(lesson.status === 'Completed');
@@ -73,7 +76,7 @@ export default function LessonPage() {
 
   const currentChapter = courseChapters[currentChapterIdx];
   const answeredIdx = miniQuizAnswers[currentChapterIdx];
-  const hasMiniQuiz = !!currentChapter.miniQuiz;
+  const hasMiniQuiz = !!currentChapter?.miniQuiz;
   const isCorrect = answeredIdx === currentChapter?.miniQuiz?.answerIndex;
 
   const handleMiniQuizAnswer = (optIdx: number) => {

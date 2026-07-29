@@ -550,10 +550,24 @@ export const useAppStore = create<AppState>()(
           }
         ];
 
-        const demoLessons = INITIAL_LESSONS.map((l, idx) => ({
-          ...l,
-          status: (idx < 3 ? 'Completed' : (idx === 3 ? 'In Progress' : l.status)) as any
-        }));
+        const demoLesson: Lesson = {
+          id: 'demo',
+          title: 'Welcome to FinWise AI',
+          description: 'A quick interactive demo showing how the FinWise education platform works.',
+          duration: '2 mins',
+          xp: 150,
+          category: 'Getting Started',
+          difficulty: 'Easy',
+          status: 'In Progress'
+        };
+
+        const demoLessons = [
+          demoLesson,
+          ...INITIAL_LESSONS.map((l, idx) => ({
+            ...l,
+            status: (idx < 3 ? 'Completed' : (idx === 3 ? 'In Progress' : l.status)) as any
+          }))
+        ];
 
         set((state) => ({
           user: { ...state.user, id: 'demo_user', xp: 850, streak: 12, name: 'Demo User' },

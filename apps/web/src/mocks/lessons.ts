@@ -8,8 +8,10 @@ import { course7 } from './courses/l7';
 import { course8 } from './courses/l8';
 import { course9 } from './courses/l9';
 import { course10 } from './courses/l10';
+import { demoCourse } from './courses/demo';
 
 export const LESSON_CONTENTS: Record<string, any[]> = {
+  'demo': demoCourse.chapters,
   'l1': course1.chapters,
   'l2': course2.chapters,
   'l3': course3.chapters,
@@ -23,6 +25,7 @@ export const LESSON_CONTENTS: Record<string, any[]> = {
 };
 
 export const LESSON_QUIZZES: Record<string, any[]> = {
+  'demo': demoCourse.finalQuiz,
   'l1': course1.finalQuiz,
   'l2': course2.finalQuiz,
   'l3': course3.finalQuiz,
