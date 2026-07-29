@@ -172,8 +172,6 @@ function AuthForm() {
         </Link>
       </div>
 
-      {/* Testing Credentials Note */}
-      <TestingCredentials />
     </div>
   );
 }
@@ -263,53 +261,3 @@ function AppleIcon() {
   );
 }
 
-function TestingCredentials() {
-  const [copiedEmail, setCopiedEmail] = useState(false);
-  const [copiedPassword, setCopiedPassword] = useState(false);
-
-  const copyToClipboard = (text: string, isEmail: boolean) => {
-    navigator.clipboard.writeText(text);
-    if (isEmail) {
-      setCopiedEmail(true);
-      setTimeout(() => setCopiedEmail(false), 2000);
-    } else {
-      setCopiedPassword(true);
-      setTimeout(() => setCopiedPassword(false), 2000);
-    }
-  };
-
-  return (
-    <div className="mt-10 pt-6 border-t border-[#303A3C]/10 flex flex-col items-center">
-      <div className="flex items-center gap-1.5 mb-4 text-[#303A3C]/40">
-        <Info size={14} />
-        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase">Demo Access</span>
-      </div>
-
-      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
-        <div 
-          onClick={() => copyToClipboard('demo@finwise.ai', true)}
-          className="group flex items-center gap-2 cursor-pointer"
-        >
-          <span className="text-[12px] font-medium text-[#303A3C]/50">Email:</span>
-          <span className="text-[13px] font-medium text-[#303A3C]">demo@finwise.ai</span>
-          <div className="text-[#303A3C]/30 group-hover:text-[#303A3C] transition-colors ml-1">
-            {copiedEmail ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
-          </div>
-        </div>
-
-        <div className="hidden sm:block w-px h-4 bg-[#303A3C]/10" />
-
-        <div 
-          onClick={() => copyToClipboard('demo123', false)}
-          className="group flex items-center gap-2 cursor-pointer"
-        >
-          <span className="text-[12px] font-medium text-[#303A3C]/50">Pass:</span>
-          <span className="text-[13px] font-medium text-[#303A3C]">demo123</span>
-          <div className="text-[#303A3C]/30 group-hover:text-[#303A3C] transition-colors ml-1">
-            {copiedPassword ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}

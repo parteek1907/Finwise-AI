@@ -140,6 +140,9 @@ function AuthForm() {
         </Link>
       </div>
 
+      {/* Testing Credentials Note */}
+      <TestingCredentials />
+
     </div>
   );
 }
@@ -226,6 +229,57 @@ function AppleIcon() {
     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
       <path d="M17.05 12.54c-.03-3.02 2.47-4.47 2.58-4.54-1.41-2.06-3.6-2.34-4.38-2.37-1.86-.19-3.64 1.1-4.58 1.1-.95 0-2.42-1.07-3.98-1.04-2.05.03-3.94 1.19-4.99 3.02-2.13 3.69-.54 9.16 1.53 12.15 1.01 1.46 2.22 3.1 3.81 3.04 1.53-.06 2.11-.99 3.96-.99s2.37.99 3.99.96c1.65-.03 2.69-1.49 3.69-2.96 1.16-1.69 1.64-3.33 1.66-3.41-.04-.02-3.2-1.23-3.24-4.87ZM14.03 3.66c.84-1.02 1.41-2.43 1.25-3.84-1.21.05-2.68.81-3.55 1.83-.78.9-1.46 2.34-1.28 3.72 1.35.1 2.73-.69 3.58-1.71Z" />
     </svg>
+  );
+}
+
+function TestingCredentials() {
+  const [copiedEmail, setCopiedEmail] = useState(false);
+  const [copiedPassword, setCopiedPassword] = useState(false);
+
+  const copyToClipboard = (text: string, isEmail: boolean) => {
+    navigator.clipboard.writeText(text);
+    if (isEmail) {
+      setCopiedEmail(true);
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } else {
+      setCopiedPassword(true);
+      setTimeout(() => setCopiedPassword(false), 2000);
+    }
+  };
+
+  return (
+    <div className="mt-10 pt-6 border-t border-[#303A3C]/10 flex flex-col items-center">
+      <div className="flex items-center gap-1.5 mb-4 text-[#303A3C]/40">
+        <Info size={14} />
+        <span className="text-[10px] font-semibold tracking-[0.15em] uppercase">Demo Access</span>
+      </div>
+
+      <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6">
+        <div 
+          onClick={() => copyToClipboard('demo@finwise.ai', true)}
+          className="group flex items-center gap-2 cursor-pointer"
+        >
+          <span className="text-[12px] font-medium text-[#303A3C]/50">Email:</span>
+          <span className="text-[13px] font-medium text-[#303A3C]">demo@finwise.ai</span>
+          <div className="text-[#303A3C]/30 group-hover:text-[#303A3C] transition-colors ml-1">
+            {copiedEmail ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+          </div>
+        </div>
+
+        <div className="hidden sm:block w-px h-4 bg-[#303A3C]/10" />
+
+        <div 
+          onClick={() => copyToClipboard('demo123', false)}
+          className="group flex items-center gap-2 cursor-pointer"
+        >
+          <span className="text-[12px] font-medium text-[#303A3C]/50">Pass:</span>
+          <span className="text-[13px] font-medium text-[#303A3C]">demo123</span>
+          <div className="text-[#303A3C]/30 group-hover:text-[#303A3C] transition-colors ml-1">
+            {copiedPassword ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 
