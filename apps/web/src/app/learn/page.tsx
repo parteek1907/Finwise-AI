@@ -23,6 +23,15 @@ export default function LearnPage() {
   const user = useAppStore(state => state.user);
   const courseProgressMap = useAppStore(state => state.courseProgress);
   const finalExamState = useAppStore(state => state.finalExamState);
+
+  React.useEffect(() => {
+    if (user.id === 'demo_user') {
+      const hasDemoLesson = lessons.some(l => l.id === 'demo');
+      if (!hasDemoLesson) {
+        useAppStore.getState().seedDemoData();
+      }
+    }
+  }, [user.id, lessons]);
   
   const [viewMode, setViewMode] = useState<'lessons' | 'certificates'>('lessons');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -45,7 +54,8 @@ export default function LearnPage() {
   const completedLessons = lessons.filter(l => l.status === 'Completed');
   const progressPercent = Math.round((completedLessons.length / lessons.length) * 100) || 0;
   const allLessonsCompleted = completedLessons.length === lessons.length && lessons.length > 0;
-  const examStatus = allLessonsCompleted 
+  const isDemoUser = user.id === 'demo_user';
+  const examStatus = (allLessonsCompleted || isDemoUser)
     ? (finalExamState.status === 'Locked' ? 'Available' : finalExamState.status) 
     : 'Locked';
 

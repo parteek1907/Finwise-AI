@@ -553,7 +553,6 @@ export const useAppStore = create<AppState>()(
         const demoLesson: Lesson = {
           id: 'demo',
           title: 'Welcome to FinWise AI',
-          description: 'A quick interactive demo showing how the FinWise education platform works.',
           duration: '2 mins',
           xp: 150,
           category: 'Getting Started',
@@ -576,6 +575,10 @@ export const useAppStore = create<AppState>()(
           courseProgress: {
             'l1': { lessonId: 'l1', currentChapterIdx: 4, miniQuizAnswers: {}, status: 'Completed', lastAccessed: new Date().toISOString() },
             'l2': { lessonId: 'l2', currentChapterIdx: 3, miniQuizAnswers: {}, status: 'Completed', lastAccessed: new Date().toISOString() }
+          },
+          finalExamState: {
+            ...state.finalExamState,
+            status: 'Available'
           }
         }));
       }
