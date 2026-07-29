@@ -2,7 +2,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 
 export const CURRENCY_MAP: Record<string, { symbol: string; rate: number; locale: string }> = {
   USD: { symbol: '$', rate: 1, locale: 'en-US' },
-  INR: { symbol: '₹', rate: 96.56, locale: 'en-IN' },
+  INR: { symbol: '₹', rate: 96, locale: 'en-IN' },
   EUR: { symbol: '€', rate: 0.88, locale: 'de-DE' },
   GBP: { symbol: '£', rate: 0.75, locale: 'en-GB' },
 };
