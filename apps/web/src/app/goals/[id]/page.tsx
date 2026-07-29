@@ -399,7 +399,7 @@ export default function GoalDetailPage() {
                       <BarChart data={monthlyChartData}>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.3} />
                         <XAxis dataKey="month" fontSize={11} tickLine={false} axisLine={false} />
-                        <Tooltip formatter={(v: number) => fmt(v)} />
+                        <Tooltip formatter={(v: any) => fmt(Number(v))} />
                         <Bar dataKey="amount" fill="#19533B" radius={[6, 6, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -416,7 +416,7 @@ export default function GoalDetailPage() {
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.3} />
                         <XAxis dataKey="date" fontSize={11} tickLine={false} axisLine={false} />
-                        <Tooltip formatter={(v: number) => fmt(v)} />
+                        <Tooltip formatter={(v: any) => fmt(Number(v))} />
                         <Area type="monotone" dataKey="total" stroke="#19533B" fill="url(#colorProgress)" strokeWidth={2} />
                       </AreaChart>
                     </ResponsiveContainer>
