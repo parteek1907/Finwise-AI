@@ -1,8 +1,22 @@
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Phone, Mail, MapPin } from 'lucide-react';
 
 export function FooterFinal() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    import('@/lib/firebase').then(({ auth }) => {
+      import('firebase/auth').then(({ onAuthStateChanged }) => {
+        const unsubscribe = onAuthStateChanged(auth, (user) => {
+          setIsAuthenticated(!!user);
+        });
+        return () => unsubscribe();
+      });
+    }).catch(console.error);
+  }, []);
+
   return (
     <footer className="relative w-full overflow-hidden border-t border-white/5" style={{ backgroundColor: '#303A3C' }}>
       {/* Ultra Faint Grid Background */}
@@ -35,35 +49,35 @@ export function FooterFinal() {
 
           {/* Platform Links */}
           <div className="flex flex-col items-start text-left">
-            <h3 className="text-base font-bold mb-5" style={{ color: '#DDD7C9' }}>Platform</h3>
-            <nav className="flex flex-col items-start space-y-1 text-xs sm:text-sm">
-              <Link href="/auth" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Dashboard</Link>
-              <Link href="/auth" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Trading Simulator</Link>
-              <Link href="/auth" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Education Library</Link>
-              <Link href="/auth" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">AI Mentor</Link>
-              <Link href="/auth" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Scam Shield</Link>
+            <h3 className="text-base font-bold mb-6" style={{ color: '#DDD7C9' }}>Platform</h3>
+            <nav className="flex flex-col items-start space-y-3 text-xs sm:text-sm">
+              <Link href={isAuthenticated ? "/dashboard" : "/signin"} style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Dashboard</Link>
+              <Link href={isAuthenticated ? "/simulator" : "/signin"} style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Trading Simulator</Link>
+              <Link href={isAuthenticated ? "/learn" : "/signin"} style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Education Library</Link>
+              <Link href={isAuthenticated ? "/mentor" : "/signin"} style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">AI Mentor</Link>
+              <Link href={isAuthenticated ? "/scam-detector" : "/signin"} style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Scam Shield</Link>
             </nav>
           </div>
 
           {/* Company Links */}
           <div className="flex flex-col items-start text-left">
-            <h3 className="text-base font-bold mb-12" style={{ color: '#DDD7C9' }}>Company</h3>
-            <nav className="flex flex-col items-start space-y-1 text-xs sm:text-sm">
+            <h3 className="text-base font-bold mb-6" style={{ color: '#DDD7C9' }}>Company</h3>
+            <nav className="flex flex-col items-start space-y-3 text-xs sm:text-sm">
               <Link href="/#features" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Our Features</Link>
               <Link href="/#community" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Join Community</Link>
               <Link href="/#pricing" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Pricing</Link>
               <Link href="/#faq" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">FAQ</Link>
-              <Link href="/auth" style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Get Started</Link>
+              <Link href={isAuthenticated ? "/dashboard" : "/signin"} style={{ color: 'rgba(221, 215, 201, 0.7)' }} className="hover:text-white transition-colors">Get Started</Link>
             </nav>
           </div>
 
           {/* Contact */}
           <div className="flex flex-col items-start text-left">
-            <h3 className="text-base font-bold mb-5" style={{ color: '#DDD7C9' }}>Contact</h3>
-            <address className="flex flex-col items-start space-y-2 text-xs sm:text-sm not-italic leading-tight" style={{ color: 'rgba(221, 215, 201, 0.7)' }}>
+            <h3 className="text-base font-bold mb-6" style={{ color: '#DDD7C9' }}>Contact</h3>
+            <address className="flex flex-col items-start space-y-3 text-xs sm:text-sm not-italic leading-tight" style={{ color: 'rgba(221, 215, 201, 0.7)' }}>
               <div className="flex items-start gap-2">
                 <Phone size={14} className="mt-0.5 shrink-0" style={{ color: '#DDD7C9' }} />
-                <div className="flex flex-col">
+                <div className="flex flex-col space-y-1">
                   <span className="font-semibold text-xs" style={{ color: '#DDD7C9' }}>For Business Inquiry:</span>
                   <span>+91 94637 68068</span>
                   <span>hello@finwise.ai</span>
@@ -71,14 +85,14 @@ export function FooterFinal() {
               </div>
               <div className="flex items-start gap-2">
                 <Mail size={14} className="mt-0.5 shrink-0" style={{ color: '#DDD7C9' }} />
-                <div className="flex flex-col">
+                <div className="flex flex-col space-y-1">
                   <span className="font-semibold text-xs" style={{ color: '#DDD7C9' }}>For Support & Queries:</span>
                   <span>support@finwise.ai</span>
                 </div>
               </div>
               <div className="flex items-start gap-2">
                 <MapPin size={14} className="mt-0.5 shrink-0" style={{ color: '#DDD7C9' }} />
-                <div className="flex flex-col">
+                <div className="flex flex-col space-y-1">
                   <span>SVKM's NMIMS, Chandigarh.</span>
                 </div>
               </div>
