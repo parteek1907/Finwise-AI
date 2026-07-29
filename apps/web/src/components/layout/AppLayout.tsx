@@ -51,6 +51,12 @@ export function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
+        // If the current local store belongs to the demo user, but we just got a real firebase login,
+        // it means someone signed up or signed in. Wipe the demo data first!
+        if (useAppStore.getState().user.id === 'demo_user') {
+          useAppStore.getState().resetStore();
+        }
+
         const providerData = firebaseUser.providerData;
         const googleProfile = providerData?.find((p: any) => p.providerId === 'google.com');
         const realGoogleName = googleProfile?.displayName;
@@ -106,7 +112,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       } else {
         // User logged out - Reset local store so the next user doesn't inherit their XP
         if (useAppStore.getState().user.id !== 'demo_user') {
-          useAppStore.getState().resetUser();
+          useAppStore.getState().resetStore();
         }
       }
     });
