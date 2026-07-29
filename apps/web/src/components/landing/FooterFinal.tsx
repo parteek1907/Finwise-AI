@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Phone, Mail, MapPin } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 export function FooterFinal() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -10,7 +11,7 @@ export function FooterFinal() {
     import('@/lib/firebase').then(({ auth }) => {
       import('firebase/auth').then(({ onAuthStateChanged }) => {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
-          setIsAuthenticated(!!user);
+          setIsAuthenticated(!!user || useAppStore.getState().user.id === 'demo_user');
         });
         return () => unsubscribe();
       });

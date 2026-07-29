@@ -8,6 +8,7 @@ import { useScroll } from '@/components/ui/use-scroll';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Tabs } from '@/components/ui/vercel-tabs';
+import { useAppStore } from '@/store/useAppStore';
 
 export function Header() {
 	const [open, setOpen] = React.useState(false);
@@ -74,7 +75,7 @@ export function Header() {
 		import('@/lib/firebase').then(({ auth }) => {
 			import('firebase/auth').then(({ onAuthStateChanged }) => {
 				const unsubscribe = onAuthStateChanged(auth, (user) => {
-					setIsAuthenticated(!!user);
+					setIsAuthenticated(!!user || useAppStore.getState().user.id === 'demo_user');
 					setAuthLoaded(true);
 				});
 				return () => unsubscribe();

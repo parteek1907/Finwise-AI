@@ -556,7 +556,7 @@ export const useAppStore = create<AppState>()(
         }));
 
         set((state) => ({
-          user: { ...state.user, xp: 850, streak: 12, name: 'Demo User' },
+          user: { ...state.user, id: 'demo_user', xp: 850, streak: 12, name: 'Demo User' },
           goals: demoGoals,
           lessons: recalculateLocks(demoLessons),
           courseProgress: {

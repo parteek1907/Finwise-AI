@@ -91,10 +91,13 @@ function AuthForm() {
         const password = (document.getElementById('password') as HTMLInputElement).value;
         
         try {
-          await signInWithEmailAndPassword(auth, email, password);
-          if (email.toLowerCase() === 'demo@finwise.ai') {
+          if (email.toLowerCase() === 'demo@finwise.ai' && password === 'demo123') {
             useAppStore.getState().seedDemoData();
+            toast({ title: "Success", description: "Successfully signed in to demo account!" });
+            window.location.href = '/dashboard';
+            return;
           }
+          await signInWithEmailAndPassword(auth, email, password);
           toast({ title: "Success", description: "Successfully signed in!" });
           window.location.href = '/dashboard';
         } catch (error: any) {

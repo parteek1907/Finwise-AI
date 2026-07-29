@@ -105,7 +105,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         }
       } else {
         // User logged out - Reset local store so the next user doesn't inherit their XP
-        useAppStore.getState().resetUser();
+        if (useAppStore.getState().user.id !== 'demo_user') {
+          useAppStore.getState().resetUser();
+        }
       }
     });
 
