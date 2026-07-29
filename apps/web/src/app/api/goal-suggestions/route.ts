@@ -9,14 +9,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Goal required" }, { status: 400 });
     }
 
+    const currencySymbol = goal.currency === 'INR' ? '₹' : goal.currency === 'EUR' ? '€' : goal.currency === 'GBP' ? '£' : '$';
+
     const prompt = `You are a financial AI. The user has a financial goal:
 Name: ${goal.name}
 Category: ${goal.category}
-Target: $${goal.target}
-Current Saved: $${goal.current}
+Target: ${currencySymbol}${goal.target?.toLocaleString()}
+Current Saved: ${currencySymbol}${goal.current?.toLocaleString()}
 Deadline: ${goal.deadline}
+Currency: ${goal.currency || 'USD'}
+Contributions: ${goal.contributions?.length || 0}
 
-Based on this exact progress and deadline, provide exactly 2 highly relevant, specific, and actionable suggestions to help the user achieve this goal faster. Return the response in ONLY valid JSON format matching this schema:
+Based on this exact progress and deadline, provide exactly 2 highly relevant, specific, and actionable suggestions to help the user achieve this goal faster. Use ${currencySymbol} for any monetary amounts. Return the response in ONLY valid JSON format matching this schema:
 {
   "suggestions": [
     {"title": "Short Title", "description": "Detailed 1-2 sentence suggestion."}

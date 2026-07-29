@@ -5,8 +5,9 @@ import { User as UserIcon, Settings, LogOut, ChevronDown, UserCheck } from 'luci
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
-import styles from './SidebarProfile.module.css';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { useAppStore } from '@/store/useAppStore';
+import styles from './SidebarProfile.module.css';
 
 export function SidebarProfile({ isCollapsed = false }: { isCollapsed?: boolean }) {
   const profile = useSettingsStore(state => state.profile);
@@ -35,6 +36,7 @@ export function SidebarProfile({ isCollapsed = false }: { isCollapsed?: boolean 
 
   const handleLogout = async () => {
     try {
+      useAppStore.getState().resetStore();
       await signOut(auth);
       router.push('/');
     } catch (err) {

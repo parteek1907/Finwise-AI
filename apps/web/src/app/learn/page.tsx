@@ -44,6 +44,10 @@ export default function LearnPage() {
 
   const completedLessons = lessons.filter(l => l.status === 'Completed');
   const progressPercent = Math.round((completedLessons.length / lessons.length) * 100) || 0;
+  const allLessonsCompleted = completedLessons.length === lessons.length && lessons.length > 0;
+  const examStatus = allLessonsCompleted 
+    ? (finalExamState.status === 'Locked' ? 'Available' : finalExamState.status) 
+    : 'Locked';
 
   // Find the most recently accessed lesson that is "In Progress"
   const recentProgress = Object.values(courseProgressMap)
@@ -214,7 +218,7 @@ export default function LearnPage() {
                        alt="Final Assessment"
                        style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
                      />
-                     {finalExamState.status === 'Locked' && <div className={styles.thumbnailOverlay}><Lock color="#fff" /></div>}
+                     {examStatus === 'Locked' && <div className={styles.thumbnailOverlay}><Lock color="#fff" /></div>}
                   </div>
                   <div className={styles.cardContent}>
                     <div className={styles.cardMeta}>
@@ -227,12 +231,12 @@ export default function LearnPage() {
                     </div>
                     <div className={styles.cardActions}>
                       <button 
-                        className={`${styles.actionBtn} ${finalExamState.status === 'Locked' ? styles.btnDisabled : styles.btnPrimary}`}
-                        onClick={() => finalExamState.status !== 'Locked' && router.push(`/learn/exam`)}
-                        disabled={finalExamState.status === 'Locked'}
-                        style={finalExamState.status !== 'Locked' ? { background: '#10b981', color: 'white', border: 'none' } : {}}
+                        className={`${styles.actionBtn} ${examStatus === 'Locked' ? styles.btnDisabled : styles.btnPrimary}`}
+                        onClick={() => examStatus !== 'Locked' && router.push(`/learn/exam`)}
+                        disabled={examStatus === 'Locked'}
+                        style={examStatus !== 'Locked' ? { background: '#10b981', color: 'white', border: 'none' } : {}}
                       >
-                        {finalExamState.status === 'Locked' ? 'Complete all lessons to unlock' : (finalExamState.status === 'Passed' ? 'Review Exam' : 'Start Final Exam')}
+                        {examStatus === 'Locked' ? 'Complete all lessons to unlock' : (examStatus === 'Passed' ? 'Review Exam' : 'Start Final Exam')}
                       </button>
                     </div>
                   </div>

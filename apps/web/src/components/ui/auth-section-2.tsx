@@ -8,6 +8,7 @@ import { AuthCanvasBackground } from "./auth-canvas-background";
 import { auth } from "@/lib/firebase";
 import { createUserWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, OAuthProvider } from "firebase/auth";
 import { useToast } from "@/components/ui/toast";
+import { useAppStore } from "@/store/useAppStore";
 
 const termsText = (
   <>
@@ -80,6 +81,7 @@ function AuthForm() {
         <SocialButton icon={<GoogleIcon />} label="Sign up with Google" onClick={async () => {
           try {
             const provider = new GoogleAuthProvider();
+            useAppStore.getState().resetStore();
             await signInWithPopup(auth, provider);
             toast({ title: "Success", description: "Successfully signed up with Google!" });
             window.location.href = '/dashboard';
@@ -90,6 +92,7 @@ function AuthForm() {
         <SocialButton icon={<AppleIcon />} label="Sign up with Apple" onClick={async () => {
           try {
             const provider = new OAuthProvider('apple.com');
+            useAppStore.getState().resetStore();
             await signInWithPopup(auth, provider);
             toast({ title: "Success", description: "Successfully signed up with Apple!" });
             window.location.href = '/dashboard';
@@ -113,6 +116,7 @@ function AuthForm() {
         const password = (document.getElementById('password') as HTMLInputElement).value;
         
         try {
+          useAppStore.getState().resetStore();
           await createUserWithEmailAndPassword(auth, email, password);
           toast({ title: "Success", description: "Account created successfully!" });
           window.location.href = '/dashboard';

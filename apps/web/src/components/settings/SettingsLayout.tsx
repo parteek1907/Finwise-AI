@@ -26,6 +26,8 @@ import { auth } from '@/lib/firebase';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
 import { motion } from 'framer-motion';
 import styles from './Settings.module.css';
+import { signOut } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
 
 type TabType = 'profile' | 'aiMentor' | 'financial' | 'notifications' | 'security' | 'appearance' | 'privacy';
 
@@ -78,6 +80,7 @@ function ToggleSwitch({ checked, onChange, ariaLabel = "Toggle option" }: { chec
 }
 
 export function SettingsLayout() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<TabType>('profile');
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
@@ -324,6 +327,7 @@ export function SettingsLayout() {
       isDanger: false,
       confirmLabel: 'Log Out All',
       onConfirm: () => {
+        useAppStore.getState().resetStore();
         terminateAllOtherSessions();
         showToast('Logged out of all other devices');
       },

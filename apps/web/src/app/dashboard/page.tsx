@@ -5,7 +5,7 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCurrencyRaw } from '@/utils/formatters';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { motion } from 'framer-motion';
@@ -254,7 +254,11 @@ export default function DashboardPage() {
               Active Goals <button className={styles.btnSmallOutline} onClick={() => router.push('/goals')}>+ New</button>
             </h3>
             <div className={styles.projectList}>
-              {goals.slice(0, 4).map((goal, idx) => {
+              {goals.length === 0 ? (
+                <div style={{ padding: '1rem', color: '#6b7280', fontSize: '0.9rem', textAlign: 'center' }}>
+                  No goals yet — <span style={{ color: '#19533B', cursor: 'pointer', fontWeight: 600 }} onClick={() => router.push('/goals')}>create one</span>
+                </div>
+              ) : goals.slice(0, 4).map((goal, idx) => {
                 const colors = [
                   { bg: '#EEF2FF', text: '#4F46E5' },
                   { bg: '#ECFDF5', text: '#10B981' },
@@ -262,13 +266,14 @@ export default function DashboardPage() {
                   { bg: '#FCE7F3', text: '#DB2777' },
                 ];
                 const c = colors[idx % colors.length];
+                const goalCurrency = goal.currency || 'USD';
                 return (
-                  <div key={goal.id} className={styles.projectItem}>
+                  <div key={goal.id} className={styles.projectItem} onClick={() => router.push(`/goals/${goal.id}`)} style={{ cursor: 'pointer' }}>
                     <div className={styles.projectIcon} style={{ background: c.bg, color: c.text }}><Target size={16} /></div>
                     <div className={styles.projectInfo}>
                       <span className={styles.projectName}>{goal.name}</span>
                       <span className={styles.projectDate}>
-                        {formatCurrency(showNumbers ? goal.current : 0)} / {formatCurrency(showNumbers ? goal.target : 0)}
+                        {formatCurrencyRaw(showNumbers ? goal.current : 0, goalCurrency)} / {formatCurrencyRaw(showNumbers ? goal.target : 0, goalCurrency)}
                       </span>
                     </div>
                   </div>

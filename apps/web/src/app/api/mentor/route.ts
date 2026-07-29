@@ -11,7 +11,13 @@ export async function POST(req: Request) {
     let goalsContext = "";
     if (goals && Array.isArray(goals) && goals.length > 0) {
       const goalsText = goals
-        .map((g: any) => `- ${g.name || 'Goal'}: $${(g.current || 0).toLocaleString()} of $${(g.target || 0).toLocaleString()} (Status: ${g.status || 'Unknown'})`)
+        .map((g: any) => {
+          const currency = g.currency || 'USD';
+          const symbol = currency === 'INR' ? '₹' : currency === 'EUR' ? '€' : currency === 'GBP' ? '£' : '$';
+          const progress = g.target > 0 ? Math.round((g.current / g.target) * 100) : 0;
+          const contribs = g.contributions?.length || 0;
+          return `- ${g.name || 'Goal'} (ID: ${g.id}): ${symbol}${(g.current || 0).toLocaleString()} of ${symbol}${(g.target || 0).toLocaleString()} [${progress}% complete, ${contribs} contributions, Status: ${g.status || 'Unknown'}, Currency: ${currency}, Deadline: ${g.deadline || 'N/A'}]`;
+        })
         .join('\n');
       goalsContext = `\n\nUser's Active Financial Goals Context:\n${goalsText}\n`;
     }
@@ -53,7 +59,10 @@ Guidelines for your responses:
 1. Adhere strictly to the requested Mode, Length, and Personality guidelines above.
 2. Structure (CRITICAL): Break down complex ideas using scannable bullet points and markdown headers if needed.
 3. Conversational Flow: Respond naturally while staying aligned with your assigned financial persona.
-4. GOAL MANAGEMENT (CRITICAL): ONLY output the UPDATE_GOAL tag if the user **EXPLICITLY COMMANDS** you to update their goal balance (e.g., 'Add $500 to my emergency fund'). Do **NOT** use this tag for hypothetical scenarios, general financial advice, or if the user is just asking a question. When explicitly commanded, you MUST output the following exact tag anywhere in your response text: \`[ACTION: UPDATE_GOAL, goal_id: "{id}", amount: {amount}]\`. Use a negative amount to remove funds. For example: \`[ACTION: UPDATE_GOAL, goal_id: "g1", amount: 500]\`.`;
+4. GOAL AWARENESS (CRITICAL): You already know the user's goals from the context above. NEVER ask "What goal are you talking about?" — infer from context. If unclear, list their goals and ask which one.
+5. GOAL MANAGEMENT (CRITICAL): ONLY output the UPDATE_GOAL tag if the user **EXPLICITLY COMMANDS** you to update their goal balance (e.g., 'Add $500 to my emergency fund'). Do **NOT** use this tag for hypothetical scenarios, general financial advice, or if the user is just asking a question. When explicitly commanded, you MUST output the following exact tag anywhere in your response text: \`[ACTION: UPDATE_GOAL, goal_id: "{id}", amount: {amount}]\`. Use a negative amount to remove funds. For example: \`[ACTION: UPDATE_GOAL, goal_id: "g1", amount: 500]\`.
+6. GOAL CREATION (CRITICAL): If the user asks you to create a new goal and provides enough details (name, target amount, deadline), you MUST output the following exact tag: \`[ACTION: CREATE_GOAL, name: "{name}", target: {amount}, deadline: "{YYYY-MM-DD}", category: "{category}"]\`. Valid categories: Emergency, Housing, Vehicle, Travel, Retirement, Other. For example: \`[ACTION: CREATE_GOAL, name: "Vacation Fund", target: 5000, deadline: "2027-06-01", category: "Travel"]\`. If the user hasn't provided all required details, ask for them naturally.
+7. GOAL RECOMMENDATIONS: If the user seems open to suggestions, proactively recommend relevant goals based on their profile and financial situation.`;
 
     if (isTutorMode && tutorContext) {
       systemPrompt = `You are a strict but supportive in-course AI Learning Companion for the FinWise platform. The learner, ${nameToUse}, is currently studying a lesson.

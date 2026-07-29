@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { syncUserXp } from '../services/leaderboard';
+import {
+  calculateGoalStatus,
+  type Contribution,
+} from '../utils/goalCalculations';
+
 // Types
 export interface User {
   id?: string;
@@ -20,8 +25,16 @@ export interface Goal {
   target: number;
   current: number;
   deadline: string;
-  status: 'On Track' | 'Ahead' | 'Behind' | 'Planning';
-  category: 'Emergency' | 'Housing' | 'Vehicle' | 'Travel' | 'Retirement';
+  status: 'On Track' | 'Ahead' | 'Behind' | 'Planning' | 'Completed';
+  category: 'Emergency' | 'Housing' | 'Vehicle' | 'Travel' | 'Retirement' | 'Other';
+  currency: string;
+  contributions: Contribution[];
+  createdAt: string;
+  completedAt?: string;
+  priority?: 'High' | 'Medium' | 'Low';
+  dependsOn?: string;
+  notes: string[];
+  aiInsights: string[];
 }
 
 export interface Lesson {
@@ -88,10 +101,15 @@ export interface AppState {
   
   // Actions
   addXP: (amount: number) => void;
-  addGoal: (goal: Omit<Goal, 'id' | 'current' | 'status'>) => void;
+  addGoal: (goal: Omit<Goal, 'id' | 'current' | 'status' | 'contributions' | 'createdAt' | 'notes' | 'aiInsights'> & { currency?: string }) => void;
   updateGoal: (id: string, amount: number) => void;
   updateGoalDetails: (id: string, updates: Partial<Goal>) => void;
   deleteGoal: (id: string) => void;
+  addContribution: (goalId: string, amount: number, note?: string) => void;
+  editContribution: (goalId: string, contributionId: string, updates: Partial<Contribution>) => void;
+  deleteContribution: (goalId: string, contributionId: string) => void;
+  updateGoalInsights: (goalId: string, insights: string[]) => void;
+  completeGoalTarget: (goalId: string) => void;
   updateCourseProgress: (lessonId: string, data: Partial<CourseProgress>) => void;
   updateFinalExamState: (data: Partial<FinalExamState>) => void;
   updateLessonChat: (lessonId: string, messages: { id: string; sender: 'user' | 'ai'; text: string }[]) => void;
@@ -104,6 +122,7 @@ export interface AppState {
   updateUser: (data: Partial<User>) => void;
   updateUserFromCloud: (data: Partial<User>) => void; // Update without syncing back
   resetUser: () => void;
+  resetStore: () => void;
 }
 
 const INITIAL_USER: User = {
@@ -116,12 +135,8 @@ const INITIAL_USER: User = {
   streak: 0,
 };
 
-const INITIAL_GOALS: Goal[] = [
-  { id: 'g1', name: 'Emergency Fund', target: 5000, current: 2400, deadline: '2026-10-01', status: 'On Track', category: 'Emergency' },
-  { id: 'g2', name: 'Credit Card Debt', target: 2000, current: 1200, deadline: '2026-08-01', status: 'Ahead', category: 'Emergency' },
-  { id: 'g3', name: 'Vehicle Downpayment', target: 8000, current: 0, deadline: '2027-03-01', status: 'Planning', category: 'Vehicle' },
-  { id: 'g4', name: 'Japan Trip', target: 4000, current: 1500, deadline: '2027-05-01', status: 'Behind', category: 'Travel' },
-];
+// Empty initial goals — users will see the empty state with templates
+const INITIAL_GOALS: Goal[] = [];
 
 const INITIAL_LESSONS: Lesson[] = [
   { id: 'l1', title: 'The Psychology of Spending', category: 'Behavior', duration: '5 min', difficulty: 'Easy', status: 'In Progress', xp: 50 },
@@ -143,9 +158,6 @@ const recalculateLocks = (lessons: Lesson[]): Lesson[] => {
   const easyCompleted = lessons.filter(l => l.difficulty === 'Easy').every(l => l.status === 'Completed');
   const mediumCompleted = lessons.filter(l => l.difficulty === 'Medium').every(l => l.status === 'Completed');
 
-  let hasFirstInProgress = false; // ensures only the very first uncompleted is "In Progress", rest are locked (if we want linear progression). 
-  // Let's just unlock all in the current tier.
-  
   return lessons.map(lesson => {
     if (lesson.status === 'Completed') return lesson;
 
@@ -169,6 +181,40 @@ const INITIAL_MESSAGES: MentorMessage[] = [];
 
 const INITIAL_CHATS: ChatSession[] = [];
 
+// Helper: recalculate goal status and detect completion
+function recalcGoalAfterContribution(goal: Goal): Goal {
+  const updated = { ...goal };
+  updated.status = calculateGoalStatus({
+    target: updated.target,
+    current: updated.current,
+    deadline: updated.deadline,
+    createdAt: updated.createdAt,
+    contributions: updated.contributions,
+    completedAt: updated.completedAt,
+  });
+
+  // Auto-complete detection
+  if (updated.current >= updated.target && !updated.completedAt) {
+    updated.completedAt = new Date().toISOString();
+    updated.status = 'Completed';
+  }
+
+  return updated;
+}
+
+// Helper: migrate legacy goals that lack new fields
+function migrateGoal(goal: any): Goal {
+  return {
+    ...goal,
+    currency: goal.currency || 'USD',
+    contributions: goal.contributions || [],
+    createdAt: goal.createdAt || new Date().toISOString(),
+    notes: goal.notes || [],
+    aiInsights: goal.aiInsights || [],
+    status: goal.status || 'Planning',
+  };
+}
+
 export const useAppStore = create<AppState>()(
   persist(
     (set, get) => ({
@@ -190,30 +236,144 @@ export const useAppStore = create<AppState>()(
       },
       lessonChats: {},
 
+      resetStore: () => set({
+        user: INITIAL_USER,
+        goals: INITIAL_GOALS,
+        lessons: recalculateLocks(INITIAL_LESSONS),
+        chats: INITIAL_CHATS,
+        activeChatId: null,
+        courseProgress: {},
+        lessonChats: {},
+        finalExamState: {
+          activeExamId: null,
+          answers: {},
+          flagged: [],
+          visited: [],
+          timeRemaining: null,
+          warnings: 0,
+          attempts: [],
+          status: 'Locked'
+        }
+      }),
+
       addXP: (amount) => set((state) => ({ 
         user: { ...state.user, xp: state.user.xp + amount } 
       })),
 
       addGoal: (goalData) => set((state) => {
         const newGoal: Goal = {
-          ...goalData,
+          name: goalData.name,
+          target: goalData.target,
+          deadline: goalData.deadline,
+          category: goalData.category as Goal['category'],
+          currency: goalData.currency || 'USD',
           id: `g${Date.now()}`,
           current: 0,
-          status: 'Planning'
+          status: 'Planning',
+          contributions: [],
+          createdAt: new Date().toISOString(),
+          notes: [],
+          aiInsights: [],
+          priority: goalData.priority,
+          dependsOn: goalData.dependsOn,
         };
         return { goals: [...state.goals, newGoal] };
       }),
 
       updateGoal: (id, amount) => set((state) => ({
-        goals: state.goals.map(g => g.id === id ? { ...g, current: Math.min(g.target, g.current + amount) } : g)
+        goals: state.goals.map(g => {
+          if (g.id !== id) return g;
+          const updated = {
+            ...g,
+            current: Math.max(0, Math.min(g.target, g.current + amount)),
+            contributions: [
+              ...g.contributions,
+              {
+                id: `c${Date.now()}`,
+                amount: amount,
+                date: new Date().toISOString(),
+                note: 'Added via AI Mentor',
+              },
+            ],
+          };
+          return recalcGoalAfterContribution(updated);
+        })
       })),
 
       updateGoalDetails: (id, updates) => set((state) => ({
-        goals: state.goals.map(g => g.id === id ? { ...g, ...updates } : g)
+        goals: state.goals.map(g => {
+          if (g.id !== id) return g;
+          const updated = { ...g, ...updates };
+          return recalcGoalAfterContribution(updated);
+        })
       })),
 
       deleteGoal: (id) => set((state) => ({
         goals: state.goals.filter(g => g.id !== id)
+      })),
+
+      addContribution: (goalId, amount, note) => set((state) => ({
+        goals: state.goals.map(g => {
+          if (g.id !== goalId) return g;
+          const newContribution: Contribution = {
+            id: `c${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            amount,
+            date: new Date().toISOString(),
+            note,
+          };
+          const updated = {
+            ...g,
+            current: Math.min(g.target, g.current + amount),
+            contributions: [...g.contributions, newContribution],
+          };
+          return recalcGoalAfterContribution(updated);
+        })
+      })),
+
+      editContribution: (goalId, contributionId, updates) => set((state) => ({
+        goals: state.goals.map(g => {
+          if (g.id !== goalId) return g;
+          const oldContrib = g.contributions.find(c => c.id === contributionId);
+          if (!oldContrib) return g;
+          
+          const amountDiff = (updates.amount !== undefined ? updates.amount : oldContrib.amount) - oldContrib.amount;
+          const newContributions = g.contributions.map(c =>
+            c.id === contributionId ? { ...c, ...updates } : c
+          );
+          const updated = {
+            ...g,
+            current: Math.max(0, Math.min(g.target, g.current + amountDiff)),
+            contributions: newContributions,
+          };
+          return recalcGoalAfterContribution(updated);
+        })
+      })),
+
+      deleteContribution: (goalId, contributionId) => set((state) => ({
+        goals: state.goals.map(g => {
+          if (g.id !== goalId) return g;
+          const contrib = g.contributions.find(c => c.id === contributionId);
+          if (!contrib) return g;
+          const updated = {
+            ...g,
+            current: Math.max(0, g.current - contrib.amount),
+            contributions: g.contributions.filter(c => c.id !== contributionId),
+            completedAt: undefined, // un-complete if deleting drops below target
+          };
+          return recalcGoalAfterContribution(updated);
+        })
+      })),
+
+      updateGoalInsights: (goalId, insights) => set((state) => ({
+        goals: state.goals.map(g =>
+          g.id === goalId ? { ...g, aiInsights: insights } : g
+        )
+      })),
+
+      completeGoalTarget: (goalId) => set((state) => ({
+        goals: state.goals.map(g =>
+          g.id === goalId ? { ...g, completedAt: new Date().toISOString(), status: 'Completed' as const } : g
+        )
       })),
 
       updateCourseProgress: (lessonId, data) => set((state) => {
@@ -357,6 +517,8 @@ export const useAppStore = create<AppState>()(
       name: 'finwise-storage',
       merge: (persistedState: any, currentState: AppState) => {
         if (!persistedState) return currentState;
+
+        // Migrate lessons (existing logic)
         if (persistedState.lessons) {
           const persistedIds = new Set(persistedState.lessons.map((l: any) => l.id));
           INITIAL_LESSONS.forEach(initialLesson => {
@@ -366,6 +528,12 @@ export const useAppStore = create<AppState>()(
           });
           persistedState.lessons = recalculateLocks(persistedState.lessons);
         }
+
+        // Migrate goals: ensure all goals have new fields
+        if (persistedState.goals && Array.isArray(persistedState.goals)) {
+          persistedState.goals = persistedState.goals.map(migrateGoal);
+        }
+
         return { ...currentState, ...persistedState };
       }
     }

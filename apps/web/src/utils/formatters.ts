@@ -43,6 +43,39 @@ export const formatCurrency = (
   }).format(converted);
 };
 
+/**
+ * Format a value in a specific currency WITHOUT exchange-rate conversion.
+ * Used for goals that store amounts in the user's currency at creation time.
+ */
+export const formatCurrencyRaw = (
+  value: number,
+  currencyCode: string = 'USD',
+  minFractions: number = 0,
+  maxFractions: number = 0
+) => {
+  const config = CURRENCY_MAP[currencyCode] || CURRENCY_MAP.USD;
+  return new Intl.NumberFormat(config.locale, {
+    style: 'currency',
+    currency: currencyCode,
+    minimumFractionDigits: minFractions,
+    maximumFractionDigits: maxFractions,
+  }).format(value);
+};
+
+/**
+ * Get the currency symbol for a given currency code.
+ */
+export const getCurrencySymbol = (currencyCode?: string): string => {
+  if (!currencyCode) {
+    try {
+      currencyCode = useSettingsStore.getState().financial?.preferredCurrency || 'USD';
+    } catch {
+      currencyCode = 'USD';
+    }
+  }
+  return CURRENCY_MAP[currencyCode]?.symbol || '$';
+};
+
 export const formatPercentage = (value: number, includeSign: boolean = true) => {
   const sign = includeSign && value > 0 ? '+' : '';
   return `${sign}${value.toFixed(2)}%`;
@@ -62,4 +95,20 @@ export const formatDate = (dateString: string) => {
     day: 'numeric',
     year: 'numeric'
   }).format(new Date(dateString));
+};
+
+/**
+ * Format a date as relative time (e.g., "Today", "2 days ago", "Jul 14")
+ */
+export const formatRelativeDate = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return 'Yesterday';
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };

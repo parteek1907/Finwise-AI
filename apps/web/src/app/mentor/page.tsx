@@ -11,7 +11,8 @@ import { ChatSidebar } from '@/components/mentor/ChatSidebar';
 import { RichMessage } from '@/components/mentor/RichMessage';
 
 export default function MentorPage() {
-  const { chats, activeChatId, addMessage, createNewChat, user, goals, updateGoal, updateChatTitle } = useAppStore();
+  const { chats, activeChatId, addMessage, createNewChat, user, goals, updateGoal, addGoal, updateChatTitle } = useAppStore();
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
   const profileName = useSettingsStore(state => state.profile?.name) || user.name || 'User';
   
   const activeChat = chats.find(c => c.id === activeChatId);
@@ -156,12 +157,24 @@ export default function MentorPage() {
       
       let aiResponseText = data.content || "I'm having trouble thinking right now.";
       
-      // Intercept tool calls
+      // Intercept UPDATE_GOAL tool calls
       const updateGoalMatch = aiResponseText.match(/\[ACTION:\s*UPDATE_GOAL,\s*goal_id:\s*"([^"]+)",\s*amount:\s*([-\d]+)\]/i);
       if (updateGoalMatch) {
          const gId = updateGoalMatch[1];
          const amount = parseInt(updateGoalMatch[2], 10);
          updateGoal(gId, amount);
+      }
+
+      // Intercept CREATE_GOAL tool calls
+      const createGoalMatch = aiResponseText.match(/\[ACTION:\s*CREATE_GOAL,\s*name:\s*"([^"]+)",\s*target:\s*(\d+),\s*deadline:\s*"([^"]+)",\s*category:\s*"([^"]+)"\]/i);
+      if (createGoalMatch) {
+        addGoal({
+          name: createGoalMatch[1],
+          target: parseInt(createGoalMatch[2], 10),
+          deadline: createGoalMatch[3],
+          category: createGoalMatch[4] as any,
+          currency: preferredCurrency,
+        });
       }
       
       addMessage(currentChatId, { 

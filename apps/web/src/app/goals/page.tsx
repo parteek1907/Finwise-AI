@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
-import { Target, Plus, PiggyBank, Home, Car, Plane, Briefcase, TrendingUp, ChevronDown, Check } from 'lucide-react';
+import { Target, Plus, PiggyBank, Home, Car, Plane, Briefcase, TrendingUp, ChevronDown, Check, Sparkles, ArrowRight, Shield, GraduationCap, Heart, Laptop, Smartphone } from 'lucide-react';
 import styles from './Goals.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { DatePicker } from '@/components/ui/date-picker';
-import { formatCurrency } from '@/utils/formatters';
+import { formatCurrencyRaw, getCurrencySymbol } from '@/utils/formatters';
+import { GOAL_TEMPLATES } from '@/utils/goalCalculations';
 
 const CATEGORY_OPTIONS = [
   { value: 'Emergency', label: 'Emergency Fund', icon: PiggyBank },
@@ -20,7 +21,7 @@ const CATEGORY_OPTIONS = [
   { value: 'Other', label: 'Other Financial Goal', icon: Briefcase },
 ];
 
-const CATEGORY_ICONS = {
+const CATEGORY_ICONS: Record<string, any> = {
   'Emergency': PiggyBank,
   'Housing': Home,
   'Vehicle': Car,
@@ -32,15 +33,19 @@ const CATEGORY_ICONS = {
 export default function GoalsPage() {
   const router = useRouter();
   const { goals, addGoal } = useAppStore();
-  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency);
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
   const [showAddModal, setShowAddModal] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
     name: '',
     target: '',
     deadline: '',
-    category: 'Emergency'
+    category: 'Emergency',
+    priority: 'Medium' as 'High' | 'Medium' | 'Low',
+    dependsOn: ''
   });
+
+  const currencySymbol = getCurrencySymbol(preferredCurrency);
 
   const handleSaveGoal = () => {
     if (!newGoal.name || !newGoal.target || !newGoal.deadline) return;
@@ -49,12 +54,33 @@ export default function GoalsPage() {
       name: newGoal.name,
       target: Number(newGoal.target),
       deadline: newGoal.deadline,
-      category: newGoal.category as any
+      category: newGoal.category as any,
+      currency: preferredCurrency,
+      priority: newGoal.priority,
+      dependsOn: newGoal.dependsOn || undefined
     });
     
     setShowAddModal(false);
-    setNewGoal({ name: '', target: '', deadline: '', category: 'Emergency' });
+    setNewGoal({ name: '', target: '', deadline: '', category: 'Emergency', priority: 'Medium', dependsOn: '' });
   };
+
+  const handleTemplateClick = (template: typeof GOAL_TEMPLATES[0]) => {
+    const targetAmount = template.defaultTargets[preferredCurrency] || template.defaultTargets['USD'];
+    const deadline = new Date();
+    deadline.setMonth(deadline.getMonth() + template.defaultMonths);
+
+    setNewGoal({
+      name: template.name,
+      target: String(targetAmount),
+      deadline: deadline.toISOString(),
+      category: template.category,
+      priority: 'Medium',
+      dependsOn: ''
+    });
+    setShowAddModal(true);
+  };
+
+  const hasGoals = goals.length > 0;
 
   return (
     <AppLayout>
@@ -83,52 +109,134 @@ export default function GoalsPage() {
           </div>
         </motion.header>
 
+        {/* Empty State */}
+        {!hasGoals && (
+          <motion.div
+            className={styles.emptyState}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+          >
+            <div className={styles.emptyHero}>
+              <div className={styles.emptyIconWrap}>
+                <Sparkles size={32} />
+              </div>
+              <h2 className={styles.emptyTitle}>Start Your Financial Journey</h2>
+              <p className={styles.emptyDesc}>
+                Set clear savings targets, track every contribution, and get AI-powered coaching to reach your goals faster.
+              </p>
+            </div>
+
+            <div className={styles.templateSection}>
+              <h3 className={styles.templateHeading}>Popular Goal Templates</h3>
+              <div className={styles.templateGrid}>
+                {GOAL_TEMPLATES.map((template, idx) => (
+                  <motion.button
+                    key={template.name}
+                    className={styles.templateCard}
+                    onClick={() => handleTemplateClick(template)}
+                    initial={{ opacity: 0, y: 16 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 + idx * 0.04, type: 'spring', stiffness: 300, damping: 24 }}
+                  >
+                    <span className={styles.templateEmoji}>
+                      {(() => {
+                        const Icon = template.icon === 'Shield' ? Shield :
+                                     template.icon === 'Plane' ? Plane :
+                                     template.icon === 'Home' ? Home :
+                                     template.icon === 'Car' ? Car :
+                                     template.icon === 'GraduationCap' ? GraduationCap :
+                                     template.icon === 'Heart' ? Heart :
+                                     template.icon === 'TrendingUp' ? TrendingUp :
+                                     template.icon === 'Laptop' ? Laptop :
+                                     template.icon === 'Smartphone' ? Smartphone : Target;
+                        return <Icon size={24} color="#19533B" />;
+                      })()}
+                    </span>
+                    <div className={styles.templateInfo}>
+                      <span className={styles.templateName}>{template.name}</span>
+                      <span className={styles.templateAmount}>
+                        {formatCurrencyRaw(template.defaultTargets[preferredCurrency] || template.defaultTargets['USD'], preferredCurrency)}
+                      </span>
+                    </div>
+                    <ArrowRight size={14} className={styles.templateArrow} />
+                  </motion.button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
         {/* Goals Grid */}
-        <motion.div 
-          className={styles.grid}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-        >
-          {goals.map(goal => {
-            const Icon = CATEGORY_ICONS[goal.category as keyof typeof CATEGORY_ICONS] || Target;
-            const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
-            
-            return (
-              <motion.div 
-                key={goal.id} 
-                className={styles.goalCard}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, delay: 0.1 + (goals.indexOf(goal) * 0.05), ease: [0.16, 1, 0.3, 1] }}
-                onClick={() => router.push(`/goals/${goal.id}`)}
-              >
-                <div className={styles.cardHeader}>
-                  <div className={styles.iconBox}>
-                    <Icon size={20} />
+        {hasGoals && (
+          <motion.div 
+            className={styles.grid}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
+          >
+            {goals.map(goal => {
+              const Icon = CATEGORY_ICONS[goal.category] || Target;
+              const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
+              const goalCurrency = goal.currency || preferredCurrency;
+              
+              return (
+                <motion.div 
+                  key={goal.id} 
+                  className={`${styles.goalCard} ${goal.status === 'Completed' ? styles.goalCardCompleted : ''}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: 0.1 + (goals.indexOf(goal) * 0.05), ease: [0.16, 1, 0.3, 1] }}
+                  onClick={() => router.push(`/goals/${goal.id}`)}
+                >
+                  <div className={styles.cardHeader}>
+                    <div className={styles.cardIconBox}>
+                      <Icon size={20} />
+                    </div>
+                    <div className={`${styles.statusBadge} ${styles[goal.status.replace(/\s+/g, '')]}`}>
+                      {goal.status}
+                    </div>
                   </div>
-                  <div className={`${styles.statusBadge} ${styles[goal.status.replace(/\s+/g, '')]}`}>
-                    {goal.status}
+                  
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <h3 className={styles.goalName} style={{ margin: 0 }}>{goal.name}</h3>
+                    {goal.priority && (
+                      <span className={styles.priorityBadge} style={{ 
+                        fontSize: '0.7rem', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 600,
+                        backgroundColor: goal.priority === 'High' ? '#fee2e2' : goal.priority === 'Medium' ? '#fef3c7' : '#f3f4f6',
+                        color: goal.priority === 'High' ? '#dc2626' : goal.priority === 'Medium' ? '#d97706' : '#6b7280'
+                      }}>
+                        {goal.priority}
+                      </span>
+                    )}
                   </div>
-                </div>
-                
-                <h3 className={styles.goalName}>{goal.name}</h3>
-                <span className={styles.deadline}>Target: {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-                
-                <div className={styles.progressSection}>
-                  <div className={styles.progressLabels}>
-                    <span className={styles.currentAmount}>{formatCurrency(goal.current)}</span>
-                    <span className={styles.targetAmount}>of {formatCurrency(goal.target)}</span>
+                  <span className={styles.deadline}>Target: {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  
+                  <div className={styles.progressSection}>
+                    <div className={styles.progressLabels}>
+                      <span className={styles.currentAmount}>{formatCurrencyRaw(goal.current, goalCurrency)}</span>
+                      <span className={styles.targetAmount}>of {formatCurrencyRaw(goal.target, goalCurrency)}</span>
+                    </div>
+                    <div className={styles.progressBar}>
+                      <motion.div 
+                        className={styles.progressFill} 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${progressPercent}%` }}
+                        transition={{ duration: 0.8, ease: 'easeOut' }}
+                      />
+                    </div>
+                    <div className={styles.progressMeta}>
+                      <span className={styles.percentText}>{progressPercent}% Funded</span>
+                      {goal.contributions.length > 0 && (
+                        <span className={styles.contribCount}>{goal.contributions.length} contribution{goal.contributions.length !== 1 ? 's' : ''}</span>
+                      )}
+                    </div>
                   </div>
-                  <div className={styles.progressBar}>
-                    <div className={styles.progressFill} style={{ width: `${progressPercent}%` }}></div>
-                  </div>
-                  <span className={styles.percentText}>{progressPercent}% Funded</span>
-                </div>
-              </motion.div>
-            );
-          })}
-        </motion.div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        )}
 
         {/* Add Modal Overlay */}
         <AnimatePresence>
@@ -164,7 +272,7 @@ export default function GoalsPage() {
                   />
                 </div>
                 <div className={styles.formGroup}>
-                  <label>Target Amount ($)</label>
+                  <label>Target Amount ({currencySymbol})</label>
                   <input 
                     type="number" 
                     className={styles.input}
@@ -242,6 +350,36 @@ export default function GoalsPage() {
                       )}
                     </AnimatePresence>
                   </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className={styles.formGroup}>
+                    <label>Priority</label>
+                    <select 
+                      className={styles.select}
+                      value={newGoal.priority}
+                      onChange={e => setNewGoal({...newGoal, priority: e.target.value as any})}
+                    >
+                      <option value="High">High</option>
+                      <option value="Medium">Medium</option>
+                      <option value="Low">Low</option>
+                    </select>
+                  </div>
+                  {goals.length > 0 && (
+                    <div className={styles.formGroup}>
+                      <label>Depends On (Optional)</label>
+                      <select 
+                        className={styles.select}
+                        value={newGoal.dependsOn}
+                        onChange={e => setNewGoal({...newGoal, dependsOn: e.target.value})}
+                      >
+                        <option value="">None</option>
+                        {goals.map(g => (
+                          <option key={g.id} value={g.id}>{g.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 </div>
 
                 <div style={{display: 'flex', gap: '1rem', marginTop: '2.5rem'}}>
