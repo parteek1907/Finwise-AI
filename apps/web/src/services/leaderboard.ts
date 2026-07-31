@@ -1,5 +1,5 @@
 import { db } from '../lib/firebase';
-import { collection, doc, setDoc, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, setDoc, onSnapshot, query, orderBy, limit, where } from 'firebase/firestore';
 import { User } from '../store/useAppStore';
 
 export interface LeaderboardUser {
@@ -59,12 +59,12 @@ export const fetchUserData = async (uid: string) => {
 };
 
 /**
- * Subscribes to the top 50 users on the global leaderboard.
+ * Subscribes to the top 5 users on the global leaderboard who have XP > 0.
  * Returns an unsubscribe function.
  */
 export const subscribeToLeaderboard = (onUpdate: (users: LeaderboardUser[]) => void) => {
   const usersRef = collection(db, 'users');
-  const q = query(usersRef, orderBy('xp', 'desc'), limit(50));
+  const q = query(usersRef, where('xp', '>', 0), orderBy('xp', 'desc'), limit(5));
 
   const unsubscribe = onSnapshot(q, (snapshot) => {
     const leaderboard: LeaderboardUser[] = [];
