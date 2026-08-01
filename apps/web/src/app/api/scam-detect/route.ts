@@ -103,33 +103,16 @@ export async function POST(req: Request) {
       return NextResponse.json(JSON.parse(content));
     } else {
       // Use Groq API for text
-      let groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: `Analyze this message: ${text}` }
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.1
-        })
-      });
-
-      if (!groqRes.ok) {
-        // Fallback to second model
-        groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      let data;
+      const attemptFetch = async (modelName: string) => {
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
           method: "POST",
           headers: {
             "Authorization": `Bearer ${GROQ_API_KEY}`,
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: modelName,
             messages: [
               { role: "system", content: SYSTEM_PROMPT },
               { role: "user", content: `Analyze this message: ${text}` }
@@ -138,14 +121,18 @@ export async function POST(req: Request) {
             temperature: 0.1
           })
         });
-        
-        if (!groqRes.ok) {
-          throw new Error(`Groq API failed completely. Error: ${await groqRes.text()}`);
-        }
+        if (!res.ok) throw new Error(`API error: ${res.status}`);
+        return res.json();
+      };
+
+      try {
+        data = await attemptFetch("llama-3.1-8b-instant");
+      } catch (e) {
+        console.warn("First model failed in scam-detect, trying fallback...", e);
+        data = await attemptFetch("llama-3.3-70b-versatile");
       }
       
-      const data = await groqRes.json();
-      let content = data.choices?.[0]?.message?.content || "";
+      let content = data?.choices?.[0]?.message?.content || "";
 
       if (!content) throw new Error("No content returned from Groq");
       

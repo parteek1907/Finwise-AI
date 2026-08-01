@@ -124,43 +124,39 @@ FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does 
       }
     }
 
-    let groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: apiMessages,
-        temperature: 0.7,
-        max_tokens: 1024
-      })
-    });
+    let groqRes;
+    let data;
 
-    if (!groqRes.ok) {
-       // Fallback to versatile model
-       groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-         method: "POST",
-         headers: {
-           "Authorization": `Bearer ${GROQ_API_KEY}`,
-           "Content-Type": "application/json"
-         },
-         body: JSON.stringify({
-           model: "llama-3.3-70b-versatile",
-           messages: apiMessages,
-           temperature: 0.7,
-           max_tokens: 1024
-         })
-       });
-       
-       if (!groqRes.ok) {
-         throw new Error(`Groq API failed completely. Error: ${await groqRes.text()}`);
-       }
+    const attemptFetch = async (modelName: string) => {
+      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: modelName,
+          messages: apiMessages,
+          temperature: 0.7,
+          max_tokens: 1024
+        })
+      });
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      return res.json();
+    };
+
+    try {
+      data = await attemptFetch("llama-3.1-8b-instant");
+    } catch (e) {
+      console.warn("First model failed, trying fallback 1...", e);
+      try {
+        data = await attemptFetch("llama-3.3-70b-versatile");
+      } catch (e2) {
+        console.warn("Second model failed, trying fallback 2...", e2);
+        data = await attemptFetch("mixtral-8x7b-32768");
+      }
     }
-    
-    const data = await groqRes.json();
-    let responseContent = data.choices?.[0]?.message?.content || "I am here to help with your financial goals!";
+    let responseContent = data?.choices?.[0]?.message?.content || "I am here to help with your financial goals!";
 
     // Brutal stripper for LLM hallucinations about tags
     if (responseContent.match(/\[no\s+off-topic.*?\]/i) || responseContent.match(/no off-topic tag/i)) {
