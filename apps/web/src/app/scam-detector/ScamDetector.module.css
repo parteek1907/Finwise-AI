@@ -1,0 +1,219 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 2rem;
+  max-width: 1000px;
+}
+
+.header {
+  margin-bottom: 3rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 2.5rem;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1.1rem;
+  font-weight: 400;
+  max-width: 600px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 2rem;
+}
+
+/* Input Area */
+.inputSection {
+  display: flex;
+  flex-direction: column;
+}
+
+.inputWrapper {
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.2s ease;
+  height: 100%;
+  min-height: 400px;
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--color-text-secondary);
+}
+
+.textarea {
+  flex: 1;
+  width: 100%;
+  border: none;
+  resize: none;
+  padding: 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  color: var(--color-text-primary);
+  background: transparent;
+  outline: none;
+  line-height: 1.6;
+}
+
+.textarea::placeholder {
+  color: var(--color-text-secondary);
+  opacity: 0.7;
+}
+
+.actionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background-color: var(--color-surface-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+.charCount {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* Results Area */
+.resultSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.shieldVisualizer {
+  height: 220px;
+  background-color: var(--color-surface-bg);
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 3rem 2rem;
+  color: var(--color-text-secondary);
+  background-color: var(--color-surface-bg);
+  border: 1px dashed var(--color-border);
+  border-radius: 20px;
+  text-align: center;
+  font-size: 0.95rem;
+}
+
+.resultCard {
+  background-color: var(--color-card-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+  border: 1px solid var(--color-border);
+  animation: slideUp 0.3s ease-out;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dangerCard {
+  border-color: rgba(194, 90, 82, 0.3); /* using Accent Red */
+  background-color: #fff9f9;
+}
+
+.safeCard {
+  border-color: rgba(37, 92, 73, 0.3); /* using Accent Green */
+}
+
+.resultHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.resultHeader h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.analysisList {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.analysisItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.highlight {
+  display: inline-block;
+  background-color: rgba(194, 90, 82, 0.1);
+  color: var(--color-accent-red);
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  font-weight: 600;
+  align-self: flex-start;
+}
+
+.analysisItem p {
+  color: var(--color-text-primary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.educationalBox {
+  display: flex;
+  gap: 0.75rem;
+  background-color: #ffffff;
+  padding: 1rem;
+  border-radius: 12px;
+  border-left: 3px solid var(--color-accent-blue);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.eduIcon {
+  color: var(--color-accent-blue);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.educationalBox p {
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.safeText {
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  font-size: 0.95rem;
+}

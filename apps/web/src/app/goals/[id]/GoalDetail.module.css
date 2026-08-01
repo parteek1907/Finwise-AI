@@ -1,0 +1,365 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+}
+
+.backBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  cursor: pointer;
+  margin-bottom: 2rem;
+  width: fit-content;
+  transition: color 0.2s;
+}
+
+.backBtn:hover {
+  color: var(--color-text-primary);
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+  align-items: start;
+}
+
+.goalHeader {
+  margin-bottom: 2rem;
+}
+
+.headerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.iconBox {
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-card-bg);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.categoryBadge {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.headerActions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.iconBtn {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  transition: all 0.2s;
+}
+
+.iconBtn:hover {
+  background-color: var(--color-surface-bg);
+  color: var(--color-text-primary);
+}
+
+/* Progress Card */
+.progressCard {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  margin-bottom: 2.5rem;
+}
+
+.progressTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.5rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.mainAmount {
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.targetAmount {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.progressBar {
+  height: 12px;
+  background-color: var(--color-surface-bg);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--color-accent-green);
+  border-radius: 9999px;
+}
+
+.progressBottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2.5rem;
+}
+
+.percentText {
+  font-weight: 600;
+  color: var(--color-text-primary);
+  font-size: 1.1rem;
+}
+
+.statusBadge {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+}
+
+.OnTrack { background-color: #eff6ff; color: #3b82f6; }
+.Ahead { background-color: #dcfce7; color: #16a34a; }
+.Behind { background-color: #fee2e2; color: #dc2626; }
+.Planning { background-color: var(--color-surface-bg); color: var(--color-text-secondary); }
+
+.actionRow {
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
+}
+
+.addFundsBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-text-primary);
+  color: white;
+  padding: 1rem 2.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.addFundsBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+}
+
+/* Timeline */
+.milestonesSection {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.milestonesSection h3 {
+  margin: 0 0 2rem 0;
+  font-size: 1.25rem;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  position: relative;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 9px;
+  width: 2px;
+  background-color: var(--color-surface-bg);
+}
+
+.timelineItem {
+  display: flex;
+  gap: 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.node {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--color-card-bg);
+  border: 4px solid var(--color-border);
+  flex-shrink: 0;
+  transition: all 0.3s;
+}
+
+.achieved .node {
+  border-color: #22c55e;
+  background-color: #dcfce7;
+}
+
+.content h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.content p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+.achieved .content h4 {
+  color: #166534;
+}
+
+/* Side Column */
+.sideCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.statsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.statCard {
+  background-color: var(--color-card-bg);
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.statIcon {
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+}
+
+.statValue {
+  font-size: 1.1rem;
+  color: var(--color-text-primary);
+}
+
+.aiCard {
+  background: linear-gradient(180deg, var(--color-card-bg) 0%, #eff6ff 100%);
+  border: 1px solid #bfdbfe;
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.aiHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #3b82f6;
+  margin-bottom: 1rem;
+}
+
+.aiHeader h3 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.suggestionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.suggestionList li {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #1e3a8a;
+  background-color: rgba(255,255,255,0.6);
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.chatBtn {
+  width: 100%;
+  background-color: #3b82f6;
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chatBtn:hover {
+  background-color: #2563eb;
+}

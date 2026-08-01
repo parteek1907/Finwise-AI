@@ -1,0 +1,648 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  margin-bottom: 2rem;
+  padding-top: 1rem;
+}
+
+.greetingHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.greetingIcon {
+  color: var(--color-text-secondary);
+}
+
+.greeting {
+  font-size: 2.25rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 350px 1fr;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.leftColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.rightColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* Base Card */
+.card {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.02);
+}
+
+.cardHeaderFlex {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.cardLabel {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.cardTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  margin: 0;
+}
+
+.cardSubtitle {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  margin: 0.25rem 0 0 0;
+}
+
+/* Total Balance Card */
+.currencySelector {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-surface-bg);
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.balanceContainer {
+  margin-bottom: 1.5rem;
+}
+
+.mainBalance {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+  margin: 0 0 0.5rem 0;
+  letter-spacing: -0.02em;
+}
+
+.growthBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #22c55e;
+}
+
+.growthText {
+  color: var(--color-text-secondary);
+  font-weight: 500;
+  margin-left: 0.25rem;
+}
+
+.actionButtons {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.actionBtn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.85rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.actionBtn:hover {
+  opacity: 0.9;
+}
+
+.primaryBtn {
+  background-color: #a3e635; /* Lime green from ref */
+  color: #1a1a1a;
+}
+
+.secondaryBtn {
+  background-color: var(--color-surface-bg);
+  color: var(--color-text-primary);
+}
+
+.walletsSection {
+  margin-top: 1rem;
+}
+
+.walletsHeader {
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+
+.walletList {
+  display: flex;
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.walletList::-webkit-scrollbar {
+  display: none;
+}
+
+.walletItem {
+  min-width: 130px;
+  background-color: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.walletTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.walletCurrency {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.moreIcon {
+  color: var(--color-text-secondary);
+  cursor: pointer;
+}
+
+.walletBalance {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 0.25rem;
+}
+
+.walletLimit {
+  font-size: 0.7rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.walletStatus {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.statusActive {
+  color: #22c55e;
+}
+
+.statusInactive {
+  color: #ef4444;
+}
+
+/* Spending Limit */
+.spendingBarContainer {
+  height: 12px;
+  background-color: var(--color-surface-bg);
+  border-radius: 9999px;
+  margin: 1.5rem 0 1rem;
+  overflow: hidden;
+}
+
+.spendingBarFill {
+  height: 100%;
+  background-color: #255C49; /* Dark green */
+  border-radius: 9999px;
+}
+
+.spendingLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+/* My Cards */
+.addBtn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.cardsContainer {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  overflow: hidden;
+}
+
+.creditCard {
+  min-width: 280px;
+  height: 160px;
+  border-radius: 20px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.cardDark {
+  background: linear-gradient(135deg, #1a1a1a, #2d2d2d);
+}
+
+.cardGreen {
+  background: linear-gradient(135deg, #166534, #22c55e);
+}
+
+.cardTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cardStatus {
+  background-color: rgba(255, 255, 255, 0.2);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  backdrop-filter: blur(4px);
+}
+
+.mcLogo {
+  display: flex;
+}
+
+.mcRed, .mcYellow {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  mix-blend-mode: multiply;
+}
+
+.mcRed { background-color: #eb001b; }
+.mcYellow { background-color: #f79e1b; margin-left: -10px; }
+
+.cardBottomRow {
+  display: flex;
+  justify-content: space-between;
+}
+
+.cardData {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cardData span {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.cardData strong {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+/* RIGHT COLUMN */
+.metricsChartRow {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 1.5rem;
+}
+
+.metricsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.metricCard {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.metricActive {
+  background: linear-gradient(135deg, #4ade80, #166534);
+  color: white;
+}
+
+.metricActive .cardLabel,
+.metricActive .growthText {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.metricActive .badge {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.metricActive .metricIconBox {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: white;
+}
+
+.metricHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.metricIconBox {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: var(--color-surface-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-secondary);
+}
+
+.metricValue {
+  font-size: 2rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+}
+
+.metricGrowth {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badgeGreen {
+  background-color: #dcfce7;
+  color: #16a34a;
+}
+
+.badgeRed {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
+
+/* Chart */
+.chartLegend {
+  display: flex;
+  justify-content: space-between;
+  margin: 1.5rem 0;
+}
+
+.legendTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.legendItems {
+  display: flex;
+  gap: 1rem;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+.dotGreen, .dotBlack {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.dotGreen { background-color: #a3e635; }
+.dotBlack { background-color: #1a1a1a; }
+
+.chartArea {
+  display: flex;
+  gap: 1rem;
+  height: 200px;
+}
+
+.yAxis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  height: calc(100% - 20px);
+}
+
+.chartBars {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px dashed var(--color-border);
+  padding-bottom: 0.5rem;
+  height: calc(100% - 20px);
+}
+
+.barGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+}
+
+.barContainer {
+  width: 24px;
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.barProfit {
+  background-color: #a3e635;
+  width: 100%;
+  border-radius: 4px;
+  position: absolute;
+}
+
+.barLoss {
+  background-color: #1a1a1a;
+  width: 100%;
+  border-radius: 4px;
+  position: absolute;
+  bottom: 0;
+}
+
+.xAxisLabel {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  position: absolute;
+  bottom: -25px;
+}
+
+/* Activities Table */
+.activitiesCard {
+  flex: 1;
+}
+
+.tableActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: var(--color-primary-bg);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  color: var(--color-text-secondary);
+}
+
+.searchBox input {
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 0.9rem;
+}
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: transparent;
+  border: 1px solid var(--color-border);
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+.tableContainer {
+  margin-top: 1rem;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th, .table td {
+  padding: 1rem 0.5rem;
+  text-align: left;
+  border-bottom: 1px solid var(--color-primary-bg);
+}
+
+.table th {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.table td {
+  font-size: 0.9rem;
+}
+
+.cellMuted {
+  color: var(--color-text-secondary);
+}
+
+.cellBold {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.activityNameCell {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+}
+
+.activityIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+}
+
+.statusCell {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.moreBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+}

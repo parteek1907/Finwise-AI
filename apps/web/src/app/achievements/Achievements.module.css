@@ -1,0 +1,240 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  padding-top: 1rem;
+}
+
+.header {
+  margin-bottom: 2.5rem;
+}
+
+.titleWrap {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.iconBox {
+  width: 56px;
+  height: 56px;
+  background-color: var(--color-card-bg);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0 0 0.25rem 0;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+.subtitle {
+  color: var(--color-text-secondary);
+  font-size: 1.05rem;
+  margin: 0;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 350px;
+  gap: 2rem;
+  align-items: start;
+}
+
+/* Level Card */
+.levelCard {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 2.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  margin-bottom: 2rem;
+}
+
+.levelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+.levelText {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--color-text-primary);
+}
+
+.streakBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #fff7ed; /* orange light */
+  color: #ea580c;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-weight: 600;
+}
+
+.xpLabels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.progressBar {
+  height: 12px;
+  background-color: var(--color-surface-bg);
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: var(--color-accent-gold);
+  border-radius: 9999px;
+}
+
+.xpSub {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* Badges */
+.badgesSection h3 {
+  margin: 0 0 1.5rem 0;
+  font-size: 1.25rem;
+}
+
+.badgesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1.5rem;
+}
+
+.badgeCard {
+  background-color: var(--color-card-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  border: 1px solid transparent;
+}
+
+.lockedCard {
+  opacity: 0.6;
+  border: 1px dashed var(--color-border);
+  box-shadow: none;
+}
+
+.badgeIconBox {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.badgeCard h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.badgeCard p {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+/* Leaderboard */
+.leaderboardCard {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.leaderboardCard h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+}
+
+.leaderboardSub {
+  margin: 0 0 2rem 0;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.playerRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+}
+
+.currentUser {
+  background-color: var(--color-surface-bg);
+  border: 1px solid var(--color-border);
+}
+
+.rank {
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  width: 20px;
+}
+
+.avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.playerName {
+  flex: 1;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.playerXp {
+  font-weight: 600;
+  color: var(--color-accent-green);
+  font-size: 0.9rem;
+}

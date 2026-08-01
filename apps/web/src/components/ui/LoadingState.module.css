@@ -1,0 +1,70 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  min-height: 200px;
+}
+
+.loader {
+  width: 200px;
+  height: 2px;
+  background-color: var(--color-border);
+  margin-bottom: 2rem;
+  overflow: hidden;
+  border-radius: 2px;
+  position: relative;
+}
+
+.loaderBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background-color: var(--color-accent-green);
+  border-radius: 2px;
+  animation: load 1.5s infinite ease-in-out;
+}
+
+@keyframes load {
+  0% {
+    left: -30%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  margin-bottom: 1rem;
+}
+
+.factContainer {
+  height: 60px; /* Fixed height to prevent layout shift */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.fact {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  max-width: 400px;
+  animation: fadeInOut 4s infinite;
+}
+
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(5px); }
+  10% { opacity: 1; transform: translateY(0); }
+  90% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-5px); }
+}

@@ -1,0 +1,20 @@
+.appContainer {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  min-height: 100vh;
+  background-color: #f1f3f6; /* Very light grey matching the reference */
+}
+
+.mainWrapper {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  position: relative;
+}
+
+.mainWorkspace {
+  padding: 0 2.5rem 2.5rem;
+  overflow-y: auto;
+  flex: 1;
+}

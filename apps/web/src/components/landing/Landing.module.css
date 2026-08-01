@@ -1,0 +1,393 @@
+.pageWrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.section {
+  padding: 8rem 0;
+  position: relative;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* ================= HERO SECTION ================= */
+.heroSection {
+  padding-top: 2rem;
+  padding-bottom: 12rem;
+  overflow: hidden;
+}
+
+.nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6rem;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: var(--font-heading);
+  font-weight: 700;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+}
+
+.logoIcon {
+  width: 24px;
+  height: 24px;
+  background-color: var(--color-text-primary);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+.navLinks {
+  display: flex;
+  gap: 2.5rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.navLinks a:hover {
+  color: var(--color-text-primary);
+}
+
+.navActions {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.heroContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.heroLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.heroTitle {
+  font-size: 4rem;
+  line-height: 1.1;
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.03em;
+}
+
+.heroSubtitle {
+  font-size: 1.25rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin-bottom: 2.5rem;
+  max-width: 480px;
+}
+
+.heroActions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.trustIndicators {
+  display: flex;
+  gap: 2rem;
+}
+
+.trustItem {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* Hero Right (Mockup) */
+.heroRight {
+  position: relative;
+  height: 600px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mockupContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.mockupCard {
+  position: absolute;
+  top: 10%;
+  left: 10%;
+  width: 350px;
+  background-color: var(--color-card-bg); /* Dark card in dark mode */
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  padding: 1.5rem;
+  z-index: 10;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+  background-color: rgba(28, 38, 33, 0.8); /* Specifically tailored for dark hero */
+}
+
+.mockupHeader {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.mockupDots {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.mockupDots span {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-text-secondary);
+  opacity: 0.5;
+}
+
+.mockupTitle {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.mockupStatRow {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.mockupStat {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.mockupLabel {
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+}
+
+.mockupValue {
+  font-family: var(--font-mono);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.mockupChart {
+  height: 100px;
+  border-top: 1px dashed var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.mockupTrend {
+  color: var(--color-accent-gold);
+  opacity: 0.8;
+}
+
+.hero3D {
+  position: absolute;
+  right: -5%;
+  bottom: 0;
+  width: 400px;
+  height: 400px;
+  z-index: 5;
+}
+
+.heroBottomCurve {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100px;
+  background-color: var(--color-primary-bg); /* This will be the light color */
+  border-radius: 100% 100% 0 0 / 100% 100% 0 0;
+  transform: translateY(50%);
+  z-index: 20;
+}
+
+/* ================= GENERIC SECTIONS ================= */
+.lightSection {
+  background-color: var(--color-primary-bg);
+}
+
+.sectionHeader {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 600px;
+  margin-bottom: 4rem;
+}
+
+.sectionHeader h2 {
+  font-size: 3rem;
+  margin: 1.5rem 0 1rem;
+}
+
+.sectionLead {
+  font-size: 1.15rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.centeredSection {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.centeredSection .sectionLead {
+  margin: 1.5rem auto 3rem;
+  max-width: 500px;
+}
+
+.grid3 {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+}
+
+.featureCard {
+  background-color: var(--color-surface-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  padding: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.featureIcon {
+  color: var(--color-accent-green);
+  margin-bottom: 1.5rem;
+}
+
+.featureCard h3 {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.featureCard p {
+  color: var(--color-text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.splitLayout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4rem;
+  align-items: center;
+}
+
+.splitContent h2 {
+  font-size: 3.5rem;
+  margin: 1.5rem 0;
+}
+
+.benefitList {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.benefitList li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 1.05rem;
+  color: var(--color-text-primary);
+}
+
+.benefitList li svg {
+  color: var(--color-accent-gold);
+}
+
+.splitVisual {
+  width: 100%;
+  height: 500px;
+  background-color: var(--color-surface-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visualPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.ctaActions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+}
+
+/* ================= FOOTER ================= */
+.footer {
+  background-color: var(--color-surface-bg);
+  border-top: 1px solid var(--color-border);
+  padding: 4rem 0 2rem;
+}
+
+.footerTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4rem;
+}
+
+.footerLinks {
+  display: flex;
+  gap: 2rem;
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+}
+
+.footerLinks a:hover {
+  color: var(--color-text-primary);
+}
+
+.footerBottom {
+  border-top: 1px solid var(--color-border);
+  padding-top: 2rem;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+}

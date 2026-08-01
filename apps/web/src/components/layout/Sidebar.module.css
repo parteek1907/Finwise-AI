@@ -1,0 +1,127 @@
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: transparent;
+  height: 100vh;
+  width: 80px;
+  padding: 1.5rem 0 2rem;
+  position: sticky;
+  top: 0;
+}
+
+.logoContainer {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  background-color: var(--color-accent-green);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoIcon::after {
+  content: '';
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  clip-path: polygon(100% 0, 0 100%, 100% 100%);
+}
+
+.themeToggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background-color: var(--color-card-bg);
+  padding: 0.5rem;
+  border-radius: 9999px;
+  margin-bottom: 3rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+}
+
+.themeToggle button {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-secondary);
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.themeToggle button:hover {
+  color: var(--color-text-primary);
+}
+
+.themeToggle button.active {
+  background-color: var(--color-primary-bg);
+  color: var(--color-text-primary);
+}
+
+.navigation {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: center;
+  margin-top: 3rem;
+}
+
+.navItem {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  color: var(--color-text-secondary);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.navItem:hover {
+  color: var(--color-text-primary);
+}
+
+.navItem.active {
+  color: white;
+}
+
+.activeBackground {
+  position: absolute;
+  inset: 0;
+  background-color: #1a1a1a;
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 0;
+}
+
+.iconWrapper {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bottomSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  align-items: center;
+}

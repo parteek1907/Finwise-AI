@@ -1,0 +1,355 @@
+.workspace {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 100px); /* Fill remaining height */
+  overflow: hidden;
+}
+
+.mentorLayout {
+  display: grid;
+  grid-template-columns: 260px 1fr 300px;
+  gap: 1.5rem;
+  height: 100%;
+}
+
+/* Left Sidebar: History */
+.historySidebar {
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  overflow-y: auto;
+}
+
+.newChatBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  width: 100%;
+  background-color: var(--color-text-primary);
+  color: white;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  margin-bottom: 2rem;
+  transition: transform 0.2s;
+}
+
+.newChatBtn:hover {
+  transform: translateY(-2px);
+}
+
+.historyList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.historyLabel {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--color-text-secondary);
+  margin-bottom: 0.5rem;
+  padding-left: 0.5rem;
+}
+
+.historyItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: transparent;
+  border: none;
+  padding: 0.75rem 0.5rem;
+  border-radius: 8px;
+  color: var(--color-text-primary);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.2s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.historyItem:hover {
+  background-color: var(--color-surface-bg);
+}
+
+.historyItem svg {
+  color: var(--color-text-secondary);
+  flex-shrink: 0;
+}
+
+/* Center: Chat Area */
+.chatArea {
+  display: flex;
+  flex-direction: column;
+  background-color: var(--color-card-bg);
+  border-radius: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  overflow: hidden;
+  position: relative;
+}
+
+.messagesContainer {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.messageWrapper {
+  display: flex;
+  gap: 1rem;
+  max-width: 85%;
+}
+
+.wrapperUser {
+  align-self: flex-end;
+  justify-content: flex-end;
+}
+
+.wrapperAi {
+  align-self: flex-start;
+}
+
+.aiAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background-color: var(--color-accent-gold);
+  color: #1a1a1a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.userAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.userAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.messageBubble {
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.bubbleUser {
+  background-color: #1a1a1a;
+  color: white;
+  border-bottom-right-radius: 4px;
+}
+
+.bubbleAi {
+  background-color: var(--color-primary-bg);
+  color: var(--color-text-primary);
+  border-bottom-left-radius: 4px;
+  border: 1px solid var(--color-border);
+}
+
+.actionCard {
+  margin-top: 1rem;
+  background-color: white;
+  border-radius: 12px;
+  padding: 1rem;
+  border: 1px solid var(--color-border);
+}
+
+.actionCard strong {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--color-accent-green);
+  margin-bottom: 0.25rem;
+}
+
+.actionCard p {
+  font-size: 0.95rem;
+  margin: 0 0 1rem 0;
+}
+
+.actionCard button {
+  background-color: var(--color-text-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.inputArea {
+  padding: 1.5rem 2rem;
+  background-color: var(--color-card-bg);
+  border-top: 1px solid var(--color-border);
+}
+
+.inputWrapper {
+  display: flex;
+  align-items: flex-end;
+  background-color: var(--color-primary-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 16px;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  transition: border-color 0.2s;
+}
+
+.inputWrapper:focus-within {
+  border-color: var(--color-accent-gold);
+}
+
+.inputWrapper textarea {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  padding: 0.5rem 0;
+  font-family: inherit;
+  font-size: 1rem;
+  resize: none;
+  max-height: 150px;
+  color: var(--color-text-primary);
+}
+
+.sendBtn {
+  background-color: var(--color-accent-green);
+  color: #1a1a1a;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.sendBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background-color: var(--color-border);
+}
+
+.disclaimer {
+  text-align: center;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  margin: 0.75rem 0 0 0;
+}
+
+/* Typing Indicator */
+.typingIndicator {
+  display: flex;
+  gap: 4px;
+  padding: 0.5rem 0;
+}
+
+.typingIndicator span {
+  width: 6px;
+  height: 6px;
+  background-color: var(--color-text-secondary);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typingIndicator span:nth-child(1) { animation-delay: -0.32s; }
+.typingIndicator span:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0); }
+  40% { transform: scale(1); }
+}
+
+/* Right Sidebar: Suggestions */
+.suggestionsSidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.infoCard {
+  background-color: #fefce8; /* Light gold/yellow */
+  border: 1px solid #fef08a;
+  border-radius: 20px;
+  padding: 1.5rem;
+}
+
+.infoHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #ca8a04;
+  margin-bottom: 0.5rem;
+}
+
+.infoHeader h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.infoCard p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #854d0e;
+  line-height: 1.5;
+}
+
+.promptsSection {
+  background-color: var(--color-card-bg);
+  border-radius: 20px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+}
+
+.promptsSection h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: var(--color-text-primary);
+}
+
+.promptsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.promptBtn {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  text-align: left;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s;
+}
+
+.promptBtn:hover {
+  border-color: var(--color-accent-gold);
+  color: var(--color-text-primary);
+  background-color: var(--color-primary-bg);
+}
