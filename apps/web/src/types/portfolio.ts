@@ -7,17 +7,24 @@ export interface PortfolioHoldingBase {
   name: string;
   shares: number;
   averagePrice: number;
+  
+  // Emotion AI Metadata from original buy
+  emotion?: string;
+  biases?: string[];
+  readinessScore?: number;
+  reflection?: {
+    whyBuying: string;
+    biggestConcern: string;
+    sellCriteria: string;
+  };
+  intendedHorizon?: string;
 }
 
 /**
  * Full holding with live-computed fields from Yahoo Finance.
  * Used by UI components — never persisted.
  */
-export interface PortfolioHolding {
-  symbol: string;
-  name: string;
-  shares: number;
-  averagePrice: number;
+export interface PortfolioHolding extends PortfolioHoldingBase {
   currentPrice: number;
   totalValue: number;
   totalReturn: number;

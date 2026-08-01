@@ -49,10 +49,11 @@ export interface Lesson {
 
 export interface MentorMessage {
   id: string;
-  sender: 'ai' | 'user';
+  sender: 'ai' | 'user' | 'system';
   text: string;
   timestamp: string;
   actionRequired?: boolean;
+  isHiddenContext?: boolean;
 }
 
 export interface ChatSession {

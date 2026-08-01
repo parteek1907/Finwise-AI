@@ -4,8 +4,9 @@ import { Trade } from '../../types/trade';
 import { formatCurrency, formatPercentage } from '../../utils/formatters';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import NumberFlow from '@/components/ui/ClientNumberFlow';
-import { EmptyState } from '../common/EmptyState';
+import { EmptyState } from '../ui/EmptyState';
 import { SellModal } from './SellModal';
+import { WeeklyEmotionReport } from './WeeklyEmotionReport';
 import styles from './Portfolio.module.css';
 
 interface PortfolioTableProps {
@@ -25,6 +26,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
 }) => {
   const [sellingHolding, setSellingHolding] = useState<PortfolioHolding | null>(null);
   const [tradeFilter, setTradeFilter] = useState<'ALL' | 'BUY' | 'SELL'>('ALL');
+  const [expandedRow, setExpandedRow] = useState<number | null>(null);
   
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
 
@@ -86,9 +88,8 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
           {holdings.length === 0 ? (
             <div className={styles.emptyContainer}>
               <EmptyState 
-                type="portfolio"
                 title="No holdings yet"
-                description="Search for a stock and make your first simulated trade."
+                message="Search for a stock and make your first simulated trade."
               />
             </div>
           ) : (
@@ -108,7 +109,11 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                 </thead>
                 <tbody>
                   {holdings.map((pos, i) => (
-                    <tr key={i}>
+                    <React.Fragment key={i}>
+                      <tr 
+                        style={{ cursor: 'pointer' }}
+                        onClick={() => setExpandedRow(expandedRow === i ? null : i)}
+                      >
                       <td>
                         <strong>{pos.symbol}</strong>
                         <span className={styles.assetName}>{pos.name}</span>
@@ -159,7 +164,40 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                           Sell
                         </button>
                       </td>
-                    </tr>
+                      </tr>
+                      
+                      {/* Expanded Row for Emotional Metadata */}
+                      {expandedRow === i && pos.reflection && (
+                        <tr className={styles.expandedRow}>
+                          <td colSpan={8}>
+                            <div className={styles.emotionMetadata}>
+                              <div className={styles.emotionHeader}>
+                                <span><strong>Emotion:</strong> {pos.emotion || 'N/A'}</span>
+                                <span><strong>Score:</strong> {pos.readinessScore || 'N/A'}</span>
+                                <span><strong>Horizon:</strong> {pos.intendedHorizon || 'N/A'}</span>
+                                <span className={pos.biases?.length ? styles.negativeText : styles.positiveText}>
+                                  <strong>Bias:</strong> {pos.biases?.join(', ') || 'None'}
+                                </span>
+                              </div>
+                              <div className={styles.reflectionGrid}>
+                                <div>
+                                  <h5>Why Buying?</h5>
+                                  <p>{pos.reflection.whyBuying}</p>
+                                </div>
+                                <div>
+                                  <h5>Biggest Concern</h5>
+                                  <p>{pos.reflection.biggestConcern}</p>
+                                </div>
+                                <div>
+                                  <h5>Sell Criteria</h5>
+                                  <p>{pos.reflection.sellCriteria}</p>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -181,9 +219,8 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
           {trades.length === 0 ? (
             <div className={styles.emptyContainer}>
               <EmptyState 
-                type="trades"
                 title="No trades yet"
-                description="Your trade history will appear here once you execute an order."
+                message="Your trade history will appear here once you execute an order."
               />
             </div>
           ) : (
@@ -232,6 +269,10 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
             </div>
           )}
         </>
+      )}
+
+      {activeTab === 'Analytics' && (
+        <WeeklyEmotionReport trades={trades} />
       )}
     </div>
   );

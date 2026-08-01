@@ -5,6 +5,9 @@ import { useTradeExecution } from '../../hooks/usePortfolio';
 import { formatCurrency } from '../../utils/formatters';
 import styles from './Trade.module.css';
 
+import { EmotionCheckModal } from './EmotionCheckModal';
+import { useRouter } from 'next/navigation';
+
 interface TradePanelProps {
   quote: Quote | null;
   buyingPower: number;
@@ -13,9 +16,10 @@ interface TradePanelProps {
 export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) => {
   const [side, setSide] = useState<'BUY' | 'SELL'>('BUY');
   const [quantity, setQuantity] = useState<number>(1);
-  const [reflection, setReflection] = useState('');
+  const [showEmotionCheck, setShowEmotionCheck] = useState(false);
   const [success, setSuccess] = useState(false);
-  const [showMentor, setShowMentor] = useState(false);
+  const [lastTradeData, setLastTradeData] = useState<any>(null);
+  const router = useRouter();
   
   const { submitOrder, isSubmitting, error } = useTradeExecution();
 
@@ -23,8 +27,13 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
 
   const total = quantity * quote.price;
 
-  const handleSubmit = async () => {
+  const handleInitiateSubmit = () => {
     if (quantity <= 0) return;
+    setShowEmotionCheck(true);
+  };
+
+  const handleFinalSubmit = async (emotionData: any) => {
+    setShowEmotionCheck(false);
     
     try {
       await submitOrder({
@@ -34,16 +43,26 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
         type: 'MARKET',
         quantity,
         status: 'PENDING',
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        ...emotionData
       }, quote.price, quote.name);
       
+      setLastTradeData(emotionData);
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      setTimeout(() => {
+        setSuccess(false);
+        setLastTradeData(null);
+      }, 7000);
       setQuantity(1);
-      setReflection('');
     } catch (err) {
       // Error is handled by hook and displayed below
     }
+  };
+
+  const handleDiscussWithAI = (contextMsg: string) => {
+    // Navigate to mentor page with context in sessionStorage (or URL)
+    sessionStorage.setItem('mentor_hidden_context', contextMsg);
+    router.push('/mentor?action=discuss_trade');
   };
 
   return (
@@ -93,68 +112,60 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
         <strong>{formatCurrency(buyingPower)}</strong>
       </div>
 
-      <div className={styles.reflectionCheck}>
-        <div className={styles.reflectionHeader}>
-          <BookOpen size={16} />
-          <h4>Trade Reflection Required</h4>
-        </div>
-        <textarea 
-          placeholder="Why are you making this trade? What is your thesis?" 
-          rows={2}
-          value={reflection}
-          onChange={(e) => setReflection(e.target.value)}
-        />
-      </div>
-
       {error && <div className={styles.errorMessage}>{error}</div>}
 
       <div className={styles.actionButtons}>
-        <button 
-          className={styles.mentorBtn}
-          onClick={() => setShowMentor(true)}
-        >
-          <Lightbulb size={16} />
-          AI Mentor
-        </button>
-
-        <button 
-          className={success ? styles.successBtn : styles.submitOrderBtn}
-          onClick={handleSubmit}
-          disabled={isSubmitting || quantity <= 0 || success}
-        >
-          {isSubmitting ? (
-            <><Loader2 size={16} className={styles.spinner} /> Processing...</>
-          ) : success ? (
-            <><CheckCircle size={16} /> Order Filled</>
-          ) : (
-            `Submit ${side} Order`
-          )}
-        </button>
+        {!success ? (
+          <button 
+            className={styles.submitOrderBtn}
+            onClick={handleInitiateSubmit}
+            disabled={isSubmitting || quantity <= 0}
+          >
+            {isSubmitting ? (
+              <><Loader2 size={16} className={styles.spinner} /> Processing...</>
+            ) : (
+              `Submit ${side} Order`
+            )}
+          </button>
+        ) : (
+          <div className={styles.tradeSuccessSummary}>
+            <div className={styles.successHeader}>
+              <CheckCircle size={24} className={styles.successIcon} />
+              <h4>Trade Complete</h4>
+            </div>
+            
+            {lastTradeData && (
+              <div className={styles.summaryGrid}>
+                <div className={styles.summaryItem}>
+                  <span>Emotion State</span>
+                  <strong>{lastTradeData.emotion}</strong>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span>Possible Bias</span>
+                  <strong className={lastTradeData.biases?.length ? styles.warnText : styles.safeText}>
+                    {lastTradeData.biases?.length > 0 ? lastTradeData.biases[0] : 'None'}
+                  </strong>
+                </div>
+              </div>
+            )}
+            
+            <p className={styles.reviewNote}>
+              Reflection saved successfully. We'll remind you to review this decision in 7 days.
+            </p>
+          </div>
+        )}
       </div>
 
-      {showMentor && (
-        <div className={styles.mentorOverlay}>
-          <div className={styles.mentorModal}>
-            <div className={styles.mentorHeader}>
-              <div className={styles.mentorTitle}>
-                <Lightbulb size={20} className={styles.mentorIcon} />
-                <h3>FinWise AI Mentor</h3>
-              </div>
-              <button onClick={() => setShowMentor(false)} className={styles.closeBtn}>×</button>
-            </div>
-            <div className={styles.mentorContent}>
-              <p>Based on your current action (<strong>{side} {quantity} shares of {quote.symbol}</strong>):</p>
-              <ul>
-                <li>Is this aligned with your long-term goals?</li>
-                <li>Consider the volatility of {quote.symbol} before sizing your position.</li>
-                <li>Avoid trading based on FOMO (Fear Of Missing Out).</li>
-              </ul>
-              <div className={styles.mentorTip}>
-                <strong>Pro Tip:</strong> Ensure you are properly diversified across different sectors to mitigate risk.
-              </div>
-            </div>
-          </div>
-        </div>
+      {showEmotionCheck && (
+        <EmotionCheckModal 
+          quote={quote}
+          side={side}
+          quantity={quantity}
+          totalValue={total}
+          onClose={() => setShowEmotionCheck(false)}
+          onSubmit={handleFinalSubmit}
+          onDiscussWithAI={handleDiscussWithAI}
+        />
       )}
     </div>
   );

@@ -16,13 +16,28 @@ interface SellModalProps {
 export const SellModal: React.FC<SellModalProps> = ({ holding, onClose, onSuccess }) => {
   const [quantity, setQuantity] = useState<number>(holding.shares);
   const [success, setSuccess] = useState(false);
+  const [showWarning, setShowWarning] = useState(false);
+  const [warningAcknowledged, setWarningAcknowledged] = useState(false);
   const { submitOrder, isSubmitting, error } = useTradeExecution();
   
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
 
 
-  const handleSell = async () => {
+  const handleInitiateSell = () => {
     if (quantity <= 0 || quantity > holding.shares) return;
+    
+    // Check if selling early
+    if (!warningAcknowledged && holding.intendedHorizon && ['Years', 'Months'].includes(holding.intendedHorizon)) {
+      // In a real app we'd compare holding.createdAt with Date.now()
+      // For now, if they said Years/Months and are selling, we warn them.
+      setShowWarning(true);
+      return;
+    }
+    
+    executeSell();
+  };
+
+  const executeSell = async () => {
     try {
       await submitOrder({
         id: `ord_${Date.now()}`,
@@ -60,6 +75,41 @@ export const SellModal: React.FC<SellModalProps> = ({ holding, onClose, onSucces
             <CheckCircle size={48} color="#16a34a" />
             <h4>Order Filled Successfully</h4>
             <p>Sold {quantity} shares of {holding.symbol}</p>
+          </div>
+        ) : showWarning ? (
+          <div className={styles.warningState}>
+            <AlertTriangle size={48} color="#f59e0b" className={styles.warnIconLarge} />
+            <h4>Early Sell Warning</h4>
+            <p>You originally planned to hold this investment for <strong>{holding.intendedHorizon}</strong>.</p>
+            <p>Are you sure you want to sell early?</p>
+            
+            {holding.reflection && (
+              <div className={styles.thesisReview}>
+                <h5>Your Original Thesis:</h5>
+                <p>"{holding.reflection.whyBuying}"</p>
+                <h5>Your Sell Criteria:</h5>
+                <p>"{holding.reflection.sellCriteria}"</p>
+              </div>
+            )}
+            
+            <div className={styles.warningActions}>
+              <button 
+                className={styles.cancelBtn} 
+                onClick={() => { setShowWarning(false); onClose(); }}
+              >
+                Keep Holding
+              </button>
+              <button 
+                className={styles.continueBtn} 
+                onClick={() => {
+                  setWarningAcknowledged(true);
+                  setShowWarning(false);
+                  executeSell();
+                }}
+              >
+                Continue Selling
+              </button>
+            </div>
           </div>
         ) : (
           <div className={styles.content}>
@@ -129,11 +179,11 @@ export const SellModal: React.FC<SellModalProps> = ({ holding, onClose, onSucces
             {error && <div className={styles.error}><AlertTriangle size={16} /> {error}</div>}
 
             <button 
-              className={styles.sellBtn}
-              onClick={handleSell}
+              className={styles.confirmBtn}
+              onClick={handleInitiateSell}
               disabled={isSubmitting || quantity <= 0}
             >
-              {isSubmitting ? <Loader2 className={styles.spinner} size={18} /> : `Confirm Sell`}
+              {isSubmitting ? <><Loader2 size={16} className={styles.spinner} /> Processing...</> : 'Confirm Sale'}
             </button>
           </div>
         )}

@@ -48,9 +48,14 @@ export default function MentorPage() {
 
   useEffect(() => {
     const draft = sessionStorage.getItem('mentorDraft');
+    const hiddenContext = sessionStorage.getItem('mentor_hidden_context');
     if (draft) {
       setInputValue(draft);
       sessionStorage.removeItem('mentorDraft');
+    }
+    if (hiddenContext) {
+      handleSendHiddenContext(hiddenContext);
+      sessionStorage.removeItem('mentor_hidden_context');
     }
   }, []);
 
@@ -136,7 +141,7 @@ export default function MentorPage() {
       
       // Prepare messages payload for backend
       const apiMessages = aiSettings.rememberChatHistory ? history.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : 'assistant',
+        role: msg.sender === 'user' || msg.sender === 'system' ? (msg.isHiddenContext ? 'system' : 'user') : 'assistant',
         content: msg.text
       })) : [];
       
@@ -192,6 +197,46 @@ export default function MentorPage() {
     }
   };
 
+  const handleSendHiddenContext = async (hiddenText: string) => {
+    let currentChatId = activeChatId;
+    if (!currentChatId || !activeChat) {
+      currentChatId = createNewChat("Trade Discussion");
+    }
+
+    addMessage(currentChatId, { sender: 'system', text: hiddenText, isHiddenContext: true });
+    setIsTyping(true);
+
+    try {
+      const aiSettings = useSettingsStore.getState().aiMentor;
+      // Get history up to this point
+      const currentHistory = useAppStore.getState().chats.find(c => c.id === currentChatId)?.messages || [];
+      
+      const apiMessages = currentHistory.map(msg => ({
+        role: msg.sender === 'user' ? 'user' : (msg.isHiddenContext ? 'system' : 'assistant'),
+        content: msg.text
+      }));
+
+      const apiUrl = '/api';
+      const response = await fetch(`${apiUrl}/mentor`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: apiMessages, goals, aiSettings, userName: user.name }),
+      });
+
+      if (!response.ok) throw new Error('API failed');
+
+      const data = await response.json();
+      setIsTyping(false);
+      
+      const aiResponseText = data.content || "I'm having trouble thinking right now.";
+      addMessage(currentChatId, { sender: 'ai', text: aiResponseText });
+    } catch (error) {
+      console.error("Error fetching AI response:", error);
+      setIsTyping(false);
+      addMessage(currentChatId, { sender: 'ai', text: "I'm here to discuss your trade. What specifically would you like to explore?" });
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -203,7 +248,8 @@ export default function MentorPage() {
     return user.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=303A3C&color=fff`;
   };
 
-  const isEmptyState = history.length === 0;
+  const visibleHistory = history.filter(msg => !msg.isHiddenContext);
+  const isEmptyState = visibleHistory.length === 0;
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -265,7 +311,7 @@ export default function MentorPage() {
             ) : (
               <div className={styles.messagesContainer}>
                 <AnimatePresence initial={false}>
-                  {history.map((msg, index) => (
+                  {visibleHistory.map((msg, index) => (
                     <motion.div 
                       key={msg.id}
                       initial={{ opacity: 0, y: 10 }}

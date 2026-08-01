@@ -11,6 +11,17 @@ export interface Order {
   price?: number; // Target price for limit/stop orders
   status: OrderStatus;
   createdAt: string;
+  
+  // Emotion AI Metadata
+  emotion?: string;
+  biases?: string[];
+  readinessScore?: number;
+  reflection?: {
+    whyBuying: string;
+    biggestConcern: string;
+    sellCriteria: string;
+  };
+  intendedHorizon?: string;
 }
 
 export interface Trade {
@@ -22,4 +33,15 @@ export interface Trade {
   executionPrice: number;
   totalValue: number;
   executedAt: string;
+  
+  // Emotion AI Metadata
+  emotion?: string;
+  biases?: string[];
+  readinessScore?: number;
+  reflection?: {
+    whyBuying: string;
+    biggestConcern: string;
+    sellCriteria: string;
+  };
+  intendedHorizon?: string;
 }

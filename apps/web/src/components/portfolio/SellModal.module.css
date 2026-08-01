@@ -239,6 +239,94 @@
   to { transform: rotate(360deg); }
 }
 
+.warningState {
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.warningState h4 {
+  margin: 0;
+  font-size: 1.25rem;
+  color: #0f172a;
+}
+
+.warningState p {
+  margin: 0;
+  color: #475569;
+  font-size: 0.95rem;
+}
+
+.warnIconLarge {
+  margin-bottom: 0.5rem;
+}
+
+.thesisReview {
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 8px;
+  padding: 1.25rem;
+  text-align: left;
+  width: 100%;
+  margin-top: 1rem;
+}
+
+.thesisReview h5 {
+  margin: 0 0 0.25rem 0;
+  color: #92400e;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+}
+
+.thesisReview p {
+  margin: 0 0 1rem 0;
+  color: #b45309;
+  font-style: italic;
+}
+
+.thesisReview p:last-child {
+  margin-bottom: 0;
+}
+
+.warningActions {
+  display: flex;
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1.5rem;
+}
+
+.cancelBtn, .continueBtn {
+  flex: 1;
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cancelBtn {
+  background: white;
+  border: 1px solid #c8a56e;
+  color: #c8a56e;
+}
+
+.cancelBtn:hover {
+  background: #fefcf8;
+}
+
+.continueBtn {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #ef4444;
+}
+
+.continueBtn:hover {
+  background: #fee2e2;
+}
+
 .error {
   display: flex;
   align-items: center;
