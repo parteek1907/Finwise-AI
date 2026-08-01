@@ -1,4 +1,5 @@
 import { useAppStore } from '../store/useAppStore';
+import { getLocalISODate } from '../utils/formatters';
 
 // Level Data
 export const LEVEL_THRESHOLDS = [
@@ -99,7 +100,7 @@ export function triggerProgression(actionType: ActionType, category: 'learning' 
   }
 
   // Update Activity Graph
-  const today = new Date().toISOString().split('T')[0];
+  const today = getLocalISODate();
   const graph = { ...progression.activityGraph };
   if (!graph[today]) {
     graph[today] = { xp: 0, types: [] };
@@ -120,7 +121,7 @@ export function triggerProgression(actionType: ActionType, category: 'learning' 
     const lastDate = targetStreak.lastDate;
     const yesterday = new Date();
     yesterday.setDate(yesterday.getDate() - 1);
-    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    const yesterdayStr = getLocalISODate(yesterday);
 
     if (lastDate === yesterdayStr) {
       targetStreak.current += 1;

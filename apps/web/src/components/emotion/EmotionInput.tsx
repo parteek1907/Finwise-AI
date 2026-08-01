@@ -22,7 +22,16 @@ const PROMPT_POOLS = [
   { category: 'Endowment Effect', text: 'I inherited these stocks from my grandfather, I could never sell them even if they underperform.', tag: 'Endowment' },
   { category: 'Recency Bias', text: 'The market has been green for 5 days straight, it will definitely keep going up.', tag: 'Recency Bias' },
   { category: 'Bandwagon Effect', text: 'All the influencers on YouTube are saying this is the next big crypto. I should go all in.', tag: 'Bandwagon' },
-  { category: 'Sunk Cost Fallacy', text: 'I already invested $5,000 in this failing company, I need to keep investing to average down.', tag: 'Sunk Cost' }
+  { category: 'Sunk Cost Fallacy', text: 'I already invested $5,000 in this failing company, I need to keep investing to average down.', tag: 'Sunk Cost' },
+  { category: 'Optimism Bias', text: 'I know most day traders lose money, but I have a special system that cannot fail.', tag: 'Optimism' },
+  { category: 'Pessimism Bias', text: 'The economy is going to collapse tomorrow, I should liquidate my entire portfolio.', tag: 'Pessimism' },
+  { category: 'Status Quo Bias', text: 'My bank gives me 0.1% interest, but moving my money to a high-yield account is too much effort.', tag: 'Status Quo' },
+  { category: 'Hindsight Bias', text: 'I knew that stock would crash! I should have shorted it when I had the chance.', tag: 'Hindsight' },
+  { category: 'Familiarity Bias', text: 'I only invest in companies from my hometown because I know them best.', tag: 'Familiarity' },
+  { category: 'Self-Serving Bias', text: 'My gains are due to my genius strategy, but my losses are just because the market is manipulated.', tag: 'Ego' },
+  { category: 'Action Bias', text: 'The market is volatile today, I need to actively buy and sell right now to do something.', tag: 'Action' },
+  { category: 'Availability Heuristic', text: 'I saw a news story about a lottery winner, so I should probably buy options instead of indexing.', tag: 'Availability' },
+  { category: 'Mental Accounting', text: 'This is my "fun money" account, so it does not matter if I gamble it away on high-risk plays.', tag: 'Mental Accounting' }
 ];
 
 export const EmotionInput: React.FC<EmotionInputProps> = ({ onAnalyze, loading }) => {

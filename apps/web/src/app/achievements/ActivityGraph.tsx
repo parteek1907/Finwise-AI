@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { formatDate } from '@/utils/formatters';
+import { formatDate, getLocalISODate } from '@/utils/formatters';
 import styles from './Progression.module.css';
 
 const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -29,7 +29,7 @@ export const ActivityGraph: React.FC<ActivityGraphProps> = ({ activityData }) =>
     let weekIndex = 0;
     
     while (currentDay <= today) {
-      const dateStr = currentDay.toISOString().split('T')[0];
+      const dateStr = getLocalISODate(currentDay);
       const data = activityData[dateStr] || { xp: 0, types: [] };
       
       let intensity = 0;
@@ -93,6 +93,13 @@ export const ActivityGraph: React.FC<ActivityGraphProps> = ({ activityData }) =>
   };
 
   const [tooltip, setTooltip] = React.useState<{ visible: boolean; x: number; y: number; content: string }>({ visible: false, x: 0, y: 0, content: '' });
+  const scrollRef = React.useRef<HTMLDivElement>(null);
+
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollLeft = scrollRef.current.scrollWidth;
+    }
+  }, [weeks]);
 
   return (
     <div className={styles.graphCard} style={{ position: 'relative' }}>
@@ -108,7 +115,7 @@ export const ActivityGraph: React.FC<ActivityGraphProps> = ({ activityData }) =>
           <span>Fri</span>
         </div>
         
-        <div className={styles.graphScrollArea}>
+        <div className={styles.graphScrollArea} ref={scrollRef}>
           <div className={styles.graphLabelsX}>
             {monthLabels.map((m, i) => (
               <span key={i} style={{ left: `${m.weekIndex * (14 + 3)}px` }}>

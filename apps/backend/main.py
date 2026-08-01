@@ -67,6 +67,14 @@ class SocialAuthRequest(BaseModel):
 class LessonCompletionRequest(BaseModel):
     xp_earned: int
 
+class ScamDetectRequest(BaseModel):
+    text: Optional[str] = None
+    image_base64: Optional[str] = None
+
+import json as json_module
+
+
+
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "message": "Finwise AI Backend is running"}
@@ -92,7 +100,7 @@ def register_user(request: AuthRegisterRequest):
 
 @app.post("/api/auth/login")
 def login_user(request: AuthLoginRequest):
-    api_key = "AIzaSyAsb_Q0OIJK5_sqf3Hkbe3n26Mq41hFAig"
+    api_key = os.getenv("FIREBASE_WEB_API_KEY")
     if not api_key:
         raise HTTPException(status_code=500, detail="FIREBASE_WEB_API_KEY not configured on backend")
     
@@ -293,6 +301,7 @@ class RedFlag(BaseModel):
     description: str
 
 class ScamResult(BaseModel):
+    reasoning: str
     isScam: bool
     probability: int
     redFlags: List[RedFlag]
@@ -304,50 +313,39 @@ def scam_detect_endpoint(request: ScamDetectRequest):
         raise HTTPException(status_code=400, detail="Must provide text or image")
 
     system_prompt = (
-        "You are an elite multimodal cybersecurity analyst specializing in financial fraud, phishing, and social engineering detection. "
-        "You operate as a deep-analysis engine for the FinWise AI Scam Shield. Your job is to analyze ANY image or text a user submits and provide a structured threat assessment.\n\n"
-
-        "=== PHASE 1: VISUAL INTELLIGENCE (For all images) ===\n"
-        "Perform exhaustive analysis on the image using ALL of these lenses simultaneously:\n"
-        "- FULL OCR: Extract every word, number, URL, email address, phone number, handle, and sender detail visible in the image. Include partially obscured or small-font text.\n"
-        "- UI/LAYOUT ANALYSIS: Identify the type of content (SMS thread, email client, social media DM, browser pop-up, banking app, QR code, promotional flyer, vector illustration, warning poster, meme, etc.).\n"
-        "- VISUAL CUE DETECTION: Look for urgency indicators (countdown timers, exclamation marks, red banners), suspicious branding (misspelled logos, low-res brand marks, unofficial color schemes), mismatched fonts, and amateurish design.\n"
-        "- QR CODE AWARENESS: If a QR code is present, flag it as a potential phishing vector and note its context.\n\n"
-
-        "=== PHASE 2: CONTENT CLASSIFICATION (CRITICAL — Read carefully) ===\n"
-        "After analyzing the image, classify it into EXACTLY ONE of these categories:\n\n"
-        "CATEGORY A — 'ACTIVE SCAM ATTEMPT': The image depicts a REAL scam, phishing message, or fraudulent offer that a user received or encountered. "
-        "Examples: a phishing SMS asking to click a link, a fake crypto investment ad promising guaranteed returns, a spoofed bank email requesting credentials, a pop-up claiming 'Your device is infected'. "
-        "→ For this category: set 'isScam' to true, set 'probability' to reflect actual threat level (50-100), list specific red flags found in the image, and provide an actionable educational lesson.\n\n"
-
-        "CATEGORY B — 'SCAM EDUCATIONAL / AWARENESS MATERIAL': The image is an illustration, infographic, warning poster, news article, meme, or vector graphic that DISCUSSES, WARNS ABOUT, or EDUCATES people about scams. "
-        "It is NOT itself a scam — it is content ABOUT scams. "
-        "Examples: a vector illustration with a magnifying glass over a phone showing 'FAKE!', an infographic titled 'How to Spot Phishing', a news headline about a fraud ring, a cartoon warning about online scams, a poster with warning triangles and the word 'HOAX'. "
-        "→ For this category: set 'isScam' to false, set 'probability' to 0, leave 'redFlags' as an empty array, and use the 'lesson' field to say something like: "
-        "'This image is educational/awareness material about scams, not an active threat. The concepts it illustrates are valid — here is what to watch for in real scenarios: [brief real-world tip based on the scam type shown].'\n\n"
-
-        "CATEGORY C — 'LEGITIMATE / SAFE CONTENT': The image shows a legitimate financial context with no scam indicators. "
-        "Examples: a personal portfolio dashboard, a banking app showing balances, a standard stock chart, a receipt, a pay stub. "
-        "→ For this category: set 'isScam' to false, set 'probability' to 0, leave 'redFlags' as an empty array, and use the 'lesson' field to confirm it appears legitimate.\n\n"
-
-        "CATEGORY D — 'COMPLETELY UNRELATED': The image has absolutely zero connection to finance, communication, or scams. "
-        "Examples: a photo of a pet, a landscape, food photography, a random selfie with no text overlays or financial context. "
-        "→ For this category: set 'isScam' to false, set 'probability' to 0, leave 'redFlags' as an empty array, and use the 'lesson' to politely explain: "
-        "'This image does not appear to contain financial or communication content to analyze. For best results, upload a screenshot of a suspicious message, email, website, QR code, or financial offer.'\n\n"
-
-        "=== PHASE 3: DECISION RULES ===\n"
-        "- NEVER reject an image just because it is not a 'standard' screenshot. Illustrations, conceptual art, cropped fragments, QR codes, and pop-ups are ALL valid inputs.\n"
-        "- When in doubt between Category A and B, look for the INTENT of the image: is it trying to DECEIVE the viewer (Category A) or EDUCATE the viewer (Category B)?\n"
-        "- For Category A, your red flag descriptions must cite SPECIFIC evidence extracted from the image (exact text, URLs, visual elements).\n"
-        "- The 'probability' field represents your confidence that this is an ACTIVE scam attempt. Educational material about scams = 0. Legitimate content = 0.\n\n"
-
+        "You are an elite, highly strict cybersecurity analyst specializing in financial fraud, phishing, and social engineering detection. "
+        "You operate as a deep-analysis engine for the FinWise AI Scam Shield. Your job is to instantly warn the user about ANY possible scam. "
+        "Apply MAXIMUM AI THINKING: assume the worst, analyze intent, language patterns, psychological manipulation tactics, and hidden technical vectors.\n\n"
+        
+        "=== PHASE 1: CONTENT INTELLIGENCE (For Text & Images) ===\n"
+        "- TEXT & OCR ANALYSIS: Scrutinize every word, URL, email, and handle. Actively hunt for 'too good to be true' offers, guaranteed returns, urgency, fear tactics, or ANY slight anomaly.\n"
+        "- VISUAL & CONTEXTUAL CUES (If image): Look for countdown timers, mismatched fonts, misspelled logos, unofficial domains, and amateurish design.\n\n"
+        
+        "=== PHASE 2: THREAT CLASSIFICATION (BE EXTREMELY STRICT) ===\n"
+        "Classify into EXACTLY ONE of these categories:\n"
+        "CATEGORY A — 'ACTIVE SCAM / HIGH RISK': Real scam, phishing, fraud, or highly suspicious behavior. (e.g., 'Click here to verify', 'Guaranteed crypto returns', unexpected alerts, unknown senders offering deals). "
+        "→ set 'isScam' to true, 'probability' high (80-100), list specific red flags, and provide an actionable lesson.\n"
+        "CATEGORY B — 'POSSIBLE SCAM / SUSPICIOUS': Anything that requests money, promises unrealistic returns, or requires unusual urgency, even if not explicitly malicious. "
+        "→ set 'isScam' to true, 'probability' (50-79), list warning signs.\n"
+        "CATEGORY C — 'EDUCATIONAL / LEGITIMATE': Safe context, standard portfolios, verifiable sources. "
+        "→ set 'isScam' to false, 'probability' to 0.\n\n"
+        
+        "=== PHASE 3: DECISION RULES (ZERO TOLERANCE, EXTREME PARANOIA) ===\n"
+        "- Assume malice by default. ANY explicit malicious links, requests for credentials, guaranteed high yields, or 'too good to be true' offers MUST be classified as Category A with >95% probability.\n"
+        "- ANY language creating false urgency, demanding secrecy, or appealing to greed MUST be classified as Category A.\n"
+        "- If there is EVEN A 1% CHANCE of risk, mark it as 'isScam': true with a legitimate risk probability (at least 60%).\n"
+        "- Prioritize protecting the user over assuming innocence. Instantly warn the user if anything feels off.\n"
+        "- Apply MAXIMUM AI THINKING: analyze the psychological vectors and hidden technical threats.\n"
+        "- You must write out your step-by-step logical deduction in the 'reasoning' field before returning your final verdict.\n\n"
+        
         "=== OUTPUT FORMAT ===\n"
-        "You MUST output ONLY valid JSON matching this exact schema:\n"
+        "You MUST output ONLY valid JSON matching this exact schema. DO NOT wrap the JSON in Markdown formatting like ```json ... ```. Just return raw JSON:\n"
         "{\n"
+        "  \"reasoning\": \"Your step-by-step deep analysis and logic\",\n"
         "  \"isScam\": boolean,\n"
         "  \"probability\": number (0-100),\n"
-        "  \"redFlags\": [{\"title\": \"short title\", \"description\": \"detailed explanation citing specific evidence from the image\"}],\n"
-        "  \"lesson\": \"An educational takeaway, context-appropriate message, or confirmation of safety\"\n"
+        "  \"redFlags\": [{\"title\": \"short title\", \"description\": \"detailed explanation citing specific evidence\"}],\n"
+        "  \"lesson\": \"An educational takeaway or confirmation of safety\"\n"
         "}\n"
     )
     
@@ -384,7 +382,13 @@ def scam_detect_endpoint(request: ScamDetectRequest):
             return json.loads(response.text)
         except Exception as e:
             print(f"Error calling Gemini API: {e}")
-            raise HTTPException(status_code=500, detail="Failed to analyze image.")
+            return {
+                "reasoning": "Our AI analysis encountered an error parsing the image. Please be highly cautious.",
+                "isScam": True,
+                "probability": 75,
+                "redFlags": [{"title": "Image Unverified", "description": "Could not confirm the safety of the provided image due to a system error."}],
+                "lesson": "Always verify the source independently before taking any action based on an image."
+            }
     else:
         api_messages = [{"role": "system", "content": system_prompt}]
         api_messages.append({"role": "user", "content": f"Analyze this message: {request.text}"})
@@ -397,10 +401,26 @@ def scam_detect_endpoint(request: ScamDetectRequest):
                 temperature=0.1
             )
             import json
-            return json.loads(chat_completion.choices[0].message.content)
+            
+            content = chat_completion.choices[0].message.content.strip()
+            if content.startswith("```"):
+                lines = content.split('\n')
+                if lines[0].startswith("```"):
+                    lines = lines[1:]
+                if lines and lines[-1].startswith("```"):
+                    lines = lines[:-1]
+                content = '\n'.join(lines).strip()
+                
+            return json.loads(content)
         except Exception as e:
             print(f"Error calling Groq API: {e}")
-            raise HTTPException(status_code=500, detail="Failed to analyze message.")
+            return {
+                "reasoning": "Our AI analysis encountered an error parsing the content. However, always exercise extreme caution.",
+                "isScam": True,
+                "probability": 75,
+                "redFlags": [{"title": "System Warning", "description": "Unable to verify the safety of this message due to a system error."}],
+                "lesson": "When in doubt, never share personal information or click on unknown links."
+            }
 
 class TitleRequest(BaseModel):
     message: str

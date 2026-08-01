@@ -105,14 +105,7 @@ export function SidebarProfile({ isCollapsed = false }: { isCollapsed?: boolean 
               <div className={styles.menuDivider} />
               
               <div className={styles.menuGroup}>
-                <button 
-                  type="button"
-                  className={styles.menuItem} 
-                  onClick={() => { setIsOpen(false); router.push('/profile'); }}
-                >
-                  <UserIcon size={16} />
-                  <span>Edit Profile</span>
-                </button>
+
                 
                 <button 
                   type="button"

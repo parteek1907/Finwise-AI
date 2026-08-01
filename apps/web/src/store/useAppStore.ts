@@ -5,6 +5,7 @@ import {
   calculateGoalStatus,
   type Contribution,
 } from '../utils/goalCalculations';
+import { getLocalISODate } from '../utils/formatters';
 
 // Types
 export interface StreakState {
@@ -326,7 +327,7 @@ function migrateUser(user: any, courseProgress: Record<string, CourseProgress>, 
     migratedUser.coins = calculatedCoins;
     
     // Log this retroactive XP into the activity graph for today so it shows up!
-    const today = new Date().toISOString().split('T')[0];
+    const today = getLocalISODate();
     if (!migratedUser.progression.activityGraph[today]) {
       migratedUser.progression.activityGraph[today] = { xp: 0, types: [] };
     }
@@ -582,7 +583,7 @@ export const useAppStore = create<AppState>()(
         const currentExamStatus = state.finalExamState.status;
         
         // Streak Logic
-        const today = new Date().toISOString().split('T')[0];
+        const today = getLocalISODate();
         let newStreak = state.user.streak;
         
         if (!state.user.lastCourseDate) {
@@ -834,7 +835,7 @@ export const useAppStore = create<AppState>()(
             }
           });
 
-          const today = new Date().toISOString().split('T')[0];
+          const today = getLocalISODate();
           
           // Dump all legacy XP into today's Activity Graph if graph is entirely empty
           const isGraphEmpty = Object.keys(user.progression.activityGraph).length === 0;

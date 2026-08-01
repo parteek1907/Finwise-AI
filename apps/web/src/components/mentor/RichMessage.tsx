@@ -55,7 +55,11 @@ export function RichMessage({ content, onActionClick }: RichMessageProps) {
     })
     // Highlight Off-topic reminder
     .replace(
-       /Let us learn something more about finance and trading\./g, 
+       /\[ACTION:\s*OFF_TOPIC\]/gi, 
+       '\n\n:::OFF_TOPIC_BANNER:::\n\n'
+    )
+    .replace(
+       /Let us learn something more about finance and trading\.?/gi, 
        '\n\n:::OFF_TOPIC_BANNER:::\n\n'
     );
 

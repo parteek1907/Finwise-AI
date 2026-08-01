@@ -30,7 +30,11 @@ export default function MentorPage() {
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
     if (textarea) {
-      textarea.style.height = 'auto';
+      if (textarea.value === '') {
+        textarea.style.height = 'auto';
+        return;
+      }
+      textarea.style.height = '0px';
       textarea.style.height = `${Math.min(textarea.scrollHeight, 200)}px`;
     }
   };
@@ -45,7 +49,13 @@ export default function MentorPage() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [history, isTyping]);
+  }, [activeChatId]);
+
+  useEffect(() => {
+    if (isTyping) {
+      scrollToBottom();
+    }
+  }, [isTyping]);
 
   useEffect(() => {
     const draft = sessionStorage.getItem('mentorDraft');
@@ -142,7 +152,7 @@ export default function MentorPage() {
       
       // Prepare messages payload for backend
       const apiMessages = aiSettings.rememberChatHistory ? history.map(msg => ({
-        role: msg.sender === 'user' || msg.sender === 'system' ? (msg.isHiddenContext ? 'system' : 'user') : 'assistant',
+        role: (msg.sender === 'user' || msg.sender === 'system') ? 'user' : 'assistant',
         content: msg.text
       })) : [];
       
@@ -213,7 +223,7 @@ export default function MentorPage() {
       const currentHistory = useAppStore.getState().chats.find(c => c.id === currentChatId)?.messages || [];
       
       const apiMessages = currentHistory.map(msg => ({
-        role: msg.sender === 'user' ? 'user' : (msg.isHiddenContext ? 'system' : 'assistant'),
+        role: (msg.sender === 'user' || msg.sender === 'system') ? 'user' : 'assistant',
         content: msg.text
       }));
 

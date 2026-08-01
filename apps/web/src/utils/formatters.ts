@@ -105,3 +105,14 @@ export const formatRelativeDate = (dateString: string): string => {
   
   return formatDate(date);
 };
+
+/**
+ * Get the local date string in YYYY-MM-DD format (timezone-safe, unlike toISOString().split('T')[0])
+ */
+export const getLocalISODate = (dateInput: Date | number | string = new Date()): string => {
+  const d = new Date(dateInput);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};

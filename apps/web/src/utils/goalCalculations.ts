@@ -3,7 +3,7 @@
  * Centralized utility for all goal-related computations:
  * status, forecasting, health scores, milestones, coaching insights, and completion analysis.
  */
-import { formatDate } from './formatters';
+import { formatDate, getLocalISODate } from './formatters';
 
 export interface Contribution {
   id: string;
@@ -178,7 +178,7 @@ export function calculateConsistencyScore(contributions: Contribution[]): number
     const d = new Date(c.date);
     const weekStart = new Date(d);
     weekStart.setDate(weekStart.getDate() - weekStart.getDay());
-    weekSet.add(weekStart.toISOString().split('T')[0]);
+    weekSet.add(getLocalISODate(weekStart));
   });
 
   return Math.min(100, Math.round((weekSet.size / totalWeeks) * 100));

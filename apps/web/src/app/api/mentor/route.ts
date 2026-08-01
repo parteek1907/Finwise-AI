@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { yahooProvider } from '@/lib/yahoo-provider';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
+const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
 
 // Cache for market context (60s TTL to avoid rate limits)
 let marketContextCache: { text: string; timestamp: number } = { text: '', timestamp: 0 };
@@ -86,15 +86,15 @@ Guidelines for your responses:
 1. OFF-TOPIC HANDLING (CRITICAL): If the user's message is NOT about finance, investing, money, or economics (e.g., asking about coding, data structures, science, general chat):
    - You MUST still answer their question and provide what they asked for (e.g., code snippets, facts, etc.).
    - However, you MUST keep any additional explanations extremely brief (1-2 sentences). Do not give long, deep explanations for off-topic things.
-   - You MUST append this EXACT phrase to the very end of your response on a new line: "Let us learn something more about finance and trading."
-   - If the user's message IS about finance or trading, DO NOT append that phrase under any circumstances.
+   - You MUST append this EXACT tag to the very end of your response on a new line: [ACTION: OFF_TOPIC]
+   - If the user's message IS about finance or trading, DO NOT append that tag under any circumstances.
 2. Adhere strictly to the requested Mode, Length, and Personality guidelines above.
 3. Structure (CRITICAL): Break down complex ideas using scannable bullet points and markdown headers if needed.
 4. Conversational Flow: Respond naturally while staying aligned with your assigned financial persona.
 5. GOAL AWARENESS (CRITICAL): You already know the user's goals from the context above. NEVER ask "What goal are you talking about?" — infer from context. If unclear, list their goals and ask which one.
-6. GOAL MANAGEMENT (CRITICAL): ONLY output the UPDATE_GOAL tag if the user **EXPLICITLY COMMANDS** you to update their goal balance (e.g., 'Add $500 to my emergency fund'). Do **NOT** use this tag for hypothetical scenarios, general financial advice, or if the user is just asking a question. When explicitly commanded, you MUST output the following exact tag anywhere in your response text: \`[ACTION: UPDATE_GOAL, goal_id: "{id}", amount: {amount}]\`. Use a negative amount to remove funds. For example: \`[ACTION: UPDATE_GOAL, goal_id: "g1", amount: 500]\`.
-7. GOAL CREATION (CRITICAL): If the user asks you to create a new goal and provides enough details (name, target amount, deadline), you MUST output the following exact tag: \`[ACTION: CREATE_GOAL, name: "{name}", target: {amount}, deadline: "{YYYY-MM-DD}", category: "{category}"]\`. Valid categories: Emergency, Housing, Vehicle, Travel, Retirement, Other. For example: \`[ACTION: CREATE_GOAL, name: "Vacation Fund", target: 5000, deadline: "2027-06-01", category: "Travel"]\`. If the user hasn't provided all required details, ask for them naturally.
-8. GOAL RECOMMENDATIONS: If the user seems open to suggestions, proactively recommend relevant goals based on their profile and financial situation.`;
+6. GOAL MANAGEMENT (CRITICAL): You MUST NEVER output the UPDATE_GOAL tag unless the user EXPLICITLY COMMANDS you to update their balance (e.g., 'Add $500'). DO NOT output it for general advice, examples, or when providing insights.
+7. GOAL CREATION (CRITICAL): You MUST NEVER output the CREATE_GOAL tag unless the user EXPLICITLY asks to create a new goal. DO NOT output it as a hypothetical example or recommendation. If the user asks for interesting insights, DO NOT output any goal action tags whatsoever.
+8. GOAL RECOMMENDATIONS: If the user seems open to suggestions, proactively recommend relevant goals but DO NOT use the CREATE_GOAL tag to do so. Just suggest them in plain text.`;
 
     if (isTutorMode && tutorContext) {
       systemPrompt = `You are a strict but supportive in-course AI Learning Companion for the FinWise platform. The learner, ${nameToUse}, is currently studying a lesson.
@@ -115,26 +115,57 @@ YOUR DIRECTIVES:
 FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does this relate to investing?"]`;
     }
 
-    const apiMessages = [{ role: 'system', content: systemPrompt }, ...messages];
+    const rawMessages = [{ role: 'system', content: systemPrompt }, ...messages];
+    
+    // CRITICAL: Groq / Llama 3 models reject consecutive messages of the same role (e.g., 'user' followed by 'user').
+    // Collapse consecutive messages into a single message to prevent 400 Bad Request errors.
+    const apiMessages = [];
+    for (const msg of rawMessages) {
+      if (apiMessages.length > 0 && apiMessages[apiMessages.length - 1].role === msg.role) {
+        apiMessages[apiMessages.length - 1].content += "\n\n" + msg.content;
+      } else {
+        apiMessages.push({ ...msg });
+      }
+    }
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "llama-3.1-8b-instant",
-        messages: apiMessages,
-        temperature: 0.7,
-        max_tokens: 1024
-      })
-    });
+    let res;
+    let retries = 2;
+    const fallbackModels = ["llama-3.1-8b-instant", "llama-3.3-70b-versatile", "mixtral-8x7b-32768"];
+    let currentModelIndex = 0;
+    
+    while (retries >= 0) {
+      const modelToUse = fallbackModels[currentModelIndex];
+      res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: modelToUse,
+          messages: apiMessages,
+          temperature: 0.7,
+          max_tokens: 1024
+        })
+      });
 
-    if (!res.ok) {
-      const errText = await res.text();
+      if (res.ok) break;
+      if (res.status !== 429 && res.status !== 503) break; // Only retry on rate limit or server error
+      
+      if (res.status === 429) {
+        currentModelIndex = Math.min(currentModelIndex + 1, fallbackModels.length - 1);
+      }
+      
+      retries--;
+      if (retries >= 0) {
+        await new Promise(resolve => setTimeout(resolve, 1500));
+      }
+    }
+
+    if (!res || !res.ok) {
+      const errText = res ? await res.text() : "No response";
       console.error("Groq API error in mentor:", errText);
-      throw new Error(`Groq API failed with status ${res.status}`);
+      throw new Error(`Groq API failed with status ${res?.status}`);
     }
 
     const data = await res.json();

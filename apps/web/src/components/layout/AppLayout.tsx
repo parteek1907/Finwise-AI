@@ -2,8 +2,12 @@
 
 import React, { useEffect } from 'react';
 import { usePathname } from 'next/navigation';
-import { Sidebar } from './Sidebar';
+import dynamic from 'next/dynamic';
 import styles from './AppLayout.module.css';
+
+const Sidebar = dynamic(() => import('./Sidebar').then(mod => ({ default: mod.Sidebar })), {
+  ssr: false,
+});
 import { auth } from '@/lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useAppStore } from '@/store/useAppStore';

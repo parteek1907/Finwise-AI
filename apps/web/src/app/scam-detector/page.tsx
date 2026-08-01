@@ -106,7 +106,7 @@ export default function ScamDetectorPage() {
   };
 
   const handleScan = async () => {
-    if (!inputText.trim() && !imageBase64) return;
+    if ((activeTab === 'text' && !inputText.trim()) || (activeTab === 'image' && !imageBase64)) return;
     setIsScanning(true);
     setResult(null);
     
@@ -116,8 +116,8 @@ export default function ScamDetectorPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: inputText.trim() || undefined,
-          image_base64: imageBase64 || undefined
+          text: activeTab === 'text' ? (inputText.trim() || undefined) : undefined,
+          image_base64: activeTab === 'image' ? (imageBase64 || undefined) : undefined
         })
       });
       
@@ -256,7 +256,7 @@ export default function ScamDetectorPage() {
               <button 
                 className={styles.scanBtn} 
                 onClick={handleScan}
-                disabled={(!inputText.trim() && !imageBase64) || isScanning}
+                disabled={(activeTab === 'text' && !inputText.trim()) || (activeTab === 'image' && !imageBase64) || isScanning}
               >
                 {isScanning ? (
                   <><span className={styles.spinner}></span> Analyzing footprint...</>
