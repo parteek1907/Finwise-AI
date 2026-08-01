@@ -153,6 +153,9 @@ export interface AppState {
   resetStore: () => void;
   seedDemoData: () => void;
   syncLegacyProgress: () => void;
+  
+  emotionContextReport?: string | null;
+  setEmotionContextReport: (report: string | null) => void;
 }
 
 const INITIAL_USER: User = {
@@ -394,6 +397,7 @@ export const useAppStore = create<AppState>()(
         status: 'Locked'
       },
       lessonChats: {},
+      emotionContextReport: null,
 
       resetStore: () => set({
         user: INITIAL_USER,
@@ -412,7 +416,8 @@ export const useAppStore = create<AppState>()(
           warnings: 0,
           attempts: [],
           status: 'Locked'
-        }
+        },
+        emotionContextReport: null,
       }),
 
       addXP: (amount) => set((state) => ({ 
