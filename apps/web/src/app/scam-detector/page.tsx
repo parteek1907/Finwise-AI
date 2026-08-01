@@ -301,11 +301,11 @@ export default function ScamDetectorPage() {
                   className={styles.resultCard}
                 >
                   {result.isQuotaError ? (
-                    <div className={styles.dangerHeader} style={{ backgroundColor: '#fff3cd', color: '#856404' }}>
-                      <AlertTriangle size={32} color="#856404" />
+                    <div className={styles.dangerHeader} style={{ backgroundColor: '#fff3cd', color: '#856404', padding: '1rem', gap: '0.75rem', alignItems: 'center' }}>
+                      <AlertTriangle size={24} color="#856404" />
                       <div>
-                        <h2>API Quota Exceeded</h2>
-                        <span>Gemini Vision daily limit reached. Please use Text Analysis.</span>
+                        <h2 style={{ fontSize: '1.1rem', margin: '0 0 0.25rem 0' }}>API Quota Exceeded</h2>
+                        <span style={{ fontSize: '0.85rem' }}>Gemini Vision daily limit reached. Please use Text Analysis.</span>
                       </div>
                     </div>
                   ) : (

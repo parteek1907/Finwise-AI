@@ -103,7 +103,7 @@ export async function POST(req: Request) {
       return NextResponse.json(JSON.parse(content));
     } else {
       // Use Groq API for text
-      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      let groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${GROQ_API_KEY}`,
@@ -121,7 +121,27 @@ export async function POST(req: Request) {
       });
 
       if (!groqRes.ok) {
-        throw new Error(`Groq API failed. Error: ${await groqRes.text()}`);
+        // Fallback to second model
+        groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${GROQ_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "llama-3.3-70b-versatile",
+            messages: [
+              { role: "system", content: SYSTEM_PROMPT },
+              { role: "user", content: `Analyze this message: ${text}` }
+            ],
+            response_format: { type: "json_object" },
+            temperature: 0.1
+          })
+        });
+        
+        if (!groqRes.ok) {
+          throw new Error(`Groq API failed completely. Error: ${await groqRes.text()}`);
+        }
       }
       
       const data = await groqRes.json();

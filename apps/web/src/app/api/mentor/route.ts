@@ -124,7 +124,7 @@ FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does 
       }
     }
 
-    const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    let groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${GROQ_API_KEY}`,
@@ -139,13 +139,38 @@ FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does 
     });
 
     if (!groqRes.ok) {
-       throw new Error(`Groq API failed. Error: ${await groqRes.text()}`);
+       // Fallback to versatile model
+       groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+         method: "POST",
+         headers: {
+           "Authorization": `Bearer ${GROQ_API_KEY}`,
+           "Content-Type": "application/json"
+         },
+         body: JSON.stringify({
+           model: "llama-3.3-70b-versatile",
+           messages: apiMessages,
+           temperature: 0.7,
+           max_tokens: 1024
+         })
+       });
+       
+       if (!groqRes.ok) {
+         throw new Error(`Groq API failed completely. Error: ${await groqRes.text()}`);
+       }
     }
     
     const data = await groqRes.json();
     let responseContent = data.choices?.[0]?.message?.content || "I am here to help with your financial goals!";
 
-
+    // Brutal stripper for LLM hallucinations about tags
+    if (responseContent.match(/\[no\s+off-topic.*?\]/i) || responseContent.match(/no off-topic tag/i)) {
+      responseContent = responseContent.replace(/\[no\s+off-topic.*?\]/gi, '');
+      responseContent = responseContent.replace(/no off-topic tag/gi, '');
+    }
+    // If it mentions off-topic in brackets but failed to write the exact string, enforce it
+    if (responseContent.match(/\[.*?off-topic.*?\]/i) && !responseContent.includes('[ACTION: OFF_TOPIC]')) {
+      responseContent = responseContent.replace(/\[.*?off-topic.*?\]/gi, '[ACTION: OFF_TOPIC]');
+    }
     return NextResponse.json({
       role: "assistant",
       content: responseContent
