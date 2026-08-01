@@ -102,55 +102,41 @@ export async function POST(req: Request) {
       
       return NextResponse.json(JSON.parse(content));
     } else {
-      // Try Gemini API First
-      let res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      // Use Groq API for text
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
         body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [{ parts: [{ text: `Analyze this message: ${text}` }] }],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+          model: "llama-3.1-8b-instant",
+          messages: [
+            { role: "system", content: SYSTEM_PROMPT },
+            { role: "user", content: `Analyze this message: ${text}` }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1
         })
       });
 
-      let content = "";
-      if (res.ok) {
-        const data = await res.json();
-        content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      } else {
-        console.warn("Gemini API failed in scam-detect, falling back to Groq", await res.text());
-        // Fallback to Groq
-        const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${GROQ_API_KEY}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: `Analyze this message: ${text}` }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.1
-          })
-        });
-
-        if (!groqRes.ok) throw new Error(`Both APIs failed. Groq error: ${await groqRes.text()}`);
-        
-        const data = await groqRes.json();
-        content = data.choices?.[0]?.message?.content || "";
+      if (!groqRes.ok) {
+        throw new Error(`Groq API failed. Error: ${await groqRes.text()}`);
       }
-
-      if (!content) throw new Error("No content returned from APIs");
       
-      content = content.trim();
-      if (content.startsWith("\`\`\`")) {
-        const lines = content.split('\n');
-        if (lines[0].startsWith("\`\`\`")) lines.shift();
-        if (lines[lines.length - 1].startsWith("\`\`\`")) lines.pop();
-        content = lines.join('\n').trim();
+      const data = await groqRes.json();
+      let content = data.choices?.[0]?.message?.content || "";
+
+      if (!content) throw new Error("No content returned from Groq");
+      
+      // Robust JSON extraction
+      const firstBrace = content.indexOf('{');
+      const lastBrace = content.lastIndexOf('}');
+      
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        content = content.substring(firstBrace, lastBrace + 1);
+      } else {
+        throw new Error("No valid JSON object found in response");
       }
       
       return NextResponse.json(JSON.parse(content));
