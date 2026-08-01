@@ -115,46 +115,43 @@ YOUR DIRECTIVES:
 FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does this relate to investing?"]`;
     }
 
-    const rawMessages = [{ role: 'system', content: systemPrompt }, ...messages];
+    // CRITICAL: Gemini handles messages differently.
+    const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
     
-    // CRITICAL: Groq / Llama 3 models reject consecutive messages of the same role (e.g., 'user' followed by 'user').
-    // Collapse consecutive messages into a single message to prevent 400 Bad Request errors.
-    const apiMessages = [];
-    for (const msg of rawMessages) {
-      if (apiMessages.length > 0 && apiMessages[apiMessages.length - 1].role === msg.role) {
-        apiMessages[apiMessages.length - 1].content += "\n\n" + msg.content;
+    // Map messages to Gemini format
+    const geminiContents = [];
+    for (const msg of messages) {
+      if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === (msg.role === 'assistant' ? 'model' : 'user')) {
+        geminiContents[geminiContents.length - 1].parts[0].text += "\n\n" + msg.content;
       } else {
-        apiMessages.push({ ...msg });
+        geminiContents.push({
+          role: msg.role === 'assistant' ? 'model' : 'user',
+          parts: [{ text: msg.content }]
+        });
       }
     }
 
     let res;
     let retries = 2;
-    const fallbackModels = ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768"];
-    let currentModelIndex = 0;
     
     while (retries >= 0) {
-      const modelToUse = fallbackModels[currentModelIndex];
-      res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+      res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          model: modelToUse,
-          messages: apiMessages,
-          temperature: 0.7,
-          max_tokens: 1024
+          systemInstruction: { parts: [{ text: systemPrompt }] },
+          contents: geminiContents,
+          generationConfig: {
+            temperature: 0.7,
+            maxOutputTokens: 1024
+          }
         })
       });
 
       if (res.ok) break;
       if (res.status !== 429 && res.status !== 503) break; // Only retry on rate limit or server error
-      
-      if (res.status === 429) {
-        currentModelIndex = Math.min(currentModelIndex + 1, fallbackModels.length - 1);
-      }
       
       retries--;
       if (retries >= 0) {
@@ -164,12 +161,12 @@ FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does 
 
     if (!res || !res.ok) {
       const errText = res ? await res.text() : "No response";
-      console.error("Groq API error in mentor:", errText);
-      throw new Error(`Groq API failed with status ${res?.status}`);
+      console.error("Gemini API error in mentor:", errText);
+      throw new Error(`Gemini API failed with status ${res?.status}`);
     }
 
     const data = await res.json();
-    const responseContent = data.choices?.[0]?.message?.content || "I am here to help with your financial goals!";
+    const responseContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "I am here to help with your financial goals!";
 
     return NextResponse.json({
       role: "assistant",

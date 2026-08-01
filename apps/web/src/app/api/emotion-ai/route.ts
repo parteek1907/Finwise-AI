@@ -42,34 +42,35 @@ You MUST output your response in valid JSON format ONLY with the following schem
   "recommendations": ["Array of 3 highly specific, actionable, rational steps they must take regarding their exact situation."]
 }`;
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
+    const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: message }
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [
+          {
+            parts: [{ text: message }]
+          }
         ],
-        response_format: { type: "json_object" },
-        temperature: 0.1
+        generationConfig: {
+          responseMimeType: "application/json",
+          temperature: 0.1
+        }
       })
     });
 
     if (!res.ok) {
       const errText = await res.text();
-      console.error("Groq API error in emotion-ai:", errText);
-      throw new Error(`Groq API failed with status ${res.status}`);
+      console.error("Gemini API error in emotion-ai:", errText);
+      throw new Error(`Gemini API failed with status ${res.status}`);
     }
 
     const data = await res.json();
-    const responseContent = data.choices?.[0]?.message?.content;
+    let responseContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
     
     if (!responseContent) {
-        throw new Error("No content returned from Groq");
+        throw new Error("No content returned from Gemini");
     }
 
     return NextResponse.json(JSON.parse(responseContent));

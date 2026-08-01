@@ -99,30 +99,33 @@ export async function POST(req: Request) {
       
       return NextResponse.json(JSON.parse(content));
     } else {
-      // Use Groq API for text-only
-      const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
+      // Use Gemini API for text-only
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: "llama-3.3-70b-versatile",
-          messages: [
-            { role: "system", content: SYSTEM_PROMPT },
-            { role: "user", content: `Analyze this message: ${text}` }
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: [
+            {
+              parts: [{ text: `Analyze this message: ${text}` }]
+            }
           ],
-          response_format: { type: "json_object" },
-          temperature: 0.1
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.1
+          }
         })
       });
 
       if (!res.ok) {
-        throw new Error(`Groq API failed: ${await res.text()}`);
+        throw new Error(`Gemini API failed: ${await res.text()}`);
       }
 
       const data = await res.json();
-      let content = data.choices?.[0]?.message?.content?.trim() || "";
+      let content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!content) throw new Error("No content returned from Gemini");
+      
+      content = content.trim();
       if (content.startsWith("\`\`\`")) {
         const lines = content.split('\n');
         if (lines[0].startsWith("\`\`\`")) lines.shift();
