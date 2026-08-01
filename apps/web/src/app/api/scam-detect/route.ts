@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
+const GROQ_API_KEY = ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
+const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
 
 const SYSTEM_PROMPT = `You are an elite, highly strict cybersecurity analyst specializing in financial fraud, phishing, and social engineering detection.
 You operate as a deep-analysis engine for the FinWise AI Scam Shield. Your job is to instantly warn the user about ANY possible scam.
