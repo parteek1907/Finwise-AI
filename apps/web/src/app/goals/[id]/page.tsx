@@ -129,10 +129,15 @@ export default function GoalDetailPage() {
   const handleAddFunds = () => {
     const amount = Number(fundAmount);
     if (!amount || amount <= 0) return;
-    addContribution(goal.id, amount, fundNote || undefined);
+    
+    // Convert the user's input amount (in their preferred currency) 
+    // back into the goal's native base currency before saving to store
+    const amountInNativeCurrency = CurrencyService.convert(amount, prefCurrency, goal.currency || 'USD', exchangeRates);
+
+    addContribution(goal.id, amountInNativeCurrency, fundNote || undefined);
     
     // Check if this contribution completed the goal
-    const newCurrent = goal.current + amount;
+    const newCurrent = goal.current + amountInNativeCurrency;
     if (newCurrent >= goal.target) {
       triggerProgression('COMPLETE_GOAL', 'saving');
     } else {
@@ -155,12 +160,14 @@ export default function GoalDetailPage() {
   };
 
   const openEditModal = () => {
-    setEditData({ name: goal.name, target: goal.target, deadline: goal.deadline });
+    const targetInPrefCurrency = CurrencyService.convert(goal.target, goal.currency || 'USD', prefCurrency, exchangeRates);
+    setEditData({ name: goal.name, target: targetInPrefCurrency, deadline: goal.deadline });
     setShowEditModal(true);
   };
 
   const handleSaveEdit = () => {
-    updateGoalDetails(goal.id, editData);
+    const targetInNativeCurrency = CurrencyService.convert(editData.target, prefCurrency, goal.currency || 'USD', exchangeRates);
+    updateGoalDetails(goal.id, { ...editData, target: targetInNativeCurrency });
     setShowEditModal(false);
   };
 
@@ -174,14 +181,18 @@ export default function GoalDetailPage() {
     const contrib = goal.contributions.find(c => c.id === contribId);
     if (!contrib) return;
     setEditingContribId(contribId);
-    setEditingContribAmount(String(contrib.amount));
+    
+    // Display the amount in the user's preferred currency in the edit field
+    const amountInUserCurrency = CurrencyService.convert(contrib.amount, goal.currency || 'USD', prefCurrency, exchangeRates);
+    setEditingContribAmount(String(amountInUserCurrency));
     setEditingContribNote(contrib.note || '');
   };
 
   const handleSaveContribEdit = () => {
     if (!editingContribId) return;
+    const amountInNativeCurrency = CurrencyService.convert(Number(editingContribAmount), prefCurrency, goal.currency || 'USD', exchangeRates);
     editContribution(goal.id, editingContribId, {
-      amount: Number(editingContribAmount),
+      amount: amountInNativeCurrency,
       note: editingContribNote || undefined,
     });
     setEditingContribId(null);
