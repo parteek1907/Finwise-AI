@@ -65,23 +65,26 @@ export async function POST(req: Request) {
             {
               parts: [
                 { text: prompt_text },
-                {
-                  inlineData: {
-                    mimeType: "image/jpeg",
-                    data: b64_string
-                  }
-                }
+                { inlineData: { mimeType: "image/jpeg", data: b64_string } }
               ]
             }
           ],
-          generationConfig: {
-            responseMimeType: "application/json",
-            temperature: 0.1
-          }
+          generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
         })
       });
 
       if (!res.ok) {
+        if (res.status === 429) {
+          return NextResponse.json({
+            reasoning: "The free daily limit for image scam detection has been reached on this API key. Please wait 24 hours to use the screenshot feature again, or paste the text instead.",
+            isScam: true,
+            probability: 50,
+            redFlags: [
+              { title: "API Quota Exceeded", description: "Gemini Vision free tier daily limit hit (20 requests/day)." }
+            ],
+            lesson: "Text analysis uses a different AI model (Groq) with much higher limits, so pasting text will always work!"
+          });
+        }
         throw new Error(`Gemini API failed: ${await res.text()}`);
       }
 
