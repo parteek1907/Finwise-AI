@@ -3,6 +3,7 @@
  * Centralized utility for all goal-related computations:
  * status, forecasting, health scores, milestones, coaching insights, and completion analysis.
  */
+import { formatDate } from './formatters';
 
 export interface Contribution {
   id: string;
@@ -411,7 +412,7 @@ export function getMonthlyContributionData(contributions: Contribution[], months
 
   for (let i = months - 1; i >= 0; i--) {
     const target = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const monthLabel = target.toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+    const monthLabel = formatDate(target);
     const monthAmount = contributions
       .filter(c => {
         const d = new Date(c.date);
@@ -435,7 +436,7 @@ export function getProgressOverTimeData(contributions: Contribution[]): { date: 
   return sorted.map(c => {
     running += c.amount;
     return {
-      date: new Date(c.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: formatDate(new Date(c.date)),
       total: running,
     };
   });

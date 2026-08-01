@@ -3,6 +3,7 @@
 import React, { useState, useRef } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { ShieldCheck, Upload, Search, AlertTriangle, ShieldAlert, CheckCircle2, Save, Sparkles, X } from 'lucide-react';
+import { formatDate } from '@/utils/formatters';
 import styles from './Scam.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs } from '@/components/ui/vercel-tabs';
@@ -36,7 +37,7 @@ export default function ScamDetectorPage() {
       setSavedReports(prev => [
         { 
           id: `rep_${Date.now()}`, 
-          date: new Date().toLocaleDateString(), 
+          date: formatDate(new Date()), 
           result,
           inputText,
           imageBase64

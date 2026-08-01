@@ -81,16 +81,16 @@ export const formatNumber = (value: number) => {
   return value.toString();
 };
 
-export const formatDate = (dateString: string) => {
-  return new Intl.DateTimeFormat('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric'
-  }).format(new Date(dateString));
+export const formatDate = (dateInput: string | Date | number) => {
+  const d = new Date(dateInput);
+  const day = d.getDate().toString().padStart(2, '0');
+  const month = (d.getMonth() + 1).toString().padStart(2, '0');
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
 };
 
 /**
- * Format a date as relative time (e.g., "Today", "2 days ago", "Jul 14")
+ * Format a date as relative time (e.g., "Today", "2 days ago", "14/07/2026")
  */
 export const formatRelativeDate = (dateString: string): string => {
   const date = new Date(dateString);
@@ -102,5 +102,6 @@ export const formatRelativeDate = (dateString: string): string => {
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays} days ago`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  
+  return formatDate(date);
 };

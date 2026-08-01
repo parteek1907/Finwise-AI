@@ -14,7 +14,7 @@ import {
 import { Indicator } from '../../../types/market';
 import { calculateSMA, calculateEMA } from '../../../utils/chart';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import { CURRENCY_MAP } from '../../../utils/formatters';
+import { formatCurrency, formatNumber, formatPercentage, formatDate } from '@/utils/formatters';
 
 import { ChartLoading } from './ChartLoading';
 import { ChartHeader } from './ChartHeader';
@@ -300,7 +300,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         dateStr = param.time;
       } else if (typeof param.time === 'number') {
         const d = new Date(param.time * 1000);
-        dateStr = d.toLocaleDateString();
+        dateStr = formatDate(d);
       } else if (typeof param.time === 'object') {
         dateStr = `${param.time.year}-${param.time.month}-${param.time.day}`;
       }

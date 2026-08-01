@@ -17,8 +17,8 @@ export function Topbar() {
   return (
     <header className={styles.topbar}>
       {/* Left: Logo */}
-      <Link href="/dashboard" className={styles.logoContainer}>
-        <div className={styles.logoIcon}></div>
+      <Link href="/dashboard" className={styles.logoContainer} style={{ gap: '4px' }}>
+        <img src="/logo.png" alt="FinWise Logo" style={{ height: '40px', width: 'auto', display: 'block' }} />
         <span className={styles.logoText}>FinWise</span>
       </Link>
 

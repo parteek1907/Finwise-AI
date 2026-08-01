@@ -9,7 +9,7 @@ import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { CurrencyService } from '@/services/currency';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatCurrencyRaw, getCurrencySymbol, formatRelativeDate } from '@/utils/formatters';
+import { formatCurrencyRaw, formatDate, getCurrencySymbol, formatRelativeDate } from '@/utils/formatters';
 import {
   calculateGoalStatus,
   calculateProjectedCompletion,
@@ -26,6 +26,7 @@ import {
   getMonthlyContributionData,
   getProgressOverTimeData,
 } from '@/utils/goalCalculations';
+import { triggerProgression } from '@/services/progressionEngine';
 import { BarChart, Bar, AreaChart, Area, XAxis, CartesianGrid, ResponsiveContainer, Tooltip } from 'recharts';
 
 export default function GoalDetailPage() {
@@ -129,6 +130,15 @@ export default function GoalDetailPage() {
     const amount = Number(fundAmount);
     if (!amount || amount <= 0) return;
     addContribution(goal.id, amount, fundNote || undefined);
+    
+    // Check if this contribution completed the goal
+    const newCurrent = goal.current + amount;
+    if (newCurrent >= goal.target) {
+      triggerProgression('COMPLETE_GOAL', 'saving');
+    } else {
+      triggerProgression('ADD_FUNDS', 'saving');
+    }
+
     setFundAmount('');
     setFundNote('');
     setShowAddFundsModal(false);
@@ -139,7 +149,7 @@ export default function GoalDetailPage() {
   };
 
   const handleDiscuss = () => {
-    const prompt = `I'm currently working toward my ${goal.name} goal.\n\nTarget Amount: ${fmt(convertedTarget)}\nCurrent Savings: ${fmt(convertedCurrent)}\nCompletion: ${progressPercent}%\nDeadline: ${new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}\nContributions: ${goal.contributions.length}\nMonthly Rate: ${fmt(Math.round(monthlyRate))}/mo\nRequired Monthly: ${fmt(requiredMonthly)}/mo\nHealth Score: ${healthScore.score}/100\n\nAnalyze my progress, identify risks, suggest ways to reach my goal faster, and recommend realistic adjustments without increasing financial stress.`;
+    const prompt = `I'm currently working toward my ${goal.name} goal.\n\nTarget Amount: ${fmt(convertedTarget)}\nCurrent Savings: ${fmt(convertedCurrent)}\nCompletion: ${progressPercent}%\nDeadline: ${formatDate(goal.deadline)}\nContributions: ${goal.contributions.length}\nMonthly Rate: ${fmt(Math.round(monthlyRate))}/mo\nRequired Monthly: ${fmt(requiredMonthly)}/mo\nHealth Score: ${healthScore.score}/100\n\nAnalyze my progress, identify risks, suggest ways to reach my goal faster, and recommend realistic adjustments without increasing financial stress.`;
     sessionStorage.setItem('mentorDraft', prompt);
     router.push('/mentor');
   };
@@ -323,7 +333,7 @@ export default function GoalDetailPage() {
                   <div className={styles.forecastItem}>
                     <span className={styles.forecastLabel}>Projected Completion</span>
                     <strong className={styles.forecastValue}>
-                      {projectedDate ? projectedDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }) : '—'}
+                      {projectedDate ? formatDate(projectedDate) : '—'}
                     </strong>
                   </div>
                   <div className={styles.forecastItem}>
@@ -447,7 +457,7 @@ export default function GoalDetailPage() {
               <div className={styles.statCard}>
                 <Calendar size={18} className={styles.statIcon} />
                 <span className={styles.statLabel}>Deadline</span>
-                <strong className={styles.statValue}>{new Date(goal.deadline).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</strong>
+                <strong className={styles.statValue}>{formatDate(goal.deadline)}</strong>
               </div>
               <div className={styles.statCard}>
                 <TrendingUp size={18} className={styles.statIcon} />
@@ -585,7 +595,7 @@ export default function GoalDetailPage() {
 
               <div className={styles.fundsDeadline}>
                 <Calendar size={14} />
-                <span>Target Date: {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+                <span>Target Date: {formatDate(goal.deadline)}</span>
               </div>
 
               <div className={styles.quickAmounts}>

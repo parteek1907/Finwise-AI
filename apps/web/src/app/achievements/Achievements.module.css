@@ -43,153 +43,42 @@
   margin: 0;
 }
 
-.layout {
+.progressionLayout {
   display: grid;
   grid-template-columns: 1fr 350px;
   gap: 2rem;
   align-items: start;
 }
 
-/* Level Card */
-.levelCard {
-  background-color: var(--color-card-bg);
-  border-radius: 24px;
-  padding: 2.5rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
-  margin-bottom: 2rem;
-}
-
-.levelHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 2rem;
-}
-
-.label {
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
-  font-weight: 600;
-  text-transform: uppercase;
-  margin-bottom: 0.25rem;
-  display: block;
-}
-
-.levelText {
-  font-size: 3rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--color-text-primary);
-}
-
-.streakBadge {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #fff7ed; /* orange light */
-  color: #ea580c;
-  padding: 0.5rem 1rem;
-  border-radius: 9999px;
-  font-weight: 600;
-}
-
-.xpLabels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.9rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--color-text-primary);
-}
-
-.progressBar {
-  height: 12px;
-  background-color: var(--color-surface-bg);
-  border-radius: 9999px;
-  overflow: hidden;
-  margin-bottom: 0.5rem;
-}
-
-.progressFill {
-  height: 100%;
-  background-color: var(--color-accent-green);
-  border-radius: 9999px;
-}
-
-.xpSub {
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-}
-
-/* Badges */
-.badgesSection h3 {
-  margin: 0 0 1.5rem 0;
-  font-size: 1.25rem;
-}
-
-.badgesGrid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 1.5rem;
-}
-
-.badgeCard {
-  background-color: var(--color-card-bg);
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+.mainContent {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  border: 1px solid transparent;
+  min-width: 0;
 }
 
-.lockedCard {
-  opacity: 0.6;
-  border: 1px dashed var(--color-border);
-  box-shadow: none;
-}
-
-.badgeIconBox {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
+.sideCol {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 1rem;
+  flex-direction: column;
+  gap: 2rem;
 }
 
-.badgeCard h4 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
-}
-
-.badgeCard p {
-  margin: 0;
-  font-size: 0.85rem;
-  color: var(--color-text-secondary);
-  line-height: 1.4;
-}
-
-/* Leaderboard */
+/* Leaderboard Specifics */
 .leaderboardCard {
-  background-color: var(--color-card-bg);
-  border-radius: 24px;
-  padding: 2rem;
-  box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #e2e8f0;
+  padding: 1.5rem;
 }
 
 .leaderboardCard h3 {
   margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
+  color: #0f172a;
 }
 
 .leaderboardSub {
-  margin: 0 0 2rem 0;
-  font-size: 0.9rem;
-  color: var(--color-text-secondary);
+  color: #64748b;
+  font-size: 0.85rem;
+  margin: 0 0 1.5rem 0;
   line-height: 1.4;
 }
 
@@ -199,46 +88,50 @@
   gap: 0.5rem;
 }
 
-.playerRow {
+.loadingText, .emptyText {
+  color: #64748b;
+  font-size: 0.9rem;
+  text-align: center;
+  padding: 1rem 0;
+  font-style: italic;
+}
+
+.leaderboardRow {
   display: flex;
   align-items: center;
   gap: 1rem;
   padding: 0.75rem 1rem;
+  background: #f8fafc;
   border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s;
 }
 
-.currentUser {
-  background-color: var(--color-surface-bg);
-  border: 1px solid var(--color-border);
+.leaderboardRow:hover {
+  background: white;
+  border-color: #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.02);
 }
 
-.rank {
+.rankBadge {
   font-weight: 700;
-  color: var(--color-text-secondary);
-  width: 20px;
+  color: #94a3b8;
+  width: 24px;
 }
 
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  overflow: hidden;
-}
-
-.avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.playerName {
+.lbUserInfo {
+  display: flex;
+  flex-direction: column;
   flex: 1;
-  font-weight: 600;
+}
+
+.lbUserInfo strong {
+  color: #0f172a;
   font-size: 0.95rem;
 }
 
-.playerXp {
+.lbUserInfo span {
+  color: #10b981;
+  font-size: 0.8rem;
   font-weight: 600;
-  color: var(--color-accent-green);
-  font-size: 0.9rem;
 }

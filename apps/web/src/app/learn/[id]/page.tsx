@@ -11,6 +11,8 @@ import { LessonSideChat } from '@/components/learn/LessonSideChat';
 import { LESSON_CONTENTS, LESSON_QUIZZES } from '@/mocks/lessons';
 import { Certificate } from '@/components/learn/Certificate';
 import { Sparkles } from 'lucide-react';
+import { triggerProgression } from '@/services/progressionEngine';
+import { formatDate } from '@/utils/formatters';
 
 export default function LessonPage() {
   const router = useRouter();
@@ -83,6 +85,10 @@ export default function LessonPage() {
     const newAnswers = { ...miniQuizAnswers, [currentChapterIdx]: optIdx };
     setMiniQuizAnswers(newAnswers);
     updateCourseProgress(lessonId, { miniQuizAnswers: newAnswers });
+    
+    if (currentChapter?.miniQuiz?.answerIndex === optIdx) {
+      triggerProgression('PASS_QUIZ', 'learning');
+    }
   };
 
   const retryQuestion = () => {
@@ -343,7 +349,7 @@ export default function LessonPage() {
                       userName={user.name}
                       courseTitle={lesson.title}
                       score={100}
-                      date={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                      date={formatDate(new Date())}
                     />
                   </div>
                 ) : (

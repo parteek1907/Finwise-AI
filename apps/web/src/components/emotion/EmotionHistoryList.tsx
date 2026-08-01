@@ -2,6 +2,7 @@ import React from 'react';
 import { EmotionHistory } from '../../types/emotion';
 import styles from './EmotionHistory.module.css';
 import { Clock } from 'lucide-react';
+import { formatDate } from '@/utils/formatters';
 import { motion } from 'framer-motion';
 
 interface EmotionHistoryListProps {
@@ -40,7 +41,7 @@ export const EmotionHistoryList: React.FC<EmotionHistoryListProps> = ({ history 
             <div className={styles.cardHeader}>
               <span className={styles.emotionBadge}>{item.emotion}</span>
               <span className={styles.date}>
-                {new Date(item.timestamp).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                {formatDate(item.timestamp)} {new Date(item.timestamp).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
               </span>
             </div>
             

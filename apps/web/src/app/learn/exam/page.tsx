@@ -6,9 +6,12 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { Flag, CheckCircle2, XCircle, Award, ChevronRight, ChevronLeft, Clock, RotateCcw, BookOpen, AlertTriangle } from 'lucide-react';
 import styles from './Exam.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Sparkles, Trophy } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
+import { triggerProgression } from '@/services/progressionEngine';
 import { LESSON_QUIZZES } from '@/mocks/lessons';
 import { Certificate } from '@/components/learn/Certificate';
+import { formatDate } from '@/utils/formatters';
 
 type Question = {
   id: string;
@@ -209,8 +212,17 @@ function ExamContent() {
         const passed = finalScore >= 70;
         
         if (passed) {
+          const lesson = useAppStore.getState().lessons.find(l => l.id === lessonId);
+          const customXp = lesson?.xp || 50;
+          const customCoins = Math.floor(customXp / 4);
+          
           useAppStore.getState().completeLesson(lessonId);
           useAppStore.getState().updateCourseProgress(lessonId, { status: 'Completed' });
+          if (finalScore === 100) {
+            triggerProgression('PERFECT_QUIZ', 'learning', false, { xp: customXp + 30, coins: customCoins + 10, label: 'Perfect Score' });
+          } else {
+            triggerProgression('COMPLETE_LESSON', 'learning', false, { xp: customXp, coins: customCoins, label: 'Course Completed' });
+          }
         }
 
         setExamResult({
@@ -551,7 +563,7 @@ function ExamContent() {
                   userName={user.name}
                   courseTitle={lessonId ? (lessons.find(l => l.id === lessonId)?.title || "Course") : "FinWise Master Assessment"}
                   score={examResult.score}
-                  date={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                  date={formatDate(new Date())}
                 />
               </div>
             )}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { PortfolioHolding, PortfolioSummary } from '../../types/portfolio';
 import { Trade } from '../../types/trade';
-import { formatCurrency, formatPercentage } from '../../utils/formatters';
+import { formatCurrency, formatPercentage, formatDate } from '../../utils/formatters';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import NumberFlow from '@/components/ui/ClientNumberFlow';
 import { EmptyState } from '../ui/EmptyState';
@@ -252,7 +252,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                   <tbody>
                     {filteredTrades.map((trade, i) => (
                       <tr key={i}>
-                        <td>{new Date(trade.executedAt).toLocaleDateString()}</td>
+                        <td>{formatDate(trade.executedAt)}</td>
                         <td><strong>{trade.symbol}</strong></td>
                         <td>
                           <span className={trade.side === 'BUY' ? styles.buyBadge : styles.sellBadge}>

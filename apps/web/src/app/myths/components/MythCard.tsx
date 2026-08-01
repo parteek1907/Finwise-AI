@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, AlertCircle, ShieldAlert, LineChart, TrendingUp, Lightbulb, Hand } from 'lucide-react';
 import styles from './MythVsFact.module.css';
+import { triggerProgression } from '@/services/progressionEngine';
 
 export interface MythData {
   id: string;
@@ -67,6 +68,7 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
     if (!isActive) return;
     if (!isFlipped) {
       setIsFlipped(true);
+      triggerProgression('MYTH_BUSTED', 'learning', true);
       setTimeout(() => {
         setShowXP(true);
       }, 400);

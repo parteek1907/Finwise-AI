@@ -8,6 +8,7 @@ import styles from './Learn.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore, Lesson } from '@/store/useAppStore';
 import { Certificate } from '@/components/learn/Certificate';
+import { formatDate } from '@/utils/formatters';
 import { Tabs } from '@/components/ui/vercel-tabs';
 
 const getLessonImage = (lessonId: string) => {
@@ -322,7 +323,7 @@ export default function LearnPage() {
               <Certificate 
                 userName={user.name || 'FinWise Student'}
                 courseTitle={selectedCertLesson.title}
-                date={new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                date={formatDate(new Date())}
                 variant="full"
               />
             </motion.div>

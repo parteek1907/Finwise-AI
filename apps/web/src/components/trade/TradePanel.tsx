@@ -7,6 +7,7 @@ import styles from './Trade.module.css';
 
 import { EmotionCheckModal } from './EmotionCheckModal';
 import { useRouter } from 'next/navigation';
+import { triggerProgression } from '../../services/progressionEngine';
 
 interface TradePanelProps {
   quote: Quote | null;
@@ -49,6 +50,12 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
       
       setLastTradeData(emotionData);
       setSuccess(true);
+      
+      triggerProgression('EMOTION_CHECK', 'reflection');
+      if (!emotionData.biases || emotionData.biases.length === 0) {
+        triggerProgression('TRADE_NO_WARNING', 'reflection');
+      }
+
       setTimeout(() => {
         setSuccess(false);
         setLastTradeData(null);

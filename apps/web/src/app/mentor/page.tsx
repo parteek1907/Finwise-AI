@@ -9,6 +9,7 @@ import { useSettingsStore } from '@/store/useSettingsStore';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ChatSidebar } from '@/components/mentor/ChatSidebar';
 import { RichMessage } from '@/components/mentor/RichMessage';
+import { triggerProgression } from '@/services/progressionEngine';
 
 export default function MentorPage() {
   const { chats, activeChatId, addMessage, createNewChat, user, goals, updateGoal, addGoal, updateChatTitle } = useAppStore();
@@ -226,6 +227,9 @@ export default function MentorPage() {
       if (!response.ok) throw new Error('API failed');
 
       const data = await response.json();
+      
+      triggerProgression('MENTOR_QUESTION', 'learning');
+      
       setIsTyping(false);
       
       const aiResponseText = data.content || "I'm having trouble thinking right now.";

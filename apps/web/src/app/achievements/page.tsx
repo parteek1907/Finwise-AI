@@ -2,51 +2,34 @@
 
 import React, { useEffect, useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Award, Zap, ShieldCheck, Flame, TrendingUp, Star, Lock } from 'lucide-react';
+import { Award } from 'lucide-react';
 import styles from './Achievements.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { subscribeToLeaderboard, LeaderboardUser } from '@/services/leaderboard';
 
-const getBadges = (xp: number, streak: number, goals: any[] = []) => {
-  const hasGoals = goals.length > 0;
-  const hasContributions = goals.some(g => g.contributions?.length > 0);
-  const has25 = goals.some(g => g.target > 0 && (g.current / g.target) >= 0.25);
-  const has50 = goals.some(g => g.target > 0 && (g.current / g.target) >= 0.50);
-  const has75 = goals.some(g => g.target > 0 && (g.current / g.target) >= 0.75);
-  const completedGoals = goals.filter(g => g.status === 'Completed' || (g.target > 0 && g.current >= g.target));
-  const hasCompleted = completedGoals.length > 0;
-  const hasThreeCompleted = completedGoals.length >= 3;
-  const isAhead = goals.some(g => g.status === 'Ahead');
-
-  // Consistent saver: at least one goal with contributions in 3+ different months
-  const isConsistent = goals.some(g => {
-    if (!g.contributions || g.contributions.length < 3) return false;
-    const months = new Set(g.contributions.map((c: any) => {
-      const d = new Date(c.date);
-      return `${d.getFullYear()}-${d.getMonth()}`;
-    }));
-    return months.size >= 3;
-  });
-
-  return [
-    { id: 1, name: 'First Steps', desc: 'Completed the onboarding.', icon: Star, color: '#eab308', unlocked: xp > 0 },
-    { id: 2, name: 'First Goal', desc: 'Created your first financial goal.', icon: ShieldCheck, color: '#22c55e', unlocked: hasGoals },
-    { id: 3, name: 'First Contribution', desc: 'Made your first goal contribution.', icon: Zap, color: '#8b5cf6', unlocked: hasContributions },
-    { id: 4, name: '25% Milestone', desc: 'Reached 25% of any goal.', icon: TrendingUp, color: '#3b82f6', unlocked: has25 },
-    { id: 5, name: '50% Milestone', desc: 'Reached 50% of any goal.', icon: TrendingUp, color: '#f59e0b', unlocked: has50 },
-    { id: 6, name: '75% Milestone', desc: 'Reached 75% of any goal.', icon: TrendingUp, color: '#f97316', unlocked: has75 },
-    { id: 7, name: 'Goal Achieved', desc: 'Completed a financial goal.', icon: Award, color: '#22c55e', unlocked: hasCompleted },
-    { id: 8, name: 'Triple Crown', desc: 'Completed three financial goals.', icon: Award, color: '#ec4899', unlocked: hasThreeCompleted },
-    { id: 9, name: 'Consistent Saver', desc: 'Contributed for 3+ months to a goal.', icon: Flame, color: '#f97316', unlocked: isConsistent },
-    { id: 10, name: 'Ahead of Schedule', desc: 'Pacing ahead on any active goal.', icon: Zap, color: '#3b82f6', unlocked: isAhead },
-    { id: 11, name: '7-Day Streak', desc: 'Logged in for 7 consecutive days.', icon: Flame, color: '#f97316', unlocked: streak >= 7 },
-    { id: 12, name: 'Market Scholar', desc: 'Completed 5 investing modules.', icon: Award, color: '#3b82f6', unlocked: xp >= 500 },
-  ];
-};
+// Components
+import { ProfilePrestige } from './ProfilePrestige';
+import { ActivityGraph } from './ActivityGraph';
+import { DailyStreaks } from './DailyStreaks';
+import { BadgeCollections } from './BadgeCollections';
+import { AchievementTimeline } from './AchievementTimeline';
 
 export default function AchievementsPage() {
   const user = useAppStore(state => state.user);
-  const goals = useAppStore(state => state.goals);
+  
+  // Safe fallback for legacy users
+  const progression = user.progression || {
+    streaks: {
+      login: { current: user.streak || 0, best: user.streak || 0 },
+      learning: { current: 0, best: 0 },
+      saving: { current: 0, best: 0 },
+      reflection: { current: 0, best: 0 },
+    },
+    badges: {},
+    activityGraph: {},
+    recentMilestones: [],
+  };
+
   const [liveLeaderboard, setLiveLeaderboard] = useState<LeaderboardUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   
@@ -54,11 +37,12 @@ export default function AchievementsPage() {
     let unsubscribeFn: (() => void) | null = null;
 
     import('@/services/leaderboard').then(({ syncUserXp, subscribeToLeaderboard }) => {
-      // Sync current user to Firebase (service guards against non-auth IDs)
       const currentUser = useAppStore.getState().user;
       syncUserXp(currentUser);
+      
+      // Force sync legacy progression on mount
+      useAppStore.getState().syncLegacyProgress();
 
-      // Subscribe to live leaderboard updates
       unsubscribeFn = subscribeToLeaderboard((users) => {
         setLiveLeaderboard(users);
         setIsLoading(false);
@@ -70,16 +54,6 @@ export default function AchievementsPage() {
     };
   }, []);
 
-  // Level Calculation: Total XP = 50 * Level * (Level + 1)
-  // Therefore Level = floor((-1 + sqrt(1 + 8 * Total XP / 100)) / 2)
-  const currentLevel = Math.floor((-1 + Math.sqrt(1 + 8 * user.xp / 100)) / 2);
-  const currentLevelBaseXp = 50 * currentLevel * (currentLevel + 1);
-  const xpForNextLevel = 50 * (currentLevel + 1) * (currentLevel + 2);
-  const xpNeededForNextLevel = xpForNextLevel - currentLevelBaseXp;
-  
-  const xpProgress = user.xp - currentLevelBaseXp;
-  const progressPercent = (xpProgress / xpNeededForNextLevel) * 100;
-
   return (
     <AppLayout>
       <div className={styles.workspace}>
@@ -87,82 +61,41 @@ export default function AchievementsPage() {
           <div className={styles.titleWrap}>
             <div className={styles.iconBox}><Award size={28} color="#19533B" /></div>
             <div>
-              <h1 className={styles.title}>Achievements & Rankings</h1>
-              <p className={styles.subtitle}>Track your progress and compete on the global leaderboard.</p>
+              <h1 className={styles.title}>Progression Hub</h1>
+              <p className={styles.subtitle}>Track your milestones, build streaks, and compete globally.</p>
             </div>
           </div>
         </header>
 
-        <div className={styles.layout}>
-          
-          <main className={styles.mainCol}>
-            {/* Level Card */}
-            <div className={styles.levelCard}>
-              <div className={styles.levelHeader}>
-                <div>
-                  <span className={styles.label}>Current Rank</span>
-                  <h2 className={styles.levelText}>Level {currentLevel}</h2>
-                </div>
-                <div className={styles.streakBadge}>
-                  <Flame size={18} /> {user.streak > 0 ? `${user.streak} Day Streak` : 'No Streak'}
-                </div>
-              </div>
-
-              <div className={styles.xpSection}>
-                <div className={styles.xpLabels}>
-                  <span>{user.xp.toLocaleString()} XP</span>
-                  <span>{xpForNextLevel.toLocaleString()} XP</span>
-                </div>
-                <div className={styles.progressBar}>
-                  <div className={styles.progressFill} style={{width: `${progressPercent}%`}}></div>
-                </div>
-                <span className={styles.xpSub}>{xpNeededForNextLevel - xpProgress} XP until Level {currentLevel + 1}</span>
-              </div>
-            </div>
-
-            {/* Badges Grid */}
-            <div className={styles.badgesSection}>
-              <h3>Earned Badges</h3>
-              <div className={styles.badgesGrid}>
-                {getBadges(user.xp, user.streak, goals).map(badge => (
-                  <div key={badge.id} className={`${styles.badgeCard} ${!badge.unlocked ? styles.lockedCard : ''}`}>
-                    <div className={styles.badgeIconBox} style={{
-                      backgroundColor: badge.unlocked ? `${badge.color}20` : 'var(--color-surface-bg)',
-                      color: badge.unlocked ? badge.color : 'var(--color-text-secondary)'
-                    }}>
-                      {badge.unlocked ? <badge.icon size={24} /> : <Lock size={24} />}
-                    </div>
-                    <h4>{badge.name}</h4>
-                    <p>{badge.desc}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
+        <div className={styles.progressionLayout}>
+          <main className={styles.mainContent}>
+            <ProfilePrestige user={user} />
+            <DailyStreaks streaks={progression.streaks} />
+            <ActivityGraph activityData={progression.activityGraph} />
+            <BadgeCollections badges={progression.badges} />
           </main>
 
           <aside className={styles.sideCol}>
+            <AchievementTimeline milestones={progression.recentMilestones} />
+            
             <div className={styles.leaderboardCard}>
               <h3>Global Leaderboard</h3>
               <p className={styles.leaderboardSub}>Compete with other learners to build the best financial habits.</p>
               
               <div className={styles.list}>
-                {isLoading && <p className="text-sm text-gray-500 mt-4">Loading top learners...</p>}
+                {isLoading && <p className={styles.loadingText}>Loading top learners...</p>}
                 {!isLoading && liveLeaderboard.length === 0 && (
-                  <p className="text-sm text-gray-500 mt-4">No top learners yet. Complete a course to be the first!</p>
+                  <p className={styles.emptyText}>No users on the leaderboard yet.</p>
                 )}
-                {liveLeaderboard.map(player => {
-                  const isUser = player.id === user.id;
-                  return (
-                    <div key={player.id} className={`${styles.playerRow} ${isUser ? styles.currentUser : ''}`}>
-                      <div className={styles.rank}>{player.rank}</div>
-                      <div className={styles.avatar}>
-                        <img src={player.avatar} alt={player.name} />
-                      </div>
-                      <div className={styles.playerName}>{isUser ? (user.name || 'You') : player.name}</div>
-                      <div className={styles.playerXp}>{player.xp} XP</div>
+                {!isLoading && liveLeaderboard.map((u, i) => (
+                  <div key={u.id || i} className={styles.leaderboardRow}>
+                    <div className={styles.rankBadge}>#{i + 1}</div>
+                    <div className={styles.lbUserInfo}>
+                      <strong>{u.name}</strong>
+                      <span>{u.xp.toLocaleString()} XP</span>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           </aside>

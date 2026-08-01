@@ -76,8 +76,8 @@ export function Sidebar({ isCollapsed = false, onToggleCollapse }: SidebarProps)
     <aside className={`${styles.sidebar} ${isCollapsed ? styles.sidebarCollapsed : ''}`}>
       {/* Header with Logo & Collapse Toggle */}
       <div className={styles.sidebarHeader}>
-        <Link href="/dashboard" className={styles.logoContainer}>
-          <div className={styles.logoIcon}></div>
+        <Link href="/dashboard" className={styles.logoContainer} style={{ gap: '4px' }}>
+          <img src="/logo.png" alt="FinWise Logo" style={{ height: '48px', width: 'auto', display: 'block' }} />
           {!isCollapsed && <span className={styles.logoText}>FinWise</span>}
         </Link>
       </div>

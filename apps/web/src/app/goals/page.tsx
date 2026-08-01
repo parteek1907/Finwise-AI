@@ -10,8 +10,9 @@ import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { CurrencyService } from '@/services/currency';
 import { DatePicker } from '@/components/ui/date-picker';
-import { formatCurrencyRaw, getCurrencySymbol } from '@/utils/formatters';
+import { formatCurrencyRaw, getCurrencySymbol, formatDate } from '@/utils/formatters';
 import { GOAL_TEMPLATES } from '@/utils/goalCalculations';
+import { triggerProgression } from '@/services/progressionEngine';
 
 const CATEGORY_OPTIONS = [
   { value: 'Emergency', label: 'Emergency Fund', icon: PiggyBank },
@@ -61,6 +62,8 @@ export default function GoalsPage() {
       priority: newGoal.priority,
       dependsOn: newGoal.dependsOn || undefined
     });
+    
+    triggerProgression('CREATE_GOAL', 'saving');
     
     setShowAddModal(false);
     setNewGoal({ name: '', target: '', deadline: '', category: 'Emergency', priority: 'Medium', dependsOn: '' });
@@ -214,7 +217,7 @@ export default function GoalsPage() {
                       </span>
                     )}
                   </div>
-                  <span className={styles.deadline}>Target: {new Date(goal.deadline).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                  <span className={styles.deadline}>Target: {formatDate(goal.deadline)}</span>
                   
                   <div className={styles.progressSection}>
                     <div className={styles.progressLabels}>

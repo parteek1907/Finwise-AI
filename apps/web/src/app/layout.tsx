@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Inter, DM_Serif_Display } from "next/font/google";
 import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
+import { XPToastProvider } from "@/components/ui/XPToastProvider";
 import { MobileBlocker } from "@/components/ui/mobile-blocker";
 
 const geist = Geist({
@@ -37,9 +38,11 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <MobileBlocker />
-        <ToastProvider>
-          {children}
-        </ToastProvider>
+        <XPToastProvider>
+          <ToastProvider>
+            {children}
+          </ToastProvider>
+        </XPToastProvider>
       </body>
     </html>
   );

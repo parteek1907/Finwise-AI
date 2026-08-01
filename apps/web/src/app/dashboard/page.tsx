@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { formatDate } from '@/utils/formatters';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
@@ -33,7 +34,7 @@ const HEALTH_TREND = Array.from({ length: 30 }).map((_, i) => {
   const date = new Date();
   date.setDate(date.getDate() - (29 - i));
   return {
-    date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+    date: formatDate(date),
     score: Math.floor(65 + (i * 0.8) + (Math.random() * 10 - 5))
   };
 });

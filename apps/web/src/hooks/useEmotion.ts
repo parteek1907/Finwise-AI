@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect } from 'react';
+import { formatDate } from '@/utils/formatters';
 import { EmotionAnalysis, EmotionHistory, EmotionStats } from '../types/emotion';
 import { analyzeEmotion, getEmotionHistory, saveEmotion } from '../services/emotion';
 
@@ -49,7 +50,7 @@ export const useEmotion = () => {
       relevantCount++;
       
       const dateObj = new Date(entry.timestamp);
-      const shortDate = `${dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} ${dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
+      const shortDate = `${formatDate(dateObj)} ${dateObj.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })}`;
       riskTrend.push({ id: entry.id, date: shortDate, riskScore: riskScores[entry.risk] || 0 });
       emotionTrend.push({ id: entry.id, date: shortDate, confidence: entry.confidence });
 
