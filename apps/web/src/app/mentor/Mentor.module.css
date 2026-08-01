@@ -149,6 +149,10 @@
   gap: 0.25rem;
 }
 
+.hoverMenuActive {
+  display: flex !important;
+}
+
 .historyItem:hover .hoverMenu {
   display: flex;
 }
@@ -165,6 +169,58 @@
 .hoverMenu button:hover {
   color: #303A3C;
   background-color: rgba(0,0,0,0.05);
+}
+
+.chatTitleInput {
+  background: white;
+  border: 1px solid #19533B;
+  border-radius: 4px;
+  padding: 2px 4px;
+  font-size: 0.85rem;
+  width: 100%;
+  color: #303A3C;
+  outline: none;
+}
+
+.dropdownMenu {
+  position: absolute;
+  right: 8px;
+  top: 36px;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  z-index: 50;
+  min-width: 120px;
+}
+
+.dropdownMenu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  color: #303A3C;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.dropdownMenu button:hover {
+  background-color: #f3f4f6;
+  color: #303A3C;
+}
+
+.dropdownMenu button.deleteOption {
+  color: #ef4444;
+}
+
+.dropdownMenu button.deleteOption:hover {
+  background-color: #fef2f2;
 }
 
 .emptySidebar {
@@ -708,4 +764,59 @@
 @keyframes wave {
   0%, 100% { transform: scaleY(0.5); opacity: 0.5; }
   50% { transform: scaleY(1); opacity: 1; }
+}
+
+/* Myth Integration CSS */
+.mythIntegrationBanner {
+  background: white;
+  border: 1px solid #29A367;
+  border-radius: 12px;
+  padding: 16px;
+  margin: 16px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(41, 163, 103, 0.1);
+  z-index: 10;
+  position: relative;
+}
+
+.mythIntegrationContent {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mythIntegrationContent h4 {
+  margin: 0 0 4px 0;
+  color: #303A3C;
+  font-size: 16px;
+}
+
+.mythIntegrationContent p {
+  margin: 0;
+  color: #8c9091;
+  font-size: 14px;
+}
+
+.generateReportBtn {
+  background: #29A367;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.generateReportBtn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(41, 163, 103, 0.2);
+}
+
+.generateReportBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }

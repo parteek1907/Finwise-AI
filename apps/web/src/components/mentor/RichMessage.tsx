@@ -1,4 +1,5 @@
 import React from 'react';
+import { CodeBlock } from './CodeBlock';
 import { 
   FileText, 
   Target, 
@@ -12,6 +13,7 @@ import styles from '../../app/mentor/Mentor.module.css';
 
 interface RichMessageProps {
   content: string;
+  onActionClick?: (action: string) => void;
 }
 
 const getIconForTitle = (title: string) => {
@@ -26,7 +28,7 @@ const getIconForTitle = (title: string) => {
   return <FileText size={18} />;
 };
 
-export function RichMessage({ content }: RichMessageProps) {
+export function RichMessage({ content, onActionClick }: RichMessageProps) {
   // We'll replace headers with a custom marker so we can split them and inject React icons later
   // Custom marker: :::HEADER:::Title:::
   let preProcessed = content
@@ -44,7 +46,18 @@ export function RichMessage({ content }: RichMessageProps) {
        const isAdd = amount > 0;
        const displayAmount = Math.abs(amount).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
        return `<div style="margin: 1rem 0; padding: 1rem; background-color: ${isAdd ? '#f0fdf4' : '#fff1f2'}; border: 1px solid ${isAdd ? '#bbf7d0' : '#fecdd3'}; border-radius: 8px; display: flex; align-items: center; gap: 12px; color: ${isAdd ? '#166534' : '#9f1239'}; font-weight: 600;">✓ Successfully ${isAdd ? 'added' : 'removed'} ${displayAmount} ${isAdd ? 'to' : 'from'} your goal!</div>`;
-    });
+    })
+    // Extract Code Blocks using base64 encoding to preserve newlines during split
+    .replace(/```(\w*)\n([\s\S]*?)```/g, (match, lang, code) => {
+       const actualCode = code.trim();
+       // use btoa to avoid issues with double newlines
+       return `\n\n:::CODEBLOCK:::${lang || 'text'}:::${btoa(encodeURIComponent(actualCode))}:::\n\n`;
+    })
+    // Highlight Off-topic reminder
+    .replace(
+       /Let us learn something more about finance and trading\./g, 
+       '\n\n:::OFF_TOPIC_BANNER:::\n\n'
+    );
 
   // Wrap lists
   preProcessed = preProcessed
@@ -88,6 +101,45 @@ export function RichMessage({ content }: RichMessageProps) {
               )}
             </div>
           );
+        }
+        
+        if (block.includes(':::OFF_TOPIC_BANNER:::')) {
+           return (
+             <div 
+               key={idx} 
+               onClick={() => onActionClick && onActionClick("Please generate some interesting insights about finance and trading for me to learn.")}
+               style={{ 
+                 margin: '2rem 0 1rem', 
+                 padding: '1.25rem', 
+                 background: 'linear-gradient(145deg, #19533B, #123e2c)', 
+                 color: 'white', 
+                 borderRadius: '12px', 
+                 fontSize: '1.1rem', 
+                 fontWeight: 600, 
+                 textAlign: 'center', 
+                 boxShadow: '0 4px 12px rgba(25, 83, 59, 0.2)', 
+                 letterSpacing: '0.02em', 
+                 display: 'flex', 
+                 alignItems: 'center', 
+                 justifyContent: 'center', 
+                 gap: '8px',
+                 cursor: onActionClick ? 'pointer' : 'default',
+                 transition: 'transform 0.2s',
+               }}
+               onMouseOver={(e) => { if(onActionClick) e.currentTarget.style.transform = 'scale(1.02)'; }}
+               onMouseOut={(e) => { if(onActionClick) e.currentTarget.style.transform = 'scale(1)'; }}
+             >
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 
+               Let us learn something more about finance and trading.
+             </div>
+           );
+        }
+
+        if (block.includes(':::CODEBLOCK:::')) {
+           const parts = block.split(':::');
+           const lang = parts[2];
+           const code = decodeURIComponent(atob(parts[3]));
+           return <CodeBlock key={idx} language={lang} code={code} />;
         }
         
         if (block.startsWith('<ul') || block.startsWith('<ol')) {

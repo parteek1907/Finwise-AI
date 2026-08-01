@@ -1,10 +1,32 @@
-import React from 'react';
-import { Plus, MessageSquare, MoreHorizontal, Inbox } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Plus, MessageSquare, MoreHorizontal, Inbox, Pencil, Trash2 } from 'lucide-react';
 import styles from '../../app/mentor/Mentor.module.css';
 import { useAppStore } from '@/store/useAppStore';
 
 export function ChatSidebar() {
-  const { chats, activeChatId, setActiveChat, createNewChat } = useAppStore();
+  const { chats, activeChatId, setActiveChat, createNewChat, deleteChat, updateChatTitle } = useAppStore();
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setActiveDropdown(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleRenameSubmit = (chatId: string) => {
+    if (editTitle.trim()) {
+      updateChatTitle(chatId, editTitle.trim());
+    }
+    setEditingChatId(null);
+  };
 
   const isToday = (dateString: string) => {
     const d = new Date(dateString);
@@ -48,18 +70,60 @@ export function ChatSidebar() {
             >
               <div className={styles.historyItemContent}>
                 <MessageSquare size={14} />
-                <span className={styles.chatTitle}>{chat.title}</span>
+                {editingChatId === chat.id ? (
+                  <input
+                    ref={editInputRef}
+                    type="text"
+                    className={styles.chatTitleInput}
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    onBlur={() => handleRenameSubmit(chat.id)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleRenameSubmit(chat.id);
+                      if (e.key === 'Escape') setEditingChatId(null);
+                    }}
+                    autoFocus
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span className={styles.chatTitle}>{chat.title}</span>
+                )}
               </div>
-              <div className={styles.hoverMenu}>
+              <div className={`${styles.hoverMenu} ${activeDropdown === chat.id ? styles.hoverMenuActive : ''}`} ref={activeDropdown === chat.id ? dropdownRef : null}>
                 <button 
                   title="More options"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // more options logic
+                    setActiveDropdown(activeDropdown === chat.id ? null : chat.id);
                   }}
                 >
                   <MoreHorizontal size={14} />
                 </button>
+                
+                {activeDropdown === chat.id && (
+                  <div className={styles.dropdownMenu}>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditTitle(chat.title);
+                        setEditingChatId(chat.id);
+                        setActiveDropdown(null);
+                      }}
+                    >
+                      <Pencil size={12} /> Rename
+                    </button>
+                    <button 
+                      className={styles.deleteOption}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteChat(chat.id);
+                        setActiveDropdown(null);
+                      }}
+                    >
+                      <Trash2 size={12} /> Delete
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           ))}

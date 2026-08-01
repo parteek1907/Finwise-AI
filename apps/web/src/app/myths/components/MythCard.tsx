@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles, ArrowRight, AlertCircle, ShieldAlert, LineChart, TrendingUp, Lightbulb, Hand } from 'lucide-react';
 import styles from './MythVsFact.module.css';
 import { triggerProgression } from '@/services/progressionEngine';
+import { ScratchCard } from './ScratchCard';
 
 export interface MythData {
   id: string;
@@ -61,33 +62,22 @@ const cardVariants: any = {
 };
 
 export function MythCard({ data, isActive, onNext, onPrev, index, direction }: MythCardProps) {
-  const [isFlipped, setIsFlipped] = useState(false);
+  const [isRevealed, setIsRevealed] = useState(false);
   const [showXP, setShowXP] = useState(false);
 
-  const handleCardClick = () => {
-    if (!isActive) return;
-    if (!isFlipped) {
-      setIsFlipped(true);
-      triggerProgression('MYTH_BUSTED', 'learning', true);
-      setTimeout(() => {
-        setShowXP(true);
-      }, 400);
-      setTimeout(() => {
-        setShowXP(false);
-      }, 2200);
-    } else {
-      onNext();
-    }
-  };
+  useEffect(() => {
+    setIsRevealed(false);
+  }, [data.id]);
 
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'Investing': return <LineChart size={14} />;
-      case 'Crypto': return <AlertCircle size={14} />;
-      case 'Scams': return <ShieldAlert size={14} />;
-      case 'Trading': return <TrendingUp size={14} />;
-      default: return <Lightbulb size={14} />;
-    }
+  const handleReveal = () => {
+    setIsRevealed(true);
+    triggerProgression('MYTH_BUSTED', 'learning', true);
+    setTimeout(() => {
+      setShowXP(true);
+    }, 400);
+    setTimeout(() => {
+      setShowXP(false);
+    }, 2200);
   };
 
   const handleDragEnd = (event: any, info: any) => {
@@ -113,50 +103,27 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
     >
       <motion.div
         className={styles.card}
-        onClick={handleCardClick}
-        drag={isActive ? "x" : false}
+        drag={isActive && isRevealed ? "x" : false}
         dragConstraints={{ left: 0, right: 0 }}
         dragElastic={0.6}
         onDragEnd={handleDragEnd}
-        animate={{
-          rotateY: isFlipped ? 180 : 0,
-        }}
-        transition={{
-          type: "spring",
-          stiffness: 260,
-          damping: 24,
-          mass: 0.8,
-        }}
-        whileTap={{ scale: 0.98 }}
+        whileTap={{ scale: 0.99 }}
+        style={{ background: 'transparent' }}
       >
-        {/* Front of Card: MYTH */}
-        <div className={`${styles.cardFace} ${styles.cardFront}`} style={{ visibility: isFlipped ? 'hidden' : 'visible' }}>
-          <div className={styles.badge}>
-            {getCategoryIcon(data.category)}
-            <span style={{ marginLeft: 6 }}>{data.category}</span>
+        <ScratchCard 
+          isComplete={isRevealed} 
+          onComplete={handleReveal}
+          myth={data.myth}
+        >
+          {/* Back of Card: FACT (Now always rendered, but hidden by canvas until scratched) */}
+          <div className={`${styles.cardFace} ${styles.cardFactSide}`}>
+            <div className={`${styles.badge} ${styles.badgeFact}`}>
+              <span style={{ marginLeft: 6 }}>REALITY</span>
+            </div>
+            <h3 className={`${styles.statement} ${styles.factStatement}`}>{data.fact}</h3>
+            <p className={styles.factExplanation}>{data.insight}</p>
           </div>
-          <h3 className={styles.statement}>"{data.myth}"</h3>
-          
-          <div className={styles.swipeIndicator}>
-            <Hand size={14} />
-            <span>Click to reveal · Click again for next</span>
-            <motion.div
-              animate={{ x: [0, 4, 0] }}
-              transition={{ repeat: Infinity, duration: 1.5 }}
-            >
-              <ArrowRight size={14} />
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Back of Card: FACT */}
-        <div className={`${styles.cardFace} ${styles.cardBack}`} style={{ visibility: isFlipped ? 'visible' : 'hidden' }}>
-          <div className={`${styles.badge} ${styles.badgeFact}`}>
-            <span style={{ marginLeft: 6 }}>REALITY</span>
-          </div>
-          <h3 className={`${styles.statement} ${styles.factStatement}`}>{data.fact}</h3>
-          <p className={styles.factExplanation}>{data.insight}</p>
-        </div>
+        </ScratchCard>
       </motion.div>
 
       {/* Floating XP Toast */}
@@ -177,3 +144,4 @@ export function MythCard({ data, isActive, onNext, onPrev, index, direction }: M
     </motion.div>
   );
 }
+

@@ -188,7 +188,7 @@ export default function DashboardPage() {
               <span>Scams Avoided</span>
               <div className={styles.metricIcon}><ShieldCheck size={14} color="#19533B" /></div>
             </div>
-            <div className={styles.metricValue}><NumberFlow value={showNumbers ? 3 : 0} /></div>
+            <div className={styles.metricValue}><NumberFlow value={showNumbers ? (user.scamsAvoided || 0) : 0} /></div>
             <div className={styles.metricChange}>
               <span className={styles.metricChangeText}>Protected successfully</span>
             </div>
@@ -377,11 +377,11 @@ export default function DashboardPage() {
               <div className={styles.scoreMetricsList}>
                 <div className={styles.scoreMetricRow}>
                   <span className={styles.metricName}>Saving Habits</span>
-                  <span className={styles.metricScore}>92/100</span>
+                  <span className={styles.metricScore}>{user.savingScore || 92}/100</span>
                 </div>
                 <div className={styles.scoreMetricRow}>
                   <span className={styles.metricName}>Risk Management</span>
-                  <span className={styles.metricScore}>80/100</span>
+                  <span className={styles.metricScore}>{user.riskScore || 80}/100</span>
                 </div>
               </div>
             </div>

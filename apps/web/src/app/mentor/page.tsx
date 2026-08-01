@@ -339,7 +339,7 @@ export default function MentorPage() {
                                 <Sparkles size={12} /> AI remembers your Guardian investor profile.
                               </div>
                             )}
-                            <RichMessage content={msg.text} />
+                            <RichMessage content={msg.text} onActionClick={handleSendHiddenContext} />
                           </>
                         )}
                       </div>

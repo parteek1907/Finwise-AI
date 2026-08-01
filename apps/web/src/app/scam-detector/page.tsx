@@ -7,6 +7,7 @@ import { formatDate } from '@/utils/formatters';
 import styles from './Scam.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Tabs } from '@/components/ui/vercel-tabs';
+import { useAppStore } from '@/store/useAppStore';
 
 interface ScamResult {
   isScam: boolean;
@@ -123,10 +124,14 @@ export default function ScamDetectorPage() {
       if (!res.ok) throw new Error('API request failed with status ' + res.status);
       const data = await res.json();
       setResult(data);
+      if (data.isScam) {
+        const store = useAppStore.getState();
+        store.updateUser({ scamsAvoided: (store.user.scamsAvoided || 0) + 1 });
+      }
     } catch (err) {
       console.error("Scan error:", err);
       // Fallback
-      setResult({
+      const fallbackResult = {
         isScam: true,
         probability: 88,
         redFlags: [
@@ -140,7 +145,12 @@ export default function ScamDetectorPage() {
           }
         ],
         lesson: "Always verify whether an investment platform or opportunity is properly licensed before transferring any funds or personal data."
-      });
+      };
+      setResult(fallbackResult);
+      if (fallbackResult.isScam) {
+        const store = useAppStore.getState();
+        store.updateUser({ scamsAvoided: (store.user.scamsAvoided || 0) + 1 });
+      }
     } finally {
       setIsScanning(false);
     }

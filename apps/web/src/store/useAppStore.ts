@@ -39,6 +39,9 @@ export interface User {
   topBadge?: string;
   streak: number; // legacy login streak, keeping for compatibility
   lastCourseDate?: string;
+  savingScore: number;
+  riskScore: number;
+  scamsAvoided: number;
   progression: UserProgression;
 }
 
@@ -143,6 +146,7 @@ export interface AppState {
   createNewChat: (title?: string) => string;
   setActiveChat: (id: string) => void;
   updateChatTitle: (id: string, title: string) => void;
+  deleteChat: (id: string) => void;
   updateUser: (data: Partial<User>) => void;
   updateUserFromCloud: (data: Partial<User>) => void; // Update without syncing back
   resetUser: () => void;
@@ -162,6 +166,9 @@ const INITIAL_USER: User = {
   level: 1,
   title: 'Financial Explorer',
   streak: 0,
+  savingScore: 92,
+  riskScore: 80,
+  scamsAvoided: 0,
   progression: {
     streaks: {
       login: { current: 0, best: 0 },
@@ -656,6 +663,18 @@ export const useAppStore = create<AppState>()(
         chats: state.chats.map(chat => chat.id === id ? { ...chat, title } : chat)
       })),
 
+      deleteChat: (id) => set((state) => {
+        const remainingChats = state.chats.filter(c => c.id !== id);
+        let nextActiveId = state.activeChatId;
+        if (state.activeChatId === id) {
+          nextActiveId = remainingChats.length > 0 ? remainingChats[0].id : null;
+        }
+        return {
+          chats: remainingChats,
+          activeChatId: nextActiveId
+        };
+      }),
+
       updateUser: (data) => {
         set((state) => ({
           user: { ...state.user, ...data }
@@ -882,7 +901,9 @@ export const useAppStore = create<AppState>()(
           }
           return {};
         });
-      }
+      },
+
+      setEmotionContextReport: (report) => set({ emotionContextReport: report })
     }),
     {
       name: 'finwise-storage',

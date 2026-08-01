@@ -247,6 +247,43 @@ def mentor_endpoint(request: ChatRequest):
         print(f"Error calling Groq API: {e}")
         raise HTTPException(status_code=503, detail="I apologize, but I am having trouble connecting to my brain right now. Please check the API configuration.")
 
+@app.get("/api/myths/generate")
+def generate_myths():
+    system_prompt = (
+        "You are an expert financial AI educator. Your task is to generate exactly 5 distinct, highly engaging 'Myth vs Fact' pairs about finance. "
+        "The categories should be mixed (e.g., Trading, Investing, Crypto, Saving, General). "
+        "Each myth must have a difficulty rating (Beginner, Intermediate, Advanced). "
+        "Make them interesting, debunking common misconceptions. "
+        "You MUST return the output in ONLY valid JSON format matching this schema:\n"
+        "{\n"
+        "  \"myths\": [\n"
+        "    {\n"
+        "      \"id\": \"unique_string_id\",\n"
+        "      \"category\": \"String\",\n"
+        "      \"difficulty\": \"String\",\n"
+        "      \"myth\": \"The myth statement\",\n"
+        "      \"fact\": \"The factual reality\",\n"
+        "      \"insight\": \"A deeper 1-2 sentence explanation of why the myth is wrong and the fact is true\",\n"
+        "      \"insightPercent\": \"A random plausible percentage between 40% and 95% (e.g., '82%') representing how many people believe this myth\",\n"
+        "      \"confidence\": number (integer between 90 and 99 representing factual confidence)\n"
+        "    }\n"
+        "  ]\n"
+        "}"
+    )
+    
+    try:
+        chat_completion = client.chat.completions.create(
+            messages=[{"role": "system", "content": system_prompt}],
+            model="llama-3.3-70b-versatile",
+            response_format={"type": "json_object"},
+            temperature=0.7
+        )
+        import json
+        return json.loads(chat_completion.choices[0].message.content)
+    except Exception as e:
+        print(f"Error calling Groq API for myths: {e}")
+        raise HTTPException(status_code=500, detail="Failed to generate myths.")
+
 class ScamDetectRequest(BaseModel):
     text: Optional[str] = None
     image_base64: Optional[str] = None

@@ -1,0 +1,25 @@
+.container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit; /* inherit from card */
+  overflow: hidden; /* clip canvas to rounded corners */
+}
+
+.canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  touch-action: none; /* Prevent scrolling when scratching on mobile */
+  cursor: crosshair;
+  z-index: 10;
+  transition: opacity 0.5s ease;
+  border-radius: inherit;
+}
+
+.fadeOut {
+  opacity: 0;
+  pointer-events: none;
+}
