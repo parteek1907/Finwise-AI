@@ -1,7 +1,7 @@
 import React from 'react';
 import { Quote, Indicator } from '../../../types/market';
 import { Timeframe } from '../../../constants/symbols';
-import { getMarketRegion, getExchangeStatus } from '../../../utils/market-hours';
+
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { CURRENCY_MAP } from '../../../utils/formatters';
 import NumberFlow from '@/components/ui/ClientNumberFlow';
@@ -28,13 +28,10 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
   onChartTypeChange
 }) => {
   const [indicatorsOpen, setIndicatorsOpen] = React.useState(false);
-  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency || 'USD');
-  const currencyRate = CURRENCY_MAP[preferredCurrency]?.rate || 1;
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
   
   if (!quote) return <div className={styles.chartHeader} style={{ minHeight: '80px' }} />;
 
-  const region = getMarketRegion(quote.exchange);
-  const status = getExchangeStatus(region);
   const isPositive = quote.change >= 0;
   
   const timeframes: Timeframe[] = ['1D', '5D', '1M', '3M', '6M', '1Y', 'ALL'];
@@ -56,7 +53,7 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
           </div>
           <div className={styles.headerTags}>
             {quote.exchange && <span className={styles.tag}>{quote.exchange}</span>}
-            {status.isOpen ? (
+            {quote.isMarketOpen ? (
               <span className={`${styles.tag} ${styles.tagLive}`}>
                 <span className={styles.liveDot} /> LIVE
               </span>
@@ -73,7 +70,7 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
           <div className={styles.headerPriceRow}>
             <div className={styles.headerPriceText}>
               <NumberFlow 
-                value={quote.price * currencyRate} 
+                value={quote.price} 
                 format={{ style: 'currency', currency: preferredCurrency || 'USD' }} 
               />
             </div>
@@ -85,13 +82,13 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
             </div>
           </div>
           <div className={styles.marketStatusUnder}>
-            {status.isOpen ? (
+            {quote.isMarketOpen ? (
               <span className={styles.marketStatusOpen}>
                 <span className={styles.liveDot} /> Market Open
               </span>
             ) : (
               <span className={styles.marketStatusClosed}>
-                {status.timeUntilOpen || 'Market Closed'}
+                {quote.marketStatusMessage || 'Market Closed'}
               </span>
             )}
           </div>

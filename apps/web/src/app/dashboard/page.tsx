@@ -5,7 +5,8 @@ import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
-import { formatCurrency, formatCurrencyRaw, convertCurrency } from '@/utils/formatters';
+import { formatCurrency, formatCurrencyRaw } from '@/utils/formatters';
+import { CurrencyService } from '@/services/currency';
 import { Area, AreaChart, CartesianGrid, XAxis } from "recharts";
 import { ChartContainer, ChartTooltip, ChartTooltipContent, ChartConfig } from "@/components/ui/chart";
 import { motion } from 'framer-motion';
@@ -273,7 +274,7 @@ export default function DashboardPage() {
                     <div className={styles.projectInfo}>
                       <span className={styles.projectName}>{goal.name}</span>
                       <span className={styles.projectDate}>
-                        {formatCurrencyRaw(convertCurrency(showNumbers ? goal.current : 0, goal.currency || 'USD', goalCurrency), goalCurrency)} / {formatCurrencyRaw(convertCurrency(showNumbers ? goal.target : 0, goal.currency || 'USD', goalCurrency), goalCurrency)}
+                        {formatCurrencyRaw(CurrencyService.convert(showNumbers ? goal.current : 0, goal.currency || 'USD', goalCurrency, useSettingsStore.getState().financial?.exchangeRates || {}), goalCurrency)} / {formatCurrencyRaw(CurrencyService.convert(showNumbers ? goal.target : 0, goal.currency || 'USD', goalCurrency, useSettingsStore.getState().financial?.exchangeRates || {}), goalCurrency)}
                       </span>
                     </div>
                   </div>

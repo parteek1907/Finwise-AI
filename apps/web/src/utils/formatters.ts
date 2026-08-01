@@ -14,52 +14,26 @@ export const formatCurrency = (
   maxFractions: number = 2
 ) => {
   let code = overrideCurrency;
-  let exchangeRates: Record<string, number> | undefined;
   if (!code) {
     try {
       const financial = useSettingsStore.getState().financial;
       code = financial?.preferredCurrency || 'USD';
-      exchangeRates = financial?.exchangeRates;
     } catch {
       code = 'USD';
-    }
-  } else {
-    try {
-      exchangeRates = useSettingsStore.getState().financial?.exchangeRates;
-    } catch {
-      // ignore
     }
   }
 
   const config = CURRENCY_MAP[code] || CURRENCY_MAP.USD;
-  const activeRate = exchangeRates ? (exchangeRates[code] || config.rate) : config.rate;
-  const converted = value * activeRate;
 
   return new Intl.NumberFormat(config.locale, {
     style: 'currency',
     currency: code,
     minimumFractionDigits: minFractions,
     maximumFractionDigits: maxFractions,
-  }).format(converted);
+  }).format(value);
 };
 
-export const convertCurrency = (amount: number, fromCode: string, toCode: string): number => {
-  if (fromCode === toCode) return amount;
-  
-  let exchangeRates: Record<string, number> = {};
-  try {
-    exchangeRates = useSettingsStore.getState().financial?.exchangeRates || {};
-  } catch {
-    // ignore
-  }
 
-  const getRate = (code: string) => exchangeRates[code] || CURRENCY_MAP[code]?.rate || 1;
-  const fromRate = getRate(fromCode);
-  const toRate = getRate(toCode);
-
-  const amountInUSD = amount / fromRate;
-  return amountInUSD * toRate;
-};
 
 /**
  * Format a value in a specific currency WITHOUT exchange-rate conversion.

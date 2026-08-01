@@ -27,6 +27,7 @@ import { formatCurrency } from '@/utils/formatters';
 import { SkeletonLoader } from '@/components/common/SkeletonLoader';
 
 export default function SimulatorPage() {
+  const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<'Trade' | 'Portfolio'>('Trade');
   const [portfolioTab, setPortfolioTab] = useState<'Holdings' | 'History' | 'Analytics'>('Holdings');
   const [selectedSymbol, setSelectedSymbol] = useState<string>('VOO');
@@ -52,6 +53,12 @@ export default function SimulatorPage() {
 
   // Example educational insights (in a real app, this would be more dynamic)
   const showInsight = trades.length > 0;
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <AppLayout>

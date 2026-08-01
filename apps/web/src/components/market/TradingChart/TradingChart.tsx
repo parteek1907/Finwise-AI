@@ -93,8 +93,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
 
-  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency || 'USD');
-  const currencyRate = CURRENCY_MAP[preferredCurrency]?.rate || 1;
+  const { preferredCurrency } = useSettingsStore(state => state.financial || {});
 
   const [indicators, setIndicators] = useState<Indicator[]>([
     { id: 'sma20', name: 'SMA', type: 'SMA', visible: false, period: 20, color: '#2962FF' },
@@ -151,7 +150,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       });
       formattedData = candles.map(c => ({
         time: c.time as Time,
-        value: c.close * currencyRate,
+        value: c.close,
       }));
     } else if (chartType === 'area') {
       mainSeries = chart.addAreaSeries({
@@ -162,7 +161,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       });
       formattedData = candles.map(c => ({
         time: c.time as Time,
-        value: c.close * currencyRate,
+        value: c.close,
       }));
     } else {
       mainSeries = chart.addCandlestickSeries({
@@ -174,10 +173,10 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       });
       formattedData = candles.map(c => ({
         time: c.time as Time,
-        open: c.open * currencyRate,
-        high: c.high * currencyRate,
-        low: c.low * currencyRate,
-        close: c.close * currencyRate,
+        open: c.open,
+        high: c.high,
+        low: c.low,
+        close: c.close,
       }));
     }
 
@@ -189,10 +188,10 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       const lastBaseCandle = candles[candles.length - 1];
       liveCandleRef.current = {
         time: lastBaseCandle.time as Time,
-        open: lastBaseCandle.open * currencyRate,
-        high: lastBaseCandle.high * currencyRate,
-        low: lastBaseCandle.low * currencyRate,
-        close: lastBaseCandle.close * currencyRate,
+        open: lastBaseCandle.open,
+        high: lastBaseCandle.high,
+        low: lastBaseCandle.low,
+        close: lastBaseCandle.close,
         volume: lastBaseCandle.volume || 0 
       };
     }
@@ -231,7 +230,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         lineWidth: 2,
         crosshairMarkerVisible: false,
       });
-      smaSeries.setData(smaData.map(d => ({ time: d.time as Time, value: d.value * currencyRate })));
+      smaSeries.setData(smaData.map(d => ({ time: d.time as Time, value: d.value })));
       smaSeriesRef.current = smaSeries;
     }
 
@@ -244,7 +243,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         lineWidth: 2,
         crosshairMarkerVisible: false,
       });
-      emaSeries.setData(emaData.map(d => ({ time: d.time as Time, value: d.value * currencyRate })));
+      emaSeries.setData(emaData.map(d => ({ time: d.time as Time, value: d.value })));
       emaSeriesRef.current = emaSeries;
     }
 
@@ -264,7 +263,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
     // 7. Set Order Lines
     orderLines.forEach(line => {
       mainSeries.createPriceLine({
-        price: line.price * currencyRate,
+        price: line.price,
         color: line.color,
         lineWidth: 2,
         lineStyle: 3, // dashed
@@ -325,11 +324,11 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
       setTooltipData({
         time: dateStr,
-        open: data.open !== undefined ? data.open / currencyRate : data.value / currencyRate,
-        high: data.high !== undefined ? data.high / currencyRate : data.value / currencyRate,
-        low: data.low !== undefined ? data.low / currencyRate : data.value / currencyRate,
-        close: data.close !== undefined ? data.close / currencyRate : data.value / currencyRate,
-        volume: volData.value,
+        open: data.open !== undefined ? data.open : data.value,
+        high: data.high !== undefined ? data.high : data.value,
+        low: data.low !== undefined ? data.low : data.value,
+        close: data.close !== undefined ? data.close : data.value,
+        volume: volData.value as number,
         x,
         y,
       });
@@ -346,14 +345,14 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       smaSeriesRef.current = null;
       emaSeriesRef.current = null;
     };
-  }, [candles, indicators, loading, currencyRate, chartType]);
+  }, [candles, indicators, loading, chartType]);
 
   // Handle Real-Time Tick Update
   useEffect(() => {
     if (!realTimeTick || !mainSeriesRef.current || !liveCandleRef.current) return;
     
     const live = liveCandleRef.current;
-    const newPrice = realTimeTick.price * currencyRate;
+    const newPrice = realTimeTick.price;
     
     const tickMs = realTimeTick.time; // ms
     let tickChartTime: Time;

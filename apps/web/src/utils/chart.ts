@@ -1,7 +1,7 @@
 import { Candle } from '../types/market';
 
 export interface LineData {
-  time: number;
+  time: string | number;
   value: number;
 }
 

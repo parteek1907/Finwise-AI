@@ -1,119 +1,120 @@
-import { useState, useEffect } from 'react';
-import { Quote, MarketMover, Candle } from '../types/market';
-import { getMarketQuote, getMarketMovers, getChartData, searchSymbols } from '../services/market';
+/**
+ * Market Hooks — React hooks that consume the centralized Market Store.
+ *
+ * All hooks read from useMarketStore (single source of truth).
+ * No direct API calls — everything goes through the store.
+ */
+
+import { useState, useEffect, useMemo } from 'react';
+import { Quote, MarketMover, Candle, MarketStatusDetails } from '../types/market';
 import { Timeframe } from '../constants/symbols';
 import { useMarketStore } from '../store/useMarketStore';
+import { searchSymbols } from '../services/market';
+
+// ─── useMarketQuote ─────────────────────────────────────────────────────
+// Subscribe to a single symbol's live quote from the store.
 
 export const useMarketQuote = (symbol: string) => {
-  const [quote, setQuote] = useState<Quote | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const subscribe = useMarketStore(s => s.subscribe);
+  const unsubscribe = useMarketStore(s => s.unsubscribe);
+  const quote = useMarketStore(s => s.quotes[symbol] || null);
+  const error = useMarketStore(s => s.error);
+
+  const [loading, setLoading] = useState(!quote);
 
   useEffect(() => {
-    let mounted = true;
-    const fetchQuote = async (isBackground = false) => {
-      try {
-        if (!isBackground) setLoading(true);
-        setError(null);
-        const data = await getMarketQuote(symbol);
-        if (mounted) setQuote(data);
-      } catch (err: any) {
-        if (mounted && !isBackground) setError(err.message || 'Failed to fetch quote');
-      } finally {
-        if (mounted && !isBackground) setLoading(false);
-      }
-    };
-    
-    if (symbol) {
-      fetchQuote();
-      // Poll every 10 seconds for real-time updates
-      const interval = setInterval(() => fetchQuote(true), 10000);
-      return () => {
-        mounted = false;
-        clearInterval(interval);
-      };
-    }
-    return () => { mounted = false; };
-  }, [symbol]);
+    if (!symbol) return;
+    subscribe(symbol);
+    return () => { unsubscribe(symbol); };
+  }, [symbol, subscribe, unsubscribe]);
+
+  useEffect(() => {
+    if (quote) setLoading(false);
+  }, [quote]);
 
   return { quote, loading, error };
 };
 
-export const useMarketMovers = () => {
-  const [baseMovers, setBaseMovers] = useState<MarketMover[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+// ─── useMarketMovers ────────────────────────────────────────────────────
+// Fetches and returns market movers from the store.
 
-  const { quotes, subscribe, unsubscribe } = useMarketStore();
+export const useMarketMovers = () => {
+  const movers = useMarketStore(s => s.movers);
+  const fetchMovers = useMarketStore(s => s.fetchMovers);
+  const subscribe = useMarketStore(s => s.subscribe);
+  const unsubscribe = useMarketStore(s => s.unsubscribe);
+  const quotes = useMarketStore(s => s.quotes);
+  const error = useMarketStore(s => s.error);
+
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let mounted = true;
-    const fetchMovers = async () => {
-      try {
-        setLoading(true);
-        const data = await getMarketMovers();
-        if (mounted) {
-          setBaseMovers(data);
-          // Subscribe to all movers for live updates
-          data.forEach(mover => subscribe(mover.symbol));
-        }
-      } catch (err: any) {
-        if (mounted) setError(err.message || 'Failed to fetch movers');
-      } finally {
-        if (mounted) setLoading(false);
-      }
+    const load = async () => {
+      await fetchMovers();
+      if (mounted) setLoading(false);
     };
-    
-    fetchMovers();
+    load();
+    return () => { mounted = false; };
+  }, [fetchMovers]);
 
-    return () => { 
-      mounted = false; 
-      baseMovers.forEach(mover => unsubscribe(mover.symbol));
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // Subscribe to all mover symbols for live price updates
+  useEffect(() => {
+    const symbols = movers.all.map(m => m.symbol);
+    symbols.forEach(s => subscribe(s));
+    return () => { symbols.forEach(s => unsubscribe(s)); };
+  }, [movers.all, subscribe, unsubscribe]);
 
-  // Dynamically compute movers with live quotes
-  const movers = baseMovers.map(mover => {
-    const quote = quotes[mover.symbol];
-    if (!quote) return mover;
-    
-    return {
-      ...mover,
-      price: quote.price,
-      changePercent: quote.changePercent,
-      isUp: quote.changePercent >= 0
-    };
-  });
+  // Merge live quotes into movers for real-time display
+  const liveMovers = useMemo(() => {
+    return movers.all.map(mover => {
+      const quote = quotes[mover.symbol];
+      if (!quote) return mover;
+      return {
+        ...mover,
+        price: quote.price,
+        changePercent: quote.changePercent,
+        isUp: quote.changePercent >= 0,
+      };
+    });
+  }, [movers.all, quotes]);
 
-  return { movers, loading, error };
+  return { movers: liveMovers, loading, error };
 };
 
+// ─── useChartData ───────────────────────────────────────────────────────
+// Fetches candle data from the store cache.
+
 export const useChartData = (symbol: string, timeframe: Timeframe) => {
+  const fetchCandles = useMarketStore(s => s.fetchCandles);
   const [data, setData] = useState<Candle[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    const fetchData = async () => {
+    const load = async () => {
+      if (!symbol || !timeframe) return;
       try {
         setLoading(true);
-        const chartData = await getChartData(symbol, timeframe);
-        if (mounted) setData(chartData);
+        setError(null);
+        const candles = await fetchCandles(symbol, timeframe);
+        if (mounted) setData(candles);
       } catch (err: any) {
         if (mounted) setError(err.message || 'Failed to fetch chart data');
       } finally {
         if (mounted) setLoading(false);
       }
     };
-    
-    if (symbol && timeframe) fetchData();
+    load();
     return () => { mounted = false; };
-  }, [symbol, timeframe]);
+  }, [symbol, timeframe, fetchCandles]);
 
   return { data, loading, error };
 };
+
+// ─── useSymbolSearch ────────────────────────────────────────────────────
+// Searches for symbols with debouncing.
 
 export const useSymbolSearch = (query: string) => {
   const [results, setResults] = useState<Quote[]>([]);
@@ -136,7 +137,7 @@ export const useSymbolSearch = (query: string) => {
         if (mounted) setLoading(false);
       }
     };
-    
+
     const debounceId = setTimeout(fetchResults, 300);
     return () => {
       mounted = false;
@@ -145,4 +146,18 @@ export const useSymbolSearch = (query: string) => {
   }, [query]);
 
   return { results, loading };
+};
+
+// ─── useMarketStatus ────────────────────────────────────────────────────
+// Returns market status for a given exchange symbol.
+
+export const useMarketStatus = (symbol: string = 'AAPL') => {
+  const fetchStatus = useMarketStore(s => s.fetchStatus);
+  const status = useMarketStore(s => s.marketStatus[symbol] || null);
+
+  useEffect(() => {
+    fetchStatus(symbol);
+  }, [symbol, fetchStatus]);
+
+  return status;
 };

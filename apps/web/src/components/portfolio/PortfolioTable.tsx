@@ -27,8 +27,6 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
   const [tradeFilter, setTradeFilter] = useState<'ALL' | 'BUY' | 'SELL'>('ALL');
   
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
-  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates);
-  const activeRate = exchangeRates ? (exchangeRates[preferredCurrency] || 1) : 1;
 
   const filteredTrades = trades.filter(t => tradeFilter === 'ALL' || t.side === tradeFilter);
 
@@ -39,7 +37,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
           <span>Total Value</span>
           <h3>
             <NumberFlow 
-              value={summary.totalValue * activeRate} 
+              value={summary.totalValue} 
               format={{ style: 'currency', currency: preferredCurrency }} 
             />
           </h3>
@@ -48,7 +46,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
           <span>Total Return</span>
           <h3 className={summary.totalReturn >= 0 ? styles.positiveText : styles.negativeText}>
             <NumberFlow 
-              value={summary.totalReturn * activeRate} 
+              value={summary.totalReturn} 
               format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
             /> 
             {' '}
@@ -119,7 +117,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                       <td>{formatCurrency(pos.averagePrice)}</td>
                       <td>
                         <NumberFlow 
-                          value={pos.currentPrice * activeRate} 
+                          value={pos.currentPrice} 
                           format={{ style: 'currency', currency: preferredCurrency }} 
                         />
                       </td>
@@ -131,7 +129,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                       </td>
                       <td className={pos.todaysReturn >= 0 ? styles.positiveText : styles.negativeText}>
                         <NumberFlow 
-                          value={pos.todaysReturn * activeRate} 
+                          value={pos.todaysReturn} 
                           format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
                         />
                         <span className={styles.percentText}>
@@ -143,7 +141,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                       </td>
                       <td className={pos.totalReturn >= 0 ? styles.positiveText : styles.negativeText}>
                         <NumberFlow 
-                          value={pos.totalReturn * activeRate} 
+                          value={pos.totalReturn} 
                           format={{ style: 'currency', currency: preferredCurrency, signDisplay: 'always' }} 
                         />
                         <span className={styles.percentText}>

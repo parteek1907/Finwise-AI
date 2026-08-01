@@ -1,7 +1,36 @@
 import { NextResponse } from 'next/server';
-import { MOCK_QUOTES } from '@/mocks/market';
+import { yahooProvider } from '@/lib/yahoo-provider';
 
 const GROQ_API_KEY = process.env.GROQ_API_KEY || ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
+
+// Cache for market context (60s TTL to avoid rate limits)
+let marketContextCache: { text: string; timestamp: number } = { text: '', timestamp: 0 };
+const MARKET_CONTEXT_TTL = 60 * 1000; // 60 seconds
+
+async function getMarketContext(): Promise<string> {
+  if (Date.now() - marketContextCache.timestamp < MARKET_CONTEXT_TTL && marketContextCache.text) {
+    return marketContextCache.text;
+  }
+
+  try {
+    const symbols = ['AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'GOOGL', 'BTC-USD', 'ETH-USD', 'RELIANCE.NS', 'TCS.NS'];
+    const quotes = await yahooProvider.getBatchQuotes(symbols);
+
+    const marketText = quotes
+      .map(q => {
+        const currencySymbol = q.currency === 'INR' ? '₹' : q.currency === 'EUR' ? '€' : q.currency === 'GBP' ? '£' : '$';
+        return `- ${q.name} (${q.symbol}): ${currencySymbol}${q.price.toFixed(2)} (${q.changePercent > 0 ? '+' : ''}${q.changePercent.toFixed(2)}%)`;
+      })
+      .join('\n');
+
+    const result = `\n\nVirtual Stock Market Context (Live from Yahoo Finance):\n${marketText}\n`;
+    marketContextCache = { text: result, timestamp: Date.now() };
+    return result;
+  } catch (error) {
+    console.warn('Failed to fetch live market context for mentor:', error);
+    return '\n\n(Market data temporarily unavailable)\n';
+  }
+}
 
 export async function POST(req: Request) {
   try {
@@ -22,10 +51,8 @@ export async function POST(req: Request) {
       goalsContext = `\n\nUser's Active Financial Goals Context:\n${goalsText}\n`;
     }
 
-    const marketText = Object.values(MOCK_QUOTES)
-      .map((q: any) => `- ${q.name} (${q.symbol}): $${q.price.toFixed(2)} (Trend: ${q.changePercent > 0 ? '+' : ''}${q.changePercent}%)`)
-      .join('\n');
-    const marketContext = `\n\nVirtual Stock Market Context (Real-time):\n${marketText}\n`;
+    const marketContext = await getMarketContext();
+
 
     let aiPreferencesContext = "";
     if (aiSettings) {

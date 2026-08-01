@@ -32,8 +32,7 @@ export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, err
   const [activeTab, setActiveTab] = React.useState<'Gainers' | 'Losers' | 'Active'>('Gainers');
 
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency || 'USD');
-  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates);
-  const activeRate = exchangeRates ? (exchangeRates[preferredCurrency] || 1) : 1;
+
 
   const sortedMovers = React.useMemo(() => {
     let sorted = [...movers];
@@ -91,7 +90,7 @@ export const MarketMovers: React.FC<MarketMoversProps> = ({ movers, loading, err
               <div className={styles.price}>
                 <strong>
                   <AnimatedNumberFlow 
-                    value={item.price * activeRate} 
+                    value={item.price} 
                     format={{ style: 'currency', currency: preferredCurrency }} 
                   />
                 </strong>

@@ -8,8 +8,9 @@ import styles from './Goals.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { CurrencyService } from '@/services/currency';
 import { DatePicker } from '@/components/ui/date-picker';
-import { formatCurrencyRaw, getCurrencySymbol, convertCurrency } from '@/utils/formatters';
+import { formatCurrencyRaw, getCurrencySymbol } from '@/utils/formatters';
 import { GOAL_TEMPLATES } from '@/utils/goalCalculations';
 
 const CATEGORY_OPTIONS = [
@@ -34,6 +35,7 @@ export default function GoalsPage() {
   const router = useRouter();
   const { goals, addGoal } = useAppStore();
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
+  const prefCurrency = preferredCurrency;
   const [showAddModal, setShowAddModal] = useState(false);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [newGoal, setNewGoal] = useState({
@@ -177,8 +179,10 @@ export default function GoalsPage() {
           >
             {goals.map(goal => {
               const Icon = CATEGORY_ICONS[goal.category] || Target;
-              const progressPercent = Math.min(100, Math.round((goal.current / goal.target) * 100));
-              const displayCurrency = preferredCurrency;
+              const exchangeRates = useSettingsStore.getState().financial?.exchangeRates || {};
+              const convertedCurrent = CurrencyService.convert(goal.current, goal.currency || 'USD', prefCurrency, exchangeRates);
+              const convertedTarget = CurrencyService.convert(goal.target, goal.currency || 'USD', prefCurrency, exchangeRates);
+              const progressPercent = Math.min(100, Math.round((convertedCurrent / convertedTarget) * 100));
               
               return (
                 <motion.div 
@@ -214,8 +218,8 @@ export default function GoalsPage() {
                   
                   <div className={styles.progressSection}>
                     <div className={styles.progressLabels}>
-                      <span className={styles.currentAmount}>{formatCurrencyRaw(convertCurrency(goal.current, goal.currency || 'USD', displayCurrency), displayCurrency)}</span>
-                      <span className={styles.targetAmount}>of {formatCurrencyRaw(convertCurrency(goal.target, goal.currency || 'USD', displayCurrency), displayCurrency)}</span>
+                      <span className={styles.currentAmount}>{formatCurrencyRaw(convertedCurrent, prefCurrency)}</span>
+                      <span className={styles.targetAmount}>of {formatCurrencyRaw(convertedTarget, prefCurrency)}</span>
                     </div>
                     <div className={styles.progressBar}>
                       <motion.div 

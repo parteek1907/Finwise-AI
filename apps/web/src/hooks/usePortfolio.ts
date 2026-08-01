@@ -1,24 +1,76 @@
+/**
+ * Portfolio Hook — Holdings NEVER store current prices.
+ *
+ * Portfolio persists ONLY: symbol, name, shares, averagePrice
+ * Current value is ALWAYS computed from Yahoo Finance via Market Store.
+ *
+ * Trade execution uses the latest Market Store price (from Yahoo).
+ */
+
 import { useState, useEffect, useMemo } from 'react';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { PortfolioHolding, PortfolioSummary } from '../types/portfolio';
+import { PortfolioHoldingBase, PortfolioHolding, PortfolioSummary } from '../types/portfolio';
 import { Trade, Order } from '../types/trade';
-import { getPortfolioHoldings, getTradeHistory } from '../services/portfolio';
 import { executeOrder } from '../services/trade';
-import { getQuote } from '../services/market';
 import { calculatePortfolioSummary } from '../utils/calculations';
 import { formatCurrency } from '../utils/formatters';
-import { INITIAL_HOLDINGS, INITIAL_TRADES, INITIAL_BUYING_POWER } from '../mocks/portfolio';
 import { useMarketStore } from '../store/useMarketStore';
+import { useSettingsStore } from '../store/useSettingsStore';
+import { CurrencyService } from '../services/currency';
 
-// Internal global state for static trade history and holding records
+// ─── Initial Data ───────────────────────────────────────────────────────
+// Portfolio stores ONLY static trade data. No live prices.
+
+const INITIAL_BUYING_POWER = 10000;
+
+const INITIAL_BASE_HOLDINGS: PortfolioHoldingBase[] = [
+  {
+    symbol: 'VOO',
+    name: 'Vanguard S&P 500 ETF',
+    shares: 5,
+    averagePrice: 400.00,
+  },
+  {
+    symbol: 'AAPL',
+    name: 'Apple Inc.',
+    shares: 10,
+    averagePrice: 180.00,
+  },
+];
+
+const INITIAL_TRADES: Trade[] = [
+  {
+    id: 't1',
+    orderId: 'o1',
+    symbol: 'VOO',
+    side: 'BUY',
+    quantity: 5,
+    executionPrice: 400.00,
+    totalValue: 2000.00,
+    executedAt: new Date(Date.now() - 86400000 * 5).toISOString()
+  },
+  {
+    id: 't2',
+    orderId: 'o2',
+    symbol: 'AAPL',
+    side: 'BUY',
+    quantity: 10,
+    executionPrice: 180.00,
+    totalValue: 1800.00,
+    executedAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  }
+];
+
+// ─── Portfolio Store (Persisted) ────────────────────────────────────────
+
 interface PortfolioState {
-  baseHoldings: PortfolioHolding[]; // Holdings before applying live prices
+  baseHoldings: PortfolioHoldingBase[];
   trades: Trade[];
   buyingPower: number;
   isInitialized: boolean;
   setInitialized: (val: boolean) => void;
-  setBaseHoldings: (h: PortfolioHolding[]) => void;
+  setBaseHoldings: (h: PortfolioHoldingBase[]) => void;
   setTrades: (t: Trade[]) => void;
   updateAfterTrade: (trade: Trade, stockName: string) => void;
 }
@@ -26,7 +78,7 @@ interface PortfolioState {
 const usePortfolioStore = create<PortfolioState>()(
   persist(
     (set) => ({
-      baseHoldings: INITIAL_HOLDINGS,
+      baseHoldings: INITIAL_BASE_HOLDINGS,
       trades: INITIAL_TRADES,
       buyingPower: INITIAL_BUYING_POWER,
       isInitialized: true,
@@ -36,64 +88,41 @@ const usePortfolioStore = create<PortfolioState>()(
       updateAfterTrade: (trade, stockName) => set((state) => {
         const isBuy = trade.side === 'BUY';
         const newBuyingPower = isBuy ? state.buyingPower - trade.totalValue : state.buyingPower + trade.totalValue;
-        
+
         let newHoldings = [...state.baseHoldings];
         const existingIdx = newHoldings.findIndex(h => h.symbol === trade.symbol);
         const existingHolding = existingIdx >= 0 ? newHoldings[existingIdx] : undefined;
-        
-        let updatedHolding: PortfolioHolding;
-        
+
         if (isBuy) {
           if (existingHolding) {
             const totalShares = existingHolding.shares + trade.quantity;
             const totalCost = (existingHolding.averagePrice * existingHolding.shares) + trade.totalValue;
-            updatedHolding = {
+            newHoldings[existingIdx] = {
               ...existingHolding,
               shares: totalShares,
               averagePrice: totalCost / totalShares,
-              currentPrice: trade.executionPrice,
-              totalValue: totalShares * trade.executionPrice,
-              totalReturn: (trade.executionPrice - (totalCost / totalShares)) * totalShares,
-              totalReturnPercent: ((trade.executionPrice - (totalCost / totalShares)) / (totalCost / totalShares)) * 100,
-              todaysReturn: 0,
-              todaysReturnPercent: 0,
             };
           } else {
-            updatedHolding = {
+            newHoldings.push({
               symbol: trade.symbol,
               name: stockName || trade.symbol,
               shares: trade.quantity,
               averagePrice: trade.executionPrice,
-              currentPrice: trade.executionPrice,
-              totalValue: trade.quantity * trade.executionPrice,
-              totalReturn: 0,
-              totalReturnPercent: 0,
-              todaysReturn: 0,
-              todaysReturnPercent: 0,
-              allocationPercent: 0
-            };
+            });
           }
-        } else { // SELL
-          if (!existingHolding) return state; // Should not happen if validated
+        } else {
+          if (!existingHolding) return state;
           const remainingShares = existingHolding.shares - trade.quantity;
-          updatedHolding = {
-            ...existingHolding,
-            shares: remainingShares,
-            totalValue: remainingShares * trade.executionPrice,
-            totalReturn: (trade.executionPrice - existingHolding.averagePrice) * remainingShares,
-          };
-        }
-        
-        if (existingIdx >= 0) {
-          if (updatedHolding.shares <= 0) {
+          if (remainingShares <= 0) {
             newHoldings.splice(existingIdx, 1);
           } else {
-            newHoldings[existingIdx] = updatedHolding;
+            newHoldings[existingIdx] = {
+              ...existingHolding,
+              shares: remainingShares,
+            };
           }
-        } else if (updatedHolding.shares > 0) {
-          newHoldings.push(updatedHolding);
         }
-        
+
         return {
           buyingPower: newBuyingPower,
           baseHoldings: newHoldings,
@@ -102,19 +131,26 @@ const usePortfolioStore = create<PortfolioState>()(
       })
     }),
     {
-      name: 'finwise-portfolio-storage', // unique name for localStorage key
+      name: 'finwise-portfolio-storage',
     }
   )
 );
 
+// ─── usePortfolio Hook ──────────────────────────────────────────────────
+
 export const usePortfolio = () => {
   const store = usePortfolioStore();
   const { quotes, subscribe, unsubscribe } = useMarketStore();
-  
-  const loading = false;
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  const loading = !isMounted;
   const error = null;
 
-  // Subscribe to all holdings in the market store to get live updates
+  // Subscribe to all holdings in the market store
   useEffect(() => {
     store.baseHoldings.forEach(h => {
       subscribe(h.symbol);
@@ -126,20 +162,26 @@ export const usePortfolio = () => {
     };
   }, [store.baseHoldings, subscribe, unsubscribe]);
 
-  // Dynamically compute live holdings using quotes from MarketStore
-  const liveHoldings = useMemo(() => {
-    // First pass to get total portfolio value
+  // Compute live holdings from base holdings + Market Store quotes
+  const liveHoldings = useMemo((): PortfolioHolding[] => {
     let totalHoldingsValue = 0;
-    
+
+    const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+    const userCurr = preferredCurrency || 'USD';
+    const rates = exchangeRates || {};
+
     const preCalcHoldings = store.baseHoldings.map(h => {
       const quote = quotes[h.symbol];
-      const livePrice = quote?.price || h.currentPrice;
+      // h.averagePrice is stored in USD. We must convert it to user's currency for math
+      const convertedAvgPrice = CurrencyService.convert(h.averagePrice, 'USD', userCurr, rates);
+      
+      const livePrice = quote?.price || convertedAvgPrice; // Fallback to avgPrice if Yahoo unavailable
       const totalValue = livePrice * h.shares;
-      
+
       totalHoldingsValue += totalValue;
-      
-      const totalReturn = (livePrice - h.averagePrice) * h.shares;
-      const totalReturnPercent = h.averagePrice > 0 ? ((livePrice - h.averagePrice) / h.averagePrice) * 100 : 0;
+
+      const totalReturn = (livePrice - convertedAvgPrice) * h.shares;
+      const totalReturnPercent = convertedAvgPrice > 0 ? ((livePrice - convertedAvgPrice) / convertedAvgPrice) * 100 : 0;
       const todaysReturn = quote ? (quote.change * h.shares) : 0;
       const todaysReturnPercent = quote ? quote.changePercent : 0;
 
@@ -150,22 +192,30 @@ export const usePortfolio = () => {
         totalReturn,
         totalReturnPercent,
         todaysReturn,
-        todaysReturnPercent
+        todaysReturnPercent,
+        allocationPercent: 0, // Computed in second pass
       };
     });
 
-    const totalPortfolioValue = totalHoldingsValue + store.buyingPower;
+    const totalPortfolioValue = totalHoldingsValue + CurrencyService.convert(store.buyingPower, 'USD', userCurr, rates);
 
-    // Second pass to calculate allocation %
     return preCalcHoldings.map(h => ({
       ...h,
       allocationPercent: totalPortfolioValue > 0 ? (h.totalValue / totalPortfolioValue) * 100 : 0
     }));
-  }, [store.baseHoldings, quotes, store.buyingPower]);
+  }, [store.baseHoldings, quotes, useSettingsStore.getState().financial?.preferredCurrency, useSettingsStore.getState().financial?.exchangeRates]);
 
-  const summary = useMemo(() => {
-    return calculatePortfolioSummary(liveHoldings, store.buyingPower);
-  }, [liveHoldings, store.buyingPower]);
+  // Compute portfolio summary
+  const summary = useMemo((): PortfolioSummary => {
+    const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+    const userCurr = preferredCurrency || 'USD';
+    const rates = exchangeRates || {};
+    
+    // Convert buying power from USD to user's currency
+    const convertedBuyingPower = CurrencyService.convert(store.buyingPower, 'USD', userCurr, rates);
+
+    return calculatePortfolioSummary(liveHoldings, convertedBuyingPower);
+  }, [liveHoldings, store.buyingPower, useSettingsStore.getState().financial?.preferredCurrency, useSettingsStore.getState().financial?.exchangeRates]);
 
   return {
     holdings: liveHoldings,
@@ -176,36 +226,50 @@ export const usePortfolio = () => {
   };
 };
 
+// ─── useTradeExecution Hook ─────────────────────────────────────────────
+
 export const useTradeExecution = () => {
   const store = usePortfolioStore();
+  const quotes = useMarketStore(s => s.quotes);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submitOrder = async (order: Order, uiPrice: number, stockName: string) => {
+  const submitOrder = async (order: Order, _uiPrice: number, stockName: string) => {
     setIsSubmitting(true);
     setError(null);
     try {
       const isBuy = order.side === 'BUY';
-      
-      // Fetch fresh price right before execution for real-time realism
-      const freshQuote = await getQuote(order.symbol);
-      const executionPrice = freshQuote.price;
-      
+
+      // Use the latest price from the Market Store (Yahoo Finance)
+      const latestQuote = quotes[order.symbol];
+      if (!latestQuote) {
+        throw new Error(`No market data available for ${order.symbol}. Please wait for data to load.`);
+      }
+      const executionPrice = latestQuote.price;
       const orderValue = executionPrice * order.quantity;
+
+      const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+      const userCurr = preferredCurrency || 'USD';
+      const rates = exchangeRates || {};
       
+      // store.buyingPower is in USD, so we must convert it to userCurr to validate against orderValue (which is in userCurr)
+      const convertedBuyingPower = CurrencyService.convert(store.buyingPower, 'USD', userCurr, rates);
+
       // Validation
-      if (isBuy && orderValue > store.buyingPower) {
+      if (isBuy && orderValue > convertedBuyingPower) {
         throw new Error(`Insufficient buying power (Market price: ${formatCurrency(executionPrice)})`);
       }
-      
+
       const existingHolding = store.baseHoldings.find(h => h.symbol === order.symbol);
       if (!isBuy && (!existingHolding || existingHolding.shares < order.quantity)) {
         throw new Error('Insufficient shares to sell');
       }
 
-      // Execute via API layer using the fresh execution price
-      const trade = await executeOrder(order, executionPrice);
-      
+      // We must store the execution price in USD in the portfolio!
+      const executionPriceInUSD = CurrencyService.convert(executionPrice, userCurr, 'USD', rates);
+
+      // Execute using the USD price for storage
+      const trade = await executeOrder(order, executionPriceInUSD);
       store.updateAfterTrade(trade, stockName);
       return trade;
 

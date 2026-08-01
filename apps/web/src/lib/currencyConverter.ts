@@ -36,12 +36,3 @@ export async function getExchangeRateToUSD(currency: string): Promise<number> {
   return fallbacks[currency] || 1;
 }
 
-/**
- * Normalizes a price from its native currency to USD.
- * Since e.g. INR=X is 83 (meaning 1 USD = 83 INR), we divide by the rate.
- */
-export async function normalizeToUSD(price: number, currency: string): Promise<number> {
-  if (!currency || currency === 'USD' || !price) return price;
-  const rateToUSD = await getExchangeRateToUSD(currency);
-  return price / rateToUSD;
-}

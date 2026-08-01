@@ -1,169 +1,286 @@
-import { Quote, MarketMover, Candle, MarketStatus, Asset } from '../types/market';
-import { MOCK_QUOTES, MOCK_MOVERS, generateMockCandles } from '../mocks/market';
-import { MOCK_CANDLES } from '../mocks/candles';
+/**
+ * Centralized Market Service
+ * 
+ * This is the ONLY module that communicates with /api/market/* endpoints.
+ * No component should call Yahoo Finance directly or use mock data.
+ * 
+ * Architecture:
+ *   UI → Market Store → Market Service → Next.js API Routes → Yahoo Finance Provider
+ */
+
+import { Quote, MarketMover, Candle, MarketStatus, MarketStatusDetails, Asset } from '../types/market';
 import { Timeframe } from '../constants/symbols';
 
-// Simulated network delay
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+// ─── In-flight request deduplication ─────────────────────────────────────
+// If the same symbol is being fetched, return the same Promise instead of duplicating.
 
-export const getQuote = async (symbol: string): Promise<Quote> => {
+const inflightQuotes = new Map<string, Promise<Quote>>();
+const inflightCandles = new Map<string, Promise<Candle[]>>();
+
+// ─── Quote Fetching ──────────────────────────────────────────────────────
+
+export const fetchQuote = async (symbol: string): Promise<Quote> => {
+  // Normalize crypto symbols for Yahoo
   let fetchSymbol = symbol;
   if (symbol === 'BTC') fetchSymbol = 'BTC-USD';
   if (symbol === 'ETH') fetchSymbol = 'ETH-USD';
   if (symbol === 'SOL') fetchSymbol = 'SOL-USD';
-  
-  try {
-    const response = await fetch(`/api/market/quote/${fetchSymbol}`);
-    if (response.ok) {
-      return await response.json();
-    }
-  } catch (error) {
-    console.warn("Backend not available for quote, falling back to mock.");
+
+  // Dedup: return in-flight promise if one exists
+  const key = fetchSymbol;
+  if (inflightQuotes.has(key)) {
+    return inflightQuotes.get(key)!;
   }
-  
-  // Fallback to mock if backend fails (e.g., missing API key)
-  await delay(400); 
-  const quote = MOCK_QUOTES[symbol.toUpperCase()];
-  if (!quote) throw new Error(`Symbol ${symbol} not found`);
-  return quote;
+
+  const promise = (async () => {
+    try {
+      const response = await fetch(`/api/market/quote/${fetchSymbol}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch quote for ${symbol}: ${response.status}`);
+      }
+      const data = await response.json();
+      return {
+        symbol: data.symbol,
+        name: data.name,
+        price: data.price,
+        change: data.change || 0,
+        changePercent: data.changePercent || 0,
+        volume: data.volume || 0,
+        marketCap: data.marketCap || 0,
+        exchange: data.exchange || 'MARKET',
+        currency: data.currency || 'USD',
+        high: data.high,
+        low: data.low,
+        open: data.open,
+        previousClose: data.previousClose,
+        marketState: data.marketState,
+        marketStatusMessage: data.marketStatusMessage,
+        isMarketOpen: data.isMarketOpen,
+      } as Quote;
+    } finally {
+      inflightQuotes.delete(key);
+    }
+  })();
+
+  inflightQuotes.set(key, promise);
+  return promise;
 };
 
-// Kept for backward compatibility
-export const getMarketQuote = getQuote;
+// Backward-compatible aliases
+export const getQuote = fetchQuote;
+export const getMarketQuote = fetchQuote;
 
-export const getMarketMovers = async (): Promise<MarketMover[]> => {
+// ─── Batch Quote Fetching ────────────────────────────────────────────────
+
+export const fetchBatchQuotes = async (symbols: string[]): Promise<Quote[]> => {
+  // Normalize crypto symbols
+  const normalizedSymbols = symbols.map(s => {
+    if (s === 'BTC') return 'BTC-USD';
+    if (s === 'ETH') return 'ETH-USD';
+    if (s === 'SOL') return 'SOL-USD';
+    return s;
+  });
+
   try {
-    // Dynamically fetch live data for our default movers list instead of a static mock
-    const symbols = MOCK_MOVERS.map(m => m.symbol);
-    const quotes = await Promise.all(symbols.map(sym => getQuote(sym)));
-    
-    // Convert Quotes to MarketMovers and sort by absolute change percentage
-    const liveMovers: MarketMover[] = quotes.map(q => ({
+    const response = await fetch('/api/market/batch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ symbols: normalizedSymbols }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Batch quote fetch failed: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return (data as any[]).map(q => ({
       symbol: q.symbol,
       name: q.name,
       price: q.price,
-      changePercent: q.changePercent,
-      isUp: q.change >= 0
-    }));
+      change: q.change || 0,
+      changePercent: q.changePercent || 0,
+      volume: q.volume || 0,
+      marketCap: q.marketCap || 0,
+      exchange: q.exchange || 'MARKET',
+      currency: q.currency || 'USD',
+      high: q.high,
+      low: q.low,
+      open: q.open,
+      previousClose: q.previousClose,
+      marketState: q.marketState,
+      marketStatusMessage: q.marketStatusMessage,
+      isMarketOpen: q.isMarketOpen,
+    } as Quote));
 
-    return liveMovers.sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
   } catch (error) {
-    console.warn("Failed to fetch live movers, falling back to mock.", error);
-    await delay(600);
-    return MOCK_MOVERS;
+    console.error('Batch quote fetch failed:', error);
+    // Fallback: fetch individually
+    const results = await Promise.allSettled(symbols.map(s => fetchQuote(s)));
+    return results
+      .filter((r): r is PromiseFulfilledResult<Quote> => r.status === 'fulfilled')
+      .map(r => r.value);
   }
 };
 
-export const getCandles = async (symbol: string, timeframe: Timeframe): Promise<Candle[]> => {
+// ─── Candle / Chart Data ─────────────────────────────────────────────────
+
+export const fetchCandles = async (symbol: string, timeframe: Timeframe): Promise<Candle[]> => {
   let fetchSymbol = symbol;
   if (symbol === 'BTC') fetchSymbol = 'BTC-USD';
   if (symbol === 'ETH') fetchSymbol = 'ETH-USD';
   if (symbol === 'SOL') fetchSymbol = 'SOL-USD';
-  
-  try {
-    // Yahoo Finance supports ETFs and Crypto for free, so we use Next.js proxy
-    const response = await fetch(`/api/market/candles/${fetchSymbol}?timeframe=${timeframe}`);
-    if (response.ok) {
-      const data = await response.json();
-      if (data && data.length > 0) return data;
-    }
-  } catch (error) {
-    console.warn("Backend not available for candles, falling back to mock.");
+
+  const key = `${fetchSymbol}:${timeframe}`;
+  if (inflightCandles.has(key)) {
+    return inflightCandles.get(key)!;
   }
 
-  await delay(500);
-  const upperSym = symbol.toUpperCase();
-  const allCandles = MOCK_CANDLES[upperSym];
-  
-  if (!allCandles) {
-    // fallback if no exact mock is prepared
-    const quote = MOCK_QUOTES[upperSym];
-    if (!quote) throw new Error(`Symbol ${symbol} not found`);
-    return generateMockCandles(quote.price, 365);
-  }
-
-  // Filter based on timeframe from the end of the array
-  let pointsToReturn = allCandles.length;
-  switch (timeframe) {
-    case '1D': pointsToReturn = 1; break; 
-    case '5D': pointsToReturn = 5; break;
-    case '1M': pointsToReturn = 30; break;
-    case '3M': pointsToReturn = 90; break;
-    case '6M': pointsToReturn = 180; break;
-    case '1Y': pointsToReturn = 365; break;
-    case 'ALL': pointsToReturn = 1800; break;
-  }
-  
-  return allCandles.slice(Math.max(allCandles.length - pointsToReturn, 0));
-};
-
-// Kept for backward compatibility
-export const getChartData = getCandles;
-
-export const searchSymbols = async (query: string): Promise<Quote[]> => {
-  const upperQuery = query.toUpperCase();
-  const matches = Object.values(MOCK_QUOTES).filter(q => 
-    q.symbol.includes(upperQuery) || q.name.toUpperCase().includes(upperQuery)
-  );
-
-  // Fetch live prices for search results in parallel
-  const liveResults = await Promise.all(
-    matches.map(async (mockQuote) => {
-      try {
-        const liveQuote = await getQuote(mockQuote.symbol);
-        return { ...mockQuote, ...liveQuote }; // Merge to preserve any mock fields like aiInsight
-      } catch {
-        return mockQuote;
+  const promise = (async () => {
+    try {
+      const response = await fetch(`/api/market/candles/${fetchSymbol}?timeframe=${timeframe}`);
+      if (!response.ok) {
+        throw new Error(`Failed to fetch candles for ${symbol}: ${response.status}`);
       }
-    })
-  );
+      const data = await response.json();
+      if (!data || !Array.isArray(data)) return [];
+      return data as Candle[];
+    } finally {
+      inflightCandles.delete(key);
+    }
+  })();
 
-  return liveResults;
+  inflightCandles.set(key, promise);
+  return promise;
 };
 
-export const getMarketStatus = async (): Promise<MarketStatus> => {
-  await delay(200);
-  
-  const now = new Date();
-  const dayOfWeek = now.getUTCDay();
-  const utcHours = now.getUTCHours();
-  const utcMinutes = now.getUTCMinutes();
-  
-  // Market is closed on Saturday (6) and Sunday (0)
-  const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
-  
-  // EST is UTC-5 (or UTC-4 during daylight savings, simplifying for mock logic)
-  // Let's assume market is open 13:30 to 20:00 UTC (9:30 AM to 4:00 PM EST roughly)
-  const isMarketHours = (utcHours > 13 || (utcHours === 13 && utcMinutes >= 30)) && utcHours < 20;
+// Backward-compatible aliases
+export const getCandles = fetchCandles;
+export const getChartData = fetchCandles;
 
-  const isOpen = !isWeekend && isMarketHours;
-  
-  const nextCloseTime = new Date();
-  if (isOpen) {
-    nextCloseTime.setUTCHours(20, 0, 0, 0);
-  } else {
-    // If closed, next close time would be next weekday at 20:00 UTC
-    let daysToAdd = 1;
-    if (dayOfWeek === 5) daysToAdd = 3;
-    if (dayOfWeek === 6) daysToAdd = 2;
-    nextCloseTime.setDate(now.getDate() + daysToAdd);
-    nextCloseTime.setUTCHours(20, 0, 0, 0);
+// ─── Market Movers ───────────────────────────────────────────────────────
+
+export interface MoversResponse {
+  gainers: MarketMover[];
+  losers: MarketMover[];
+  active: MarketMover[];
+  all: MarketMover[];
+}
+
+export const fetchMarketMovers = async (): Promise<MoversResponse> => {
+  try {
+    const response = await fetch('/api/market/movers');
+    if (!response.ok) {
+      throw new Error(`Failed to fetch movers: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch market movers:', error);
+    return { gainers: [], losers: [], active: [], all: [] };
   }
+};
 
+// Legacy compat: returns flat list sorted by absolute change
+export const getMarketMovers = async (): Promise<MarketMover[]> => {
+  const data = await fetchMarketMovers();
+  return data.all.sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent));
+};
+
+// ─── Market Status ───────────────────────────────────────────────────────
+
+export const fetchMarketStatus = async (symbol: string = 'AAPL'): Promise<MarketStatusDetails> => {
+  try {
+    const response = await fetch(`/api/market/status?symbol=${symbol}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch market status:', error);
+    return {
+      isOpen: false,
+      phase: 'Market Closed',
+      displayMessage: 'Unable to determine market status',
+    };
+  }
+};
+
+// Legacy compat
+export const getMarketStatus = async (): Promise<MarketStatus> => {
+  const status = await fetchMarketStatus();
   return {
-    isOpen,
-    nextCloseTime: nextCloseTime.toISOString()
+    isOpen: status.isOpen,
+    nextOpenTime: status.nextOpenTime,
   };
 };
 
+// ─── Exchange Rates ──────────────────────────────────────────────────────
+
+export const fetchExchangeRates = async (): Promise<Record<string, number>> => {
+  try {
+    const response = await fetch('/api/market/exchange-rates');
+    if (!response.ok) throw new Error(`Failed: ${response.status}`);
+    return await response.json();
+  } catch (error) {
+    console.error('Failed to fetch exchange rates:', error);
+    return { USD: 1, INR: 96.56, EUR: 0.88, GBP: 0.75 };
+  }
+};
+
+// ─── Symbol Search ───────────────────────────────────────────────────────
+
+export const searchSymbols = async (query: string): Promise<Quote[]> => {
+  if (!query.trim()) return [];
+
+  try {
+    // Use batch quotes for known symbols, otherwise return basic info
+    const symbols = await fetchSearchResults(query);
+    if (symbols.length === 0) return [];
+
+    // Fetch live quotes for search results
+    const quotes = await fetchBatchQuotes(symbols.map(s => s.symbol));
+    return quotes;
+  } catch (error) {
+    console.error('Symbol search failed:', error);
+    return [];
+  }
+};
+
+// Internal: calls the search API
+const fetchSearchResults = async (query: string): Promise<Array<{ symbol: string; name: string }>> => {
+  try {
+    // Use Yahoo search via a simple quote attempt for now
+    // The batch endpoint handles the resolution
+    const upperQuery = query.toUpperCase();
+
+    // Try known symbol patterns first
+    const knownSymbols = [
+      'AAPL', 'MSFT', 'NVDA', 'TSLA', 'AMZN', 'META', 'GOOGL', 'NFLX', 'AMD', 'INTC',
+      'VOO', 'QQQ', 'BTC-USD', 'ETH-USD', 'SOL-USD',
+      'RELIANCE.NS', 'TCS.NS', 'INFY.NS', 'ICICIBANK.NS', 'HDFCBANK.NS',
+      'GOLD', 'SILVER', 'GC=F',
+    ];
+
+    const matches = knownSymbols.filter(s =>
+      s.toUpperCase().includes(upperQuery) ||
+      s.replace('.NS', '').toUpperCase().includes(upperQuery) ||
+      s.replace('-USD', '').toUpperCase().includes(upperQuery)
+    );
+
+    return matches.map(s => ({ symbol: s, name: s }));
+  } catch {
+    return [];
+  }
+};
+
+// ─── Watchlist ────────────────────────────────────────────────────────────
+
 export const getWatchlist = async (): Promise<Asset[]> => {
-  await delay(300);
   return [
     { symbol: 'AAPL', name: 'Apple Inc.', exchange: 'NASDAQ', type: 'Stock' },
     { symbol: 'TSLA', name: 'Tesla Inc.', exchange: 'NASDAQ', type: 'Stock' },
-    { symbol: 'BTC', name: 'Bitcoin', exchange: 'CRYPTO', type: 'Crypto' },
+    { symbol: 'BTC-USD', name: 'Bitcoin', exchange: 'CRYPTO', type: 'Crypto' },
     { symbol: 'NVDA', name: 'NVIDIA Corp.', exchange: 'NASDAQ', type: 'Stock' },
     { symbol: 'GOOGL', name: 'Alphabet Inc.', exchange: 'NASDAQ', type: 'Stock' },
-    { symbol: 'GOLD', name: 'Gold', exchange: 'COMEX', type: 'ETF' },
+    { symbol: 'GC=F', name: 'Gold Futures', exchange: 'COMEX', type: 'ETF' },
   ];
 };

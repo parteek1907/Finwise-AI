@@ -1,8 +1,5 @@
 import { NextResponse } from 'next/server';
-import YahooFinance from 'yahoo-finance2';
-import { normalizeToUSD } from '@/lib/currencyConverter';
-
-const yahooFinance = new YahooFinance();
+import { yahooProvider } from '@/lib/yahoo-provider';
 
 export async function GET(
   request: Request,
@@ -10,7 +7,6 @@ export async function GET(
 ) {
   try {
     let resolvedParams = params;
-    // Handle both Next.js 14 and 15 param resolution
     if (params instanceof Promise) {
       resolvedParams = await params;
     }
@@ -20,45 +16,29 @@ export async function GET(
       return NextResponse.json({ error: 'Symbol is required' }, { status: 400 });
     }
 
-    const quote = await yahooFinance.quote(symbol);
-
-    if (!quote) {
-      return NextResponse.json({ error: 'Symbol not found' }, { status: 404 });
-    }
-
-    const rawPrice = quote.regularMarketPrice || 0;
-    const rawPreviousClose = quote.regularMarketPreviousClose || rawPrice;
-    const rawChange = quote.regularMarketChange || (rawPrice - rawPreviousClose);
-    const rawHigh = quote.regularMarketDayHigh || rawPrice;
-    const rawLow = quote.regularMarketDayLow || rawPrice;
-    const rawOpen = quote.regularMarketOpen || rawPrice;
-
-    // Normalize all prices to USD so the frontend formatting logic multiplier works correctly
-    const currency = quote.currency || 'USD';
-    const price = await normalizeToUSD(rawPrice, currency);
-    const previousClose = await normalizeToUSD(rawPreviousClose, currency);
-    const change = await normalizeToUSD(rawChange, currency);
-    const high = await normalizeToUSD(rawHigh, currency);
-    const low = await normalizeToUSD(rawLow, currency);
-    const open = await normalizeToUSD(rawOpen, currency);
-
-    const changePercent = quote.regularMarketChangePercent || (rawChange / rawPreviousClose) * 100;
+    const quote = await yahooProvider.getQuote(symbol);
+    const status = yahooProvider.getMarketStatus(quote);
 
     return NextResponse.json({
       symbol: quote.symbol,
-      name: quote.shortName || quote.longName || symbol,
-      exchange: quote.exchange || quote.fullExchangeName || 'MARKET',
-      currency: currency,
-      price,
-      change,
-      changePercent,
-      high,
-      low,
-      open,
-      previousClose,
+      name: quote.name,
+      exchange: quote.exchange,
+      currency: quote.currency,
+      price: quote.price,
+      change: quote.change,
+      changePercent: quote.changePercent,
+      high: quote.high,
+      low: quote.low,
+      open: quote.open,
+      previousClose: quote.previousClose,
+      volume: quote.volume,
+      marketCap: quote.marketCap,
+      marketState: status.phase,
+      marketStatusMessage: status.displayMessage,
+      isMarketOpen: status.isOpen,
     });
   } catch (error: any) {
-    console.error('Error fetching quote from Yahoo Finance:', error);
+    console.error('Error fetching quote:', error);
     return NextResponse.json({ error: error.message || 'Failed to fetch quote' }, { status: 500 });
   }
 }

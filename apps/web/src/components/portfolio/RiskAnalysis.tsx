@@ -27,8 +27,7 @@ const COLORS = ['#0ea5e9', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#6366f1'
 
 export const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ holdings }) => {
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
-  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates);
-  const activeRate = exchangeRates ? (exchangeRates[preferredCurrency] || 1) : 1;
+
 
   const { sectorData, riskScore, riskLevel } = useMemo(() => {
     if (holdings.length === 0) return { sectorData: [], riskScore: 0, riskLevel: 'N/A' };
@@ -138,7 +137,7 @@ export const RiskAnalysis: React.FC<RiskAnalysisProps> = ({ holdings }) => {
                 ))}
               </Pie>
               <Tooltip 
-                formatter={(value: any) => formatCurrency(Number(value) * activeRate)} 
+                formatter={(value: any) => formatCurrency(Number(value))} 
                 contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
               />
               <Legend verticalAlign="bottom" height={36} />

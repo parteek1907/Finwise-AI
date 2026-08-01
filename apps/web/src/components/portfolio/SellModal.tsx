@@ -19,8 +19,7 @@ export const SellModal: React.FC<SellModalProps> = ({ holding, onClose, onSucces
   const { submitOrder, isSubmitting, error } = useTradeExecution();
   
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
-  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates);
-  const activeRate = exchangeRates ? (exchangeRates[preferredCurrency] || 1) : 1;
+
 
   const handleSell = async () => {
     if (quantity <= 0 || quantity > holding.shares) return;
@@ -115,14 +114,14 @@ export const SellModal: React.FC<SellModalProps> = ({ holding, onClose, onSucces
               <div className={styles.summaryRow}>
                 <span>Estimated Credit</span>
                 <strong>
-                  <NumberFlow value={estimatedValue * activeRate} format={{ style: 'currency', currency: preferredCurrency }} />
+                  <NumberFlow value={estimatedValue} format={{ style: 'currency', currency: preferredCurrency }} />
                 </strong>
               </div>
               <div className={styles.summaryRow}>
                 <span>Estimated {isProfit ? 'Profit' : 'Loss'}</span>
                 <strong className={isProfit ? styles.profit : styles.loss}>
                   {isProfit ? '+' : ''}
-                  <NumberFlow value={estimatedProfit * activeRate} format={{ style: 'currency', currency: preferredCurrency }} />
+                  <NumberFlow value={estimatedProfit} format={{ style: 'currency', currency: preferredCurrency }} />
                 </strong>
               </div>
             </div>

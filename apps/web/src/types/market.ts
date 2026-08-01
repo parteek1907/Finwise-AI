@@ -1,3 +1,12 @@
+export type MarketPhase = 'Pre-Market' | 'Market Open' | 'After Hours' | 'Market Closed' | 'Weekend';
+
+export interface MarketStatusDetails {
+  isOpen: boolean;
+  phase: MarketPhase;
+  nextOpenTime?: string;
+  displayMessage: string;
+}
+
 export interface Quote {
   symbol: string;
   name: string;
@@ -6,8 +15,15 @@ export interface Quote {
   changePercent: number;
   volume: number;
   marketCap: number;
-  exchange?: string;
-  currency?: string;
+  exchange: string;
+  currency: string;
+  high?: number;
+  low?: number;
+  open?: number;
+  previousClose?: number;
+  marketState?: string;
+  marketStatusMessage?: string;
+  isMarketOpen?: boolean;
   // Future AI Fields
   aiInsight?: string;
   riskLevel?: 'Low' | 'Medium' | 'High';
@@ -23,7 +39,7 @@ export interface MarketMover {
 }
 
 export interface Candle {
-  time: number; // Unix timestamp for lightweight-charts
+  time: number | string; // Unix timestamp for intraday, 'YYYY-MM-DD' for daily
   open: number;
   high: number;
   low: number;

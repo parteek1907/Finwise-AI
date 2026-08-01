@@ -6,5 +6,3 @@ pydantic
 groq
 google-genai
 requests
-finnhub-python
-websockets

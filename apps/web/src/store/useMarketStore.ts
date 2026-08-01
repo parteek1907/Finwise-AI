@@ -1,104 +1,336 @@
-import { create } from 'zustand';
-import { Quote, MarketStatus } from '../types/market';
-import { getQuote } from '../services/market';
+/**
+ * Market Store — Single Source of Truth for ALL market data.
+ *
+ * Architecture:
+ *   UI Components → hooks → useMarketStore → services/market.ts → /api/market/* → Yahoo Finance
+ *
+ * Features:
+ * - Reference-counted subscriptions (5 components needing AAPL = 1 poll)
+ * - Adaptive polling: 15s when market open, 10min when closed
+ * - Batch quote fetching to minimize API calls
+ * - Error resilience: keeps last successful prices, shows error banner
+ * - Candle caching by symbol+timeframe
+ */
 
-interface RealTimeTick {
-  symbol: string;
-  price: number;
-  time: number;
-  volume: number;
+import { create } from 'zustand';
+import { Quote, MarketMover, Candle, MarketStatusDetails, MarketPhase } from '../types/market';
+import { Timeframe } from '../constants/symbols';
+import { useSettingsStore } from './useSettingsStore';
+import { CurrencyService } from '../services/currency';
+import {
+  fetchQuote,
+  fetchBatchQuotes,
+  fetchCandles as fetchCandlesService,
+  fetchMarketMovers,
+  fetchMarketStatus,
+  fetchExchangeRates,
+  MoversResponse,
+} from '../services/market';
+
+// ─── Types ──────────────────────────────────────────────────────────────
+
+interface CachedCandles {
+  data: Candle[];
+  timeframe: Timeframe;
+  fetchedAt: number;
 }
 
 interface MarketState {
+  // Data
   quotes: Record<string, Quote>;
-  liveTicks: Record<string, RealTimeTick>;
+  candles: Record<string, CachedCandles>;
+  movers: MoversResponse;
+  marketStatus: Record<string, MarketStatusDetails>;
+  exchangeRates: Record<string, number>;
+
+  // UI state
   loading: boolean;
   error: string | null;
-  activeSymbols: Set<string>;
-  
+  lastSuccessfulFetch: number;
+
+  // Subscription tracking (ref counting)
+  subscriptionCounts: Record<string, number>;
+
   // Actions
-  initialize: () => Promise<void>;
   subscribe: (symbol: string) => void;
   unsubscribe: (symbol: string) => void;
+  fetchQuotes: () => Promise<void>;
+  fetchCandles: (symbol: string, timeframe: Timeframe) => Promise<Candle[]>;
+  fetchMovers: () => Promise<void>;
+  fetchStatus: (symbol?: string) => Promise<void>;
+  fetchRates: () => Promise<void>;
+  initialize: () => Promise<void>;
 }
 
-// Keep polling intervals outside of zustand state
-const pollingIntervals: Record<string, NodeJS.Timeout> = {};
+// ─── Polling Management ─────────────────────────────────────────────────
 
-export const useMarketStore = create<MarketState>((set, get) => {
-  return {
-    quotes: {},
-    liveTicks: {},
-    loading: true,
-    error: null,
-    activeSymbols: new Set(),
+let pollTimer: ReturnType<typeof setTimeout> | null = null;
+let moversPollTimer: ReturnType<typeof setTimeout> | null = null;
+let ratesPollTimer: ReturnType<typeof setTimeout> | null = null;
+let isPolling = false;
 
-    initialize: async () => {
-      set({ loading: false, error: null });
-    },
+const POLL_INTERVAL_OPEN = 15 * 1000;    // 15s during market hours
+const POLL_INTERVAL_CLOSED = 10 * 60 * 1000; // 10min when closed
+const MOVERS_POLL_INTERVAL = 60 * 1000;  // 60s
+const RATES_POLL_INTERVAL = 15 * 60 * 1000; // 15min
+const CANDLE_CACHE_TTL = 5 * 60 * 1000;  // 5min
 
-    subscribe: async (symbol: string) => {
-      const state = get();
-      const newSymbols = new Set(state.activeSymbols);
-      newSymbols.add(symbol);
-      set({ activeSymbols: newSymbols });
+function getPollInterval(marketStatus: Record<string, MarketStatusDetails>): number {
+  // If any subscribed exchange is open, use the faster interval
+  const anyOpen = Object.values(marketStatus).some(s => s.isOpen);
+  return anyOpen ? POLL_INTERVAL_OPEN : POLL_INTERVAL_CLOSED;
+}
 
-      const fetchAndUpdate = async () => {
-        try {
-          const quote = await getQuote(symbol);
-          
-          set(prev => {
-            const prevQuote = prev.quotes[symbol];
-            
-            // Only generate a chart tick if the price actually changed to avoid spamming the chart
-            // with identical prices, unless it's the very first quote
-            let newLiveTicks = prev.liveTicks;
-            if (!prevQuote || prevQuote.price !== quote.price) {
-              newLiveTicks = {
-                ...prev.liveTicks,
-                [symbol]: {
-                  symbol,
-                  price: quote.price,
-                  time: Date.now(),
-                  volume: quote.volume || Math.floor(Math.random() * 500) + 100
-                }
-              };
-            }
+function startPolling() {
+  if (isPolling) return;
+  isPolling = true;
 
-            return {
-              quotes: { ...prev.quotes, [symbol]: quote },
-              liveTicks: newLiveTicks
-            };
-          });
-        } catch (error) {
-          console.error(`Failed to fetch quote for ${symbol}`, error);
+  const poll = async () => {
+    const state = useMarketStore.getState();
+    const subscribedSymbols = Object.keys(state.subscriptionCounts);
+
+    if (subscribedSymbols.length === 0) {
+      isPolling = false;
+      return;
+    }
+
+    await state.fetchQuotes();
+
+    const interval = getPollInterval(state.marketStatus);
+    pollTimer = setTimeout(poll, interval);
+  };
+
+  // Start immediately
+  poll();
+}
+
+function stopPolling() {
+  isPolling = false;
+  if (pollTimer) {
+    clearTimeout(pollTimer);
+    pollTimer = null;
+  }
+}
+
+function startMoversPoll() {
+  const poll = async () => {
+    await useMarketStore.getState().fetchMovers();
+    moversPollTimer = setTimeout(poll, MOVERS_POLL_INTERVAL);
+  };
+  poll();
+}
+
+function stopMoversPoll() {
+  if (moversPollTimer) {
+    clearTimeout(moversPollTimer);
+    moversPollTimer = null;
+  }
+}
+
+function startRatesPoll() {
+  const poll = async () => {
+    await useMarketStore.getState().fetchRates();
+    ratesPollTimer = setTimeout(poll, RATES_POLL_INTERVAL);
+  };
+  poll();
+}
+
+function stopRatesPoll() {
+  if (ratesPollTimer) {
+    clearTimeout(ratesPollTimer);
+    ratesPollTimer = null;
+  }
+}
+
+// ─── Store Definition ───────────────────────────────────────────────────
+
+export const useMarketStore = create<MarketState>((set, get) => ({
+  // Initial state
+  quotes: {},
+  candles: {},
+  movers: { gainers: [], losers: [], active: [], all: [] },
+  marketStatus: {},
+  exchangeRates: { USD: 1 },
+  loading: true,
+  error: null,
+  lastSuccessfulFetch: 0,
+  subscriptionCounts: {},
+
+  initialize: async () => {
+    set({ loading: false, error: null });
+    // Start exchange rate polling
+    startRatesPoll();
+  },
+
+  subscribe: (symbol: string) => {
+    const state = get();
+    const currentCount = state.subscriptionCounts[symbol] || 0;
+    const newCounts = { ...state.subscriptionCounts, [symbol]: currentCount + 1 };
+    set({ subscriptionCounts: newCounts });
+
+    if (currentCount === 0) {
+      // First subscriber for this symbol — fetch immediately
+      fetchQuote(symbol).then(quote => {
+        const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+        const userCurr = preferredCurrency || 'USD';
+        const converted = CurrencyService.convertQuote(quote, userCurr, exchangeRates || {});
+
+        set(prev => ({
+          quotes: { ...prev.quotes, [symbol]: converted },
+          error: null,
+          lastSuccessfulFetch: Date.now(),
+        }));
+      }).catch(err => {
+        console.error(`Failed initial fetch for ${symbol}:`, err);
+        // Only set error if we have no data at all
+        if (!get().quotes[symbol]) {
+          set({ error: 'Live market data temporarily unavailable.' });
         }
-      };
+      });
 
-      // Fetch initial quote immediately
-      if (!state.quotes[symbol]) {
-        await fetchAndUpdate();
+      // Start polling if not already running
+      startPolling();
+    }
+  },
+
+  unsubscribe: (symbol: string) => {
+    const state = get();
+    const currentCount = state.subscriptionCounts[symbol] || 0;
+
+    if (currentCount <= 1) {
+      // Last subscriber removed
+      const newCounts = { ...state.subscriptionCounts };
+      delete newCounts[symbol];
+      set({ subscriptionCounts: newCounts });
+
+      // Stop polling if no more subscriptions
+      if (Object.keys(newCounts).length === 0) {
+        stopPolling();
+      }
+    } else {
+      set({
+        subscriptionCounts: {
+          ...state.subscriptionCounts,
+          [symbol]: currentCount - 1,
+        },
+      });
+    }
+  },
+
+  fetchQuotes: async () => {
+    const state = get();
+    const symbols = Object.keys(state.subscriptionCounts);
+    if (symbols.length === 0) return;
+
+    try {
+      const quotes = await fetchBatchQuotes(symbols);
+      const quotesMap: Record<string, Quote> = { ...state.quotes };
+      
+      const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+      const userCurr = preferredCurrency || 'USD';
+
+      for (const quote of quotes) {
+        const converted = CurrencyService.convertQuote(quote, userCurr, exchangeRates || {});
+        quotesMap[quote.symbol] = converted;
+        // Also store under short alias for crypto (BTC-USD → BTC)
+        if (quote.symbol.endsWith('-USD')) {
+          quotesMap[quote.symbol.replace('-USD', '')] = converted;
+        }
+        // Store under short alias for NSE (.NS suffix)
+        if (quote.symbol.endsWith('.NS')) {
+          quotesMap[quote.symbol.replace('.NS', '')] = converted;
+        }
       }
 
-      // Start polling every 5 seconds if not already polling
-      if (!pollingIntervals[symbol]) {
-        console.log(`Started polling for ${symbol}`);
-        pollingIntervals[symbol] = setInterval(fetchAndUpdate, 5000);
-      }
-    },
-
-    unsubscribe: (symbol: string) => {
-      const state = get();
-      const newSymbols = new Set(state.activeSymbols);
-      newSymbols.delete(symbol);
-      set({ activeSymbols: newSymbols });
-
-      // Stop polling
-      if (pollingIntervals[symbol]) {
-        clearInterval(pollingIntervals[symbol]);
-        delete pollingIntervals[symbol];
-        console.log(`Stopped polling for ${symbol}`);
+      set({
+        quotes: quotesMap,
+        error: null,
+        lastSuccessfulFetch: Date.now(),
+      });
+    } catch (error) {
+      console.error('Batch quote fetch failed:', error);
+      // Keep last successful data, only set error if we have nothing
+      if (Object.keys(state.quotes).length === 0) {
+        set({ error: 'Live market data temporarily unavailable.' });
       }
     }
-  };
-});
+  },
+
+  fetchCandles: async (symbol: string, timeframe: Timeframe): Promise<Candle[]> => {
+    const state = get();
+    const cacheKey = `${symbol}:${timeframe}`;
+    const cached = state.candles[cacheKey];
+
+    // Return cached if fresh enough
+    if (cached && cached.timeframe === timeframe && (Date.now() - cached.fetchedAt) < CANDLE_CACHE_TTL) {
+      return cached.data;
+    }
+
+    try {
+      const rawCandles = await fetchCandlesService(symbol, timeframe);
+      
+      const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+      const userCurr = preferredCurrency || 'USD';
+      
+      // We need the original currency to convert. We can get it from the cached quote.
+      const quote = state.quotes[symbol];
+      const fromCurrency = quote ? quote.currency : 'USD'; // If we don't have it, assume USD (unlikely)
+
+      const convertedCandles = CurrencyService.convertCandles(rawCandles, fromCurrency || 'USD', userCurr, exchangeRates || {});
+
+      set({
+        candles: {
+          ...state.candles,
+          [cacheKey]: { data: convertedCandles, timeframe, fetchedAt: Date.now() },
+        },
+      });
+
+      return convertedCandles;
+    } catch (error) {
+      console.error(`Failed to fetch candles for ${symbol}:`, error);
+      // Return cached data if available
+      return cached?.data || [];
+    }
+  },
+
+  fetchMovers: async () => {
+    try {
+      const rawMovers = await fetchMarketMovers();
+      
+      const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
+      const userCurr = preferredCurrency || 'USD';
+      const rates = exchangeRates || {};
+
+      const convertedMovers = {
+        gainers: rawMovers.gainers.map(m => CurrencyService.convertMover(m, 'USD', userCurr, rates)), // Yahoo movers default to US market usually
+        losers: rawMovers.losers.map(m => CurrencyService.convertMover(m, 'USD', userCurr, rates)),
+        active: rawMovers.active.map(m => CurrencyService.convertMover(m, 'USD', userCurr, rates)),
+        all: rawMovers.all.map(m => CurrencyService.convertMover(m, 'USD', userCurr, rates)),
+      };
+
+      set({ movers: convertedMovers });
+    } catch (error) {
+      console.error('Failed to fetch movers:', error);
+    }
+  },
+
+  fetchStatus: async (symbol: string = 'AAPL') => {
+    try {
+      const status = await fetchMarketStatus(symbol);
+      set(prev => ({
+        marketStatus: { ...prev.marketStatus, [symbol]: status },
+      }));
+    } catch (error) {
+      console.error('Failed to fetch market status:', error);
+    }
+  },
+
+  fetchRates: async () => {
+    try {
+      const rates = await fetchExchangeRates();
+      set({ exchangeRates: rates });
+    } catch (error) {
+      console.error('Failed to fetch exchange rates:', error);
+    }
+  },
+}));

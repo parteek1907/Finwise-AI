@@ -7,8 +7,9 @@ import { ArrowLeft, Target, Plus, TrendingUp, Calendar, Zap, Edit2, Trash2, X, A
 import styles from './GoalDetail.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
+import { CurrencyService } from '@/services/currency';
 import { motion, AnimatePresence } from 'framer-motion';
-import { formatCurrencyRaw, getCurrencySymbol, formatRelativeDate, convertCurrency } from '@/utils/formatters';
+import { formatCurrencyRaw, getCurrencySymbol, formatRelativeDate } from '@/utils/formatters';
 import {
   calculateGoalStatus,
   calculateProjectedCompletion,
@@ -38,6 +39,8 @@ export default function GoalDetailPage() {
   const deleteGoal = useAppStore(state => state.deleteGoal);
   
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
+  const exchangeRates = useSettingsStore(state => state.financial?.exchangeRates) || {};
+  const prefCurrency = preferredCurrency;
   
   const goal = goals.find(g => g.id === id);
   
@@ -86,8 +89,8 @@ export default function GoalDetailPage() {
   const goalCurrency = preferredCurrency; // Force preferred currency over legacy goal currency
   const fmt = (v: number) => formatCurrencyRaw(v, goalCurrency);
   const symbol = getCurrencySymbol(goalCurrency);
-  const convertedCurrent = convertCurrency(goal.current, goal.currency || 'USD', goalCurrency);
-  const convertedTarget = convertCurrency(goal.target, goal.currency || 'USD', goalCurrency);
+  const convertedCurrent = CurrencyService.convert(goal.current, goal.currency || 'USD', prefCurrency, exchangeRates);
+  const convertedTarget = CurrencyService.convert(goal.target, goal.currency || 'USD', prefCurrency, exchangeRates);
 
   const goalData = { 
     ...goal,
@@ -379,7 +382,7 @@ export default function GoalDetailPage() {
                               {c.note && <span className={styles.historyNote}><StickyNote size={10} /> {c.note}</span>}
                             </div>
                             <div className={styles.historyRight}>
-                              <span className={styles.historyAmount}>+{formatCurrencyRaw(convertCurrency(c.amount, goal.currency || 'USD', goalCurrency), goalCurrency)}</span>
+                              <span className={styles.historyAmount}>+{formatCurrencyRaw(CurrencyService.convert(c.amount, goal.currency || 'USD', prefCurrency, exchangeRates), prefCurrency)}</span>
                               <div className={styles.historyActions}>
                                 <button onClick={() => handleEditContribution(c.id)} title="Edit"><Pencil size={12} /></button>
                                 <button onClick={() => handleDeleteContribution(c.id)} title="Delete"><Trash size={12} /></button>
