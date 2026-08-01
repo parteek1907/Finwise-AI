@@ -24,29 +24,51 @@ You MUST return the output in ONLY valid JSON format matching this schema:
   ]
 }`;
 
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+    const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
+    let res;
+    let content = "";
+    
+    // Try Gemini First
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: "POST",
-      headers: {
-        "Authorization": `Bearer ${GROQ_API_KEY}`,
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
-        messages: [{ role: 'system', content: systemPrompt }],
-        response_format: { type: "json_object" },
-        temperature: 0.8,
-        max_tokens: 2000
+        systemInstruction: { parts: [{ text: systemPrompt }] },
+        contents: [{ parts: [{ text: "Generate the myths now." }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.8 }
       })
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("Groq API error in myths generate:", errText);
-      throw new Error(`Groq API failed with status ${res.status}`);
+    if (res.ok) {
+      const data = await res.json();
+      content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    } else {
+      console.warn("Gemini API failed in myths generate, falling back to Groq", await res.text());
+      // Fallback to Groq
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [{ role: 'system', content: systemPrompt }],
+          response_format: { type: "json_object" },
+          temperature: 0.8,
+          max_tokens: 2000
+        })
+      });
+
+      if (!groqRes.ok) {
+        throw new Error(`Both APIs failed. Groq error: ${await groqRes.text()}`);
+      }
+
+      const data = await groqRes.json();
+      content = data.choices?.[0]?.message?.content;
     }
 
-    const data = await res.json();
-    const content = data.choices?.[0]?.message?.content;
+    if (!content) throw new Error("No content returned from APIs");
     const jsonContent = JSON.parse(content);
     
     // Check if the response contains exactly 5 myths

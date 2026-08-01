@@ -43,34 +43,55 @@ You MUST output your response in valid JSON format ONLY with the following schem
 }`;
 
     const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
-    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+    
+    let res;
+    let responseContent = "";
+
+    // Try Gemini First
+    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: systemPrompt }] },
-        contents: [
-          {
-            parts: [{ text: message }]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: "application/json",
-          temperature: 0.1
-        }
+        contents: [{ parts: [{ text: message }] }],
+        generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
       })
     });
 
-    if (!res.ok) {
-      const errText = await res.text();
-      console.error("Gemini API error in emotion-ai:", errText);
-      throw new Error(`Gemini API failed with status ${res.status}`);
-    }
+    if (res.ok) {
+      const data = await res.json();
+      responseContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    } else {
+      console.warn("Gemini API failed in emotion-ai, falling back to Groq", await res.text());
+      
+      // Fallback to Groq
+      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${GROQ_API_KEY}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          model: "llama-3.1-8b-instant",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: message }
+          ],
+          response_format: { type: "json_object" },
+          temperature: 0.1
+        })
+      });
 
-    const data = await res.json();
-    let responseContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!groqRes.ok) {
+        throw new Error(`Both APIs failed. Groq error: ${await groqRes.text()}`);
+      }
+
+      const data = await groqRes.json();
+      responseContent = data.choices?.[0]?.message?.content;
+    }
     
     if (!responseContent) {
-        throw new Error("No content returned from Gemini");
+        throw new Error("No content returned from APIs");
     }
 
     return NextResponse.json(JSON.parse(responseContent));
