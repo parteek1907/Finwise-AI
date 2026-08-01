@@ -76,13 +76,13 @@ export async function POST(req: Request) {
       if (!res.ok) {
         if (res.status === 429) {
           return NextResponse.json({
+            isQuotaError: true,
             reasoning: "The free daily limit for image scam detection has been reached on this API key. Please wait 24 hours to use the screenshot feature again, or paste the text instead.",
-            isScam: true,
-            probability: 50,
+            isScam: false,
+            probability: 0,
             redFlags: [
-              { title: "API Quota Exceeded", description: "Gemini Vision free tier daily limit hit (20 requests/day)." }
-            ],
-            lesson: "Text analysis uses a different AI model (Groq) with much higher limits, so pasting text will always work!"
+              { title: "Gemini Vision Quota Hit", description: "The daily limit of 20 images has been reached. Please paste your text instead, as text analysis uses Groq which has much higher limits!" }
+            ]
           });
         }
         throw new Error(`Gemini API failed: ${await res.text()}`);

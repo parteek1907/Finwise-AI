@@ -290,7 +290,7 @@ export default function ScamDetectorPage() {
                 >
                   <div className={styles.radar}></div>
                   <h3>Scanning...</h3>
-                  <p>Cross-referencing global scam databases using Gemini...</p>
+                  <p>Cross-referencing global scam databases using {activeTab === 'image' ? 'Gemini Vision' : 'Groq AI'}...</p>
                 </motion.div>
               )}
 
@@ -300,13 +300,23 @@ export default function ScamDetectorPage() {
                   initial={{opacity: 0, scale: 0.95}} animate={{opacity: 1, scale: 1}}
                   className={styles.resultCard}
                 >
-                  <div className={result.isScam ? styles.dangerHeader : styles.safeHeader}>
-                    {result.isScam ? <ShieldAlert size={32} /> : <ShieldCheck size={32} color="#22c55e" />}
-                    <div>
-                      <h2>{result.isScam ? "High Risk Detected" : "Looks Safe"}</h2>
-                      <span>{result.probability}% probability of being a scam</span>
+                  {result.isQuotaError ? (
+                    <div className={styles.dangerHeader} style={{ backgroundColor: '#fff3cd', color: '#856404' }}>
+                      <AlertTriangle size={32} color="#856404" />
+                      <div>
+                        <h2>API Quota Exceeded</h2>
+                        <span>Gemini Vision daily limit reached. Please use Text Analysis.</span>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className={result.isScam ? styles.dangerHeader : styles.safeHeader}>
+                      {result.isScam ? <ShieldAlert size={32} /> : <ShieldCheck size={32} color="#22c55e" />}
+                      <div>
+                        <h2>{result.isScam ? "High Risk Detected" : "Looks Safe"}</h2>
+                        <span>{result.probability}% probability of being a scam</span>
+                      </div>
+                    </div>
+                  )}
 
                   {result.redFlags && result.redFlags.length > 0 && (
                     <div className={styles.analysisSection}>
