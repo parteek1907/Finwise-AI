@@ -207,7 +207,7 @@ export default function LearnPage() {
                         onClick={() => lesson.status !== 'Locked' && router.push(`/learn/${lesson.id}`)}
                         disabled={lesson.status === 'Locked'}
                       >
-                        {lesson.status === 'Completed' ? 'Review Lesson' : lesson.status === 'Locked' ? 'Locked - Complete previous to unlock' : 'Start Lesson'}
+                        {lesson.status === 'Completed' ? 'Review Lesson' : lesson.status === 'Locked' ? 'Locked - Complete previous to unlock' : (courseProgressMap[lesson.id]?.currentChapterIdx > 0 ? 'Resume Lesson' : 'Start Lesson')}
                       </button>
                     </div>
                   </div>

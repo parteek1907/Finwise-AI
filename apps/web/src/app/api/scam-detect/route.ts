@@ -86,8 +86,16 @@ export async function POST(req: Request) {
       }
 
       const data = await res.json();
-      const content = data.candidates?.[0]?.content?.parts?.[0]?.text;
+      let content = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!content) throw new Error("No content returned from Gemini");
+      
+      content = content.trim();
+      if (content.startsWith("\`\`\`")) {
+        const lines = content.split('\n');
+        if (lines[0].startsWith("\`\`\`")) lines.shift();
+        if (lines[lines.length - 1].startsWith("\`\`\`")) lines.pop();
+        content = lines.join('\n').trim();
+      }
       
       return NextResponse.json(JSON.parse(content));
     } else {

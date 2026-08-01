@@ -99,7 +99,11 @@ export default function DashboardPage() {
 
   // Derived Data
   const completedLessons = lessons.filter(l => l.status === 'Completed').length;
-  const inProgressLesson = lessons.find(l => l.status === 'In Progress') || lessons[0];
+  const courseProgress = useAppStore(state => state.courseProgress);
+  const recentProgress = Object.values(courseProgress)
+    .filter(p => p.status === 'In Progress')
+    .sort((a, b) => new Date(b.lastAccessed).getTime() - new Date(a.lastAccessed).getTime())[0];
+  const inProgressLesson = (recentProgress ? lessons.find(l => l.id === recentProgress.lessonId) : null) || lessons.find(l => l.status === 'In Progress') || lessons[0];
   const activeGoals = goals.filter(g => g.status !== 'Planning');
 
   const radius = 40;
@@ -406,10 +410,10 @@ export default function DashboardPage() {
               <div className={styles.lessonProgressBarWrap}>
                 <div className={styles.lessonProgressTop}>
                   <span>Course Progress</span>
-                  <strong>60%</strong>
+                  <strong>{Math.round(((courseProgress[inProgressLesson.id]?.currentChapterIdx || 0) / (inProgressLesson.id === 'l1' ? 5 : inProgressLesson.id === 'l2' ? 4 : 5)) * 100)}%</strong>
                 </div>
                 <div className={styles.lessonTrackFill}>
-                  <div className={styles.lessonTrackBar} style={{ width: '60%' }}></div>
+                  <div className={styles.lessonTrackBar} style={{ width: `${Math.round(((courseProgress[inProgressLesson.id]?.currentChapterIdx || 0) / (inProgressLesson.id === 'l1' ? 5 : inProgressLesson.id === 'l2' ? 4 : 5)) * 100)}%` }}></div>
                 </div>
               </div>
 
