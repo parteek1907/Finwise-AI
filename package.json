@@ -6,9 +6,9 @@
   "license": "UNLICENSED",
   "private": true,
   "scripts": {
-    "dev": "npm run dev --workspaces",
-    "build": "npm run build --workspaces",
-    "lint": "npm run lint --workspaces"
+    "dev": "pnpm -r run dev",
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint"
   },
   "engines": {
     "node": ">=18.0.0"
