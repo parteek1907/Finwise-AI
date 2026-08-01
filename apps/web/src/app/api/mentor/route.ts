@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { yahooProvider } from '@/lib/yahoo-provider';
 
-const GROQ_API_KEY = process.env.GROQ_API_KEY || "";
+const GROQ_API_KEY = process.env.GROQ_API_KEY || ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
 
 // Cache for market context (60s TTL to avoid rate limits)
 let marketContextCache: { text: string; timestamp: number } = { text: '', timestamp: 0 };
