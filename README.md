@@ -83,15 +83,25 @@ Image/Screenshot Upload → FastAPI Backend
 
 **Scam & Fraud Detector** — Upload suspicious text messages or screenshots. Powered by Gemini 1.5 Flash (vision) and Groq (text analysis), it extracts red flags, assigns a probability score, and provides actionable educational insights.
 
-**Interactive Financial Dashboard** — A beautiful, real-time overview of your financial health score, learning modules, and market data integrated with `lightweight-charts` and `recharts`.
+**Gamified Learning Academy** — A fully structured, progressive curriculum featuring Easy, Medium, and Hard modules, XP tracking, unlockable content, and a Final Master Assessment.
 
-**Immersive 3D Visualizations** — Utilizing React Three Fiber and Three.js to render data points and financial concepts dynamically on the client side.
+**Live Trading Labs & Simulator** — An interactive paper-trading sandbox featuring live `lightweight-charts`. Users complete hands-on missions (like identifying candlestick patterns or finding top market gainers) right inside their lessons.
 
-**Dynamic Goal Tracking** — Create, manage, and track active financial milestones (e.g., Emergency Funds, Debt Payoff, Investments) with persistent global state via Zustand.
+**Behavioral Psychology Focus** — Specialized modules like "Myth vs Fact", "Emotion AI", and "The Delay Discounting Trap" tackle the psychological barriers of personal finance.
+
+**Interactive Missions & Side-Chat** — Learning modules integrate a floating AI companion panel and dynamic pop-up missions (e.g., Mini Market Screener) that react dynamically to user input.
+
+**Badge Collection & Certificates** — Users earn persistent badges and generate official completion certificates by mastering modules and achieving high accuracy in fraud detection.
+
+**Interactive Financial Dashboard** — A beautiful, real-time overview of your financial health score, active goals, and market data.
+
+**Immersive 3D Visualizations & Banners** — Utilizing React Three Fiber to render dynamic concepts (like the Tree of Wealth), alongside beautifully customized, Python-processed 3D course banners.
+
+**Dynamic Goal Tracking** — Create, manage, and track active financial milestones (e.g., Emergency Funds, Debt Payoff) with persistent global state via Zustand.
 
 **Seamless Authentication** — Secure backend routes protected and integrated seamlessly with Firebase Authentication.
 
-**Monorepo Architecture** — Efficiently organized using npm workspaces, separating the Next.js frontend (`apps/web`) and the FastAPI backend (`apps/backend`) while sharing project configurations.
+**Monorepo Architecture** — Efficiently organized using npm workspaces, separating the Next.js frontend (`apps/web`) and the FastAPI backend (`apps/backend`).
 
 ---
 
