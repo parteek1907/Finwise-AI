@@ -24,6 +24,7 @@ export interface UserProgression {
   badges: Record<string, { unlockedAt: string; progress: number; isHidden?: boolean }>;
   activityGraph: Record<string, { xp: number; types: string[] }>;
   recentMilestones: { id: string; title: string; date: string; type: 'badge' | 'level' | 'streak' | 'goal' }[];
+  marketDiary: { id: string; date: string; lessonId: string; ticker: string; reasoning: string; outcome: string; feedback: string }[];
 }
 
 export interface User {
@@ -183,6 +184,7 @@ const INITIAL_USER: User = {
     badges: {},
     activityGraph: {},
     recentMilestones: [],
+    marketDiary: [],
   }
 };
 
@@ -202,6 +204,10 @@ const INITIAL_LESSONS: Lesson[] = [
   { id: 'l8', title: 'Tax-Advantaged Accounts', category: 'Taxes', duration: '15 min', difficulty: 'Hard', status: 'Locked', xp: 150 },
   { id: 'l9', title: 'Options Trading Basics', category: 'Investing', duration: '20 min', difficulty: 'Hard', status: 'Locked', xp: 150 },
   { id: 'l10', title: 'Retirement Drawdown', category: 'Retirement', duration: '18 min', difficulty: 'Hard', status: 'Locked', xp: 150 },
+  
+  // Live Trading Labs
+  { id: 'lab1', title: 'Stock Market Basics Lab', category: 'Live Trading Labs', duration: '15 min', difficulty: 'Easy', status: 'In Progress', xp: 100 },
+  { id: 'lab2', title: 'Candlestick Analysis Lab', category: 'Live Trading Labs', duration: '20 min', difficulty: 'Medium', status: 'Locked', xp: 150 },
 ];
 
 // Helper to recalculate which lessons are locked
@@ -375,7 +381,13 @@ function migrateUser(user: any, courseProgress: Record<string, CourseProgress>, 
     migratedUser.progression.badges['first_goal'] = { unlockedAt: new Date().toISOString(), progress: 100 };
   }
 
-  return migratedUser;
+  return {
+    ...migratedUser,
+    progression: {
+      ...migratedUser.progression,
+      marketDiary: migratedUser.progression?.marketDiary || []
+    }
+  };
 }
 
 export const useAppStore = create<AppState>()(

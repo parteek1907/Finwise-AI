@@ -62,6 +62,10 @@ interface TradingChartProps {
   realTimeTick?: { price: number; time: number; volume: number } | null;
   chartType?: 'candle' | 'line' | 'area';
   onChartTypeChange?: (type: 'candle' | 'line' | 'area') => void;
+  hideHeader?: boolean;
+  hidePriceScale?: boolean;
+  hideIndicators?: boolean;
+  hideTooltip?: boolean;
 }
 
 export const TradingChart: React.FC<TradingChartProps> = ({ 
@@ -76,7 +80,11 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   orderLines = [],
   realTimeTick,
   chartType = 'candle',
-  onChartTypeChange
+  onChartTypeChange,
+  hideHeader = false,
+  hidePriceScale = false,
+  hideIndicators = false,
+  hideTooltip = false
 }) => {
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
@@ -130,6 +138,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       },
       rightPriceScale: {
         borderColor: 'rgba(0, 0, 0, 0.1)',
+        visible: !hidePriceScale,
       },
       timeScale: {
         borderColor: 'rgba(0, 0, 0, 0.1)',
@@ -198,7 +207,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
     // 3. Add Volume Series (Histogram)
     const volumeInd = indicators.find(i => i.id === 'vol');
-    if (volumeInd?.visible) {
+    if (!hideIndicators && volumeInd?.visible) {
       const volumeSeries = chart.addHistogramSeries({
         color: '#26a69a',
         priceFormat: { type: 'volume' },
@@ -223,7 +232,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
     // 4. Add SMA
     const smaInd = indicators.find(i => i.id === 'sma20');
-    if (smaInd?.visible && smaInd.period) {
+    if (!hideIndicators && smaInd?.visible && smaInd.period) {
       const smaData = calculateSMA(candles, smaInd.period);
       const smaSeries = chart.addLineSeries({
         color: smaInd.color,
@@ -236,7 +245,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
     // 5. Add EMA
     const emaInd = indicators.find(i => i.id === 'ema20');
-    if (emaInd?.visible && emaInd.period) {
+    if (!hideIndicators && emaInd?.visible && emaInd.period) {
       const emaData = calculateEMA(candles, emaInd.period);
       const emaSeries = chart.addLineSeries({
         color: emaInd.color,
@@ -308,8 +317,8 @@ export const TradingChart: React.FC<TradingChartProps> = ({
       const containerWidth = chartContainerRef.current!.clientWidth;
       const containerHeight = chartContainerRef.current!.clientHeight;
       
-      const tooltipWidth = 150;
-      const tooltipHeight = 180;
+      const tooltipWidth = 180;
+      const tooltipHeight = 220;
       
       let x = param.point.x + 15;
       let y = param.point.y + 15;
@@ -435,24 +444,25 @@ export const TradingChart: React.FC<TradingChartProps> = ({
 
   return (
     <div className={styles.chartWrapper}>
-      
-      <ChartHeader 
-        quote={quote}
-        selectedTimeframe={timeframe as any}
-        onSelectTimeframe={onTimeframeChange}
-        indicators={indicators}
-        onToggleIndicator={toggleIndicator}
-        chartType={chartType}
-        onChartTypeChange={onChartTypeChange}
-      />
+      {!hideHeader && (
+        <ChartHeader 
+          quote={quote}
+          selectedTimeframe={timeframe as any}
+          onSelectTimeframe={onTimeframeChange}
+          indicators={hideIndicators ? [] : indicators}
+          onToggleIndicator={toggleIndicator}
+          chartType={chartType}
+          onChartTypeChange={onChartTypeChange}
+        />
+      )}
 
       <div className={styles.chartContainer}>
         {loading ? (
           <ChartLoading />
         ) : (
-          <div ref={chartContainerRef} style={{ width: '100%', height: '100%' }} />
+          <div ref={chartContainerRef} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
         )}
-        <ChartTooltip data={tooltipData} />
+        {!hideTooltip && <ChartTooltip data={tooltipData} />}
       </div>
 
     </div>

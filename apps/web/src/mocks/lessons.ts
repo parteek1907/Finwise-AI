@@ -9,6 +9,7 @@ import { course8 } from './courses/l8';
 import { course9 } from './courses/l9';
 import { course10 } from './courses/l10';
 import { demoCourse } from './courses/demo';
+import { lab1, lab2 } from './labs';
 
 export const LESSON_CONTENTS: Record<string, any[]> = {
   'demo': demoCourse.chapters,
@@ -22,6 +23,8 @@ export const LESSON_CONTENTS: Record<string, any[]> = {
   'l8': course8.chapters,
   'l9': course9.chapters,
   'l10': course10.chapters,
+  'lab1': lab1.chapters,
+  'lab2': lab2.chapters,
 };
 
 export const LESSON_QUIZZES: Record<string, any[]> = {
@@ -36,4 +39,6 @@ export const LESSON_QUIZZES: Record<string, any[]> = {
   'l8': course8.finalQuiz,
   'l9': course9.finalQuiz,
   'l10': course10.finalQuiz,
+  'lab1': lab1.finalQuiz,
+  'lab2': lab2.finalQuiz,
 };

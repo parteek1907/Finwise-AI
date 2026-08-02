@@ -11,12 +11,15 @@ import { Certificate } from '@/components/learn/Certificate';
 import { formatDate } from '@/utils/formatters';
 import { Tabs } from '@/components/ui/vercel-tabs';
 
-const getLessonImage = (lessonId: string) => {
-  // We now map by lesson ID to ensure every single course has a unique, beautifully generated 3D vector image!
+const getLessonImage = (lessonId: string, title: string) => {
+  // Hardcode the demo course image to guarantee it loads even if local storage ID is weird
+  if (title.includes('Demo Testing Course') || lessonId === 'demo') {
+    return '/courses/course_demo.png';
+  }
   return `/courses/course_${lessonId}.png`;
 };
 
-const CATEGORIES = ['All', 'Behavior', 'Saving', 'Investing', 'Credit', 'Taxes', 'Retirement'];
+const CATEGORIES = ['All', 'Behavior', 'Saving', 'Investing', 'Credit', 'Taxes', 'Retirement', 'Live Trading Labs'];
 
 export default function LearnPage() {
   const router = useRouter();
@@ -182,9 +185,12 @@ export default function LearnPage() {
                       {lesson.status !== 'Completed' && lesson.status !== 'Locked' && <Play className={styles.statusIcon} color="#3b82f6" fill="#3b82f6" style={{ marginLeft: '2px', width: '16px', height: '16px' }} />}
                     </div>
                     <img 
-                      src={getLessonImage(lesson.id)} 
+                      src={getLessonImage(lesson.id, lesson.title)} 
                       alt={lesson.title}
                       style={{ position: 'relative', width: '100%', height: '100%', objectFit: 'cover', zIndex: 1 }}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/courses/course_l1.png';
+                      }}
                     />
                   </div>
                   

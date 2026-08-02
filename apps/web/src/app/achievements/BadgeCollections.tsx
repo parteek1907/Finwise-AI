@@ -18,6 +18,8 @@ const BADGE_CONFIG = [
   { id: 'diamond_hands', name: 'Diamond Hands', desc: 'Hold a stock through a 5% drop without panic selling.', icon: Zap, category: 'Investing' },
   { id: 'emotion_master', name: 'Emotion Master', desc: 'Complete 10 emotion checks.', icon: Brain, category: 'Behavior' },
   { id: 'reflection_streak', name: 'Zen Trader', desc: 'Maintain a 7-day reflection streak.', icon: Flame, category: 'Behavior' },
+  { id: 'chart_reader', name: 'Chart Reader', desc: 'Complete your first Live Trading Lab.', icon: TrendingUp, category: 'Investing' },
+  { id: 'disciplined_trader', name: 'Disciplined Trader', desc: 'Successfully place a trade with a Stop Loss in a Lab.', icon: ShieldCheck, category: 'Investing' },
   { id: 'night_owl', name: 'Night Owl', desc: 'Complete a course after midnight.', icon: Award, category: 'Secret', isHidden: true },
 ];
 

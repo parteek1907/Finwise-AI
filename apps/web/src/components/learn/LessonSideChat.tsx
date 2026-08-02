@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from 'react';
-import { Send, Sparkles, X, ChevronRight, MessageSquare, Loader2 } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { Send, Sparkles, X, ChevronRight, MessageSquare, Loader2, Maximize2, Minimize2, BookOpen, Target, TrendingUp } from 'lucide-react';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useAppStore } from '@/store/useAppStore';
 import { RichMessage } from '../mentor/RichMessage';
@@ -20,6 +20,8 @@ interface LessonSideChatProps {
   initialPrompt?: string | null;
   onInitialPromptSent?: () => void;
   onStateChange?: (isExpanded: boolean) => void;
+  isFocusMode?: boolean;
+  onFocusModeChange?: (isFocusMode: boolean) => void;
 }
 
 const LOADING_MESSAGES = [
@@ -36,9 +38,14 @@ export const LessonSideChat: React.FC<LessonSideChatProps> = ({
   contextMode = 'reading',
   initialPrompt,
   onInitialPromptSent,
-  onStateChange
+  onStateChange,
+  isFocusMode = false,
+  onFocusModeChange
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [panelWidth, setPanelWidth] = useState(420);
+  const [isResizing, setIsResizing] = useState(false);
+  
   const [inputValue, setInputValue] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
@@ -67,6 +74,43 @@ export const LessonSideChat: React.FC<LessonSideChatProps> = ({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPrompt]);
+
+  // Load preferred width
+  useEffect(() => {
+    const savedWidth = localStorage.getItem('aiMentorWidth');
+    if (savedWidth) {
+      setPanelWidth(Number(savedWidth));
+    }
+  }, []);
+
+  // Resize Handlers
+  const startResizing = useCallback((e: React.MouseEvent) => {
+    setIsResizing(true);
+    e.preventDefault();
+  }, []);
+
+  const stopResizing = useCallback(() => {
+    setIsResizing(false);
+    localStorage.setItem('aiMentorWidth', panelWidth.toString());
+  }, [panelWidth]);
+
+  const resize = useCallback((e: MouseEvent) => {
+    if (isResizing) {
+      const newWidth = window.innerWidth - e.clientX - 16; // 16px right offset
+      if (newWidth >= 420 && newWidth <= 700) {
+        setPanelWidth(newWidth);
+      }
+    }
+  }, [isResizing]);
+
+  useEffect(() => {
+    window.addEventListener('mousemove', resize);
+    window.addEventListener('mouseup', stopResizing);
+    return () => {
+      window.removeEventListener('mousemove', resize);
+      window.removeEventListener('mouseup', stopResizing);
+    };
+  }, [resize, stopResizing]);
 
   // Sync state to parent
   useEffect(() => {
@@ -101,22 +145,16 @@ export const LessonSideChat: React.FC<LessonSideChatProps> = ({
     return () => clearInterval(interval);
   }, [isTyping]);
 
-  const getSuggestions = () => {
+  const getQuickActions = () => {
     if (contextMode === 'quiz') {
-      return [
-        "Give me a hint",
-        "Explain the concept being tested",
-        "Break this into smaller steps",
-        "What should I think about?"
-      ];
+      return ["Give me a hint", "Explain the concept", "Break into steps"];
     }
-    return [
-      "Explain this lesson in simpler words",
-      "Give me a real-life example",
-      "How does this affect my finances?",
-      "What mistakes do beginners make?",
-      "Summarize this chapter"
-    ];
+    return ["Explain Simpler", "Real Example", "Quiz Me", "Summarize", "Challenge Me"];
+  };
+
+  const handleContextChipClick = (contextLabel: string) => {
+    setInputValue(prev => prev + `[${contextLabel}] `);
+    textareaRef.current?.focus();
   };
 
   const handleSend = async (text: string = inputValue) => {
@@ -233,18 +271,37 @@ export const LessonSideChat: React.FC<LessonSideChatProps> = ({
         {isExpanded && (
           <motion.div 
             className={styles.chatPanel}
+            style={{ 
+              width: isFocusMode ? '50vw' : panelWidth, 
+              right: isFocusMode ? '50vw' : 16, 
+              top: isFocusMode ? 0 : 16, 
+              bottom: isFocusMode ? 0 : 16, 
+              borderRadius: isFocusMode ? 0 : 20,
+              boxShadow: isFocusMode ? 'none' : undefined,
+              borderRight: isFocusMode ? '1px solid #e5e7eb' : undefined
+            }}
             initial={{ x: 400, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: 400, opacity: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
           >
+            {!isFocusMode && <div className={`${styles.resizer} ${isResizing ? styles.isResizing : ''}`} onMouseDown={startResizing} />}
+            
             <div className={styles.header}>
-              <div className={styles.headerTitle}>
-                <Sparkles size={16} /> Learning Companion
+              <div>
+                <div className={styles.headerTitle}>
+                  <Sparkles size={16} /> Intelligent Companion
+                </div>
+                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '4px', display: 'flex', gap: '8px', alignItems: 'center' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><BookOpen size={12}/> {lessonContext.chapterTitle}</span>
+                  {contextMode === 'quiz' && <span style={{ display: 'flex', alignItems: 'center', gap: '4px', color: '#3b82f6' }}><Target size={12}/> Mission Active</span>}
+                </div>
               </div>
-              <button className={styles.closeBtn} onClick={() => setIsExpanded(false)} title="Collapse Chat">
-                <X size={18} />
-              </button>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className={styles.closeBtn} onClick={() => setIsExpanded(false)} title="Collapse Chat">
+                  <X size={18} />
+                </button>
+              </div>
             </div>
 
             <div className={styles.messagesArea}>
@@ -290,27 +347,37 @@ export const LessonSideChat: React.FC<LessonSideChatProps> = ({
               <div ref={messagesEndRef} />
             </div>
 
-            {!isTyping && messages.length === 0 && (
-              <div className={styles.suggestionsArea}>
-                <p className={styles.suggestionsTitle}>Examples of queries:</p>
-                {getSuggestions().map((suggestion, idx) => (
+            <div className={styles.inputArea}>
+              <div className={styles.quickActionsRow}>
+                {getQuickActions().map((action, idx) => (
                   <button 
                     key={idx} 
-                    className={styles.suggestionChip}
-                    onClick={() => handleSend(suggestion)}
+                    className={styles.quickActionChip}
+                    onClick={() => handleSend(action)}
                   >
-                    <span>{suggestion}</span>
-                    <ChevronRight size={14} className={styles.suggestionArrow} />
+                    {action}
                   </button>
                 ))}
               </div>
-            )}
 
-            <div className={styles.inputArea}>
+              <div className={styles.contextChips}>
+                <button className={styles.contextChip} onClick={() => handleContextChipClick('Lesson')}>
+                  <BookOpen size={10} /> Lesson
+                </button>
+                {contextMode === 'quiz' && (
+                  <button className={styles.contextChip} onClick={() => handleContextChipClick('Mission')}>
+                    <Target size={10} /> Mission
+                  </button>
+                )}
+                <button className={styles.contextChip} onClick={() => handleContextChipClick('Chart')}>
+                  <TrendingUp size={10} /> Chart
+                </button>
+              </div>
+
               <div className={styles.inputWrapper}>
                 <textarea 
                   ref={textareaRef}
-                  placeholder="Ask a question..." 
+                  placeholder="Ask about this lesson, chart, or mission..." 
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyDown={handleKeyDown}

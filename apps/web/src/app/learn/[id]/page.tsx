@@ -10,6 +10,8 @@ import { useAppStore } from '@/store/useAppStore';
 import { LessonSideChat } from '@/components/learn/LessonSideChat';
 import { LESSON_CONTENTS, LESSON_QUIZZES } from '@/mocks/lessons';
 import { Certificate } from '@/components/learn/Certificate';
+import { LiveMarketPanel } from '@/components/learn/LiveMarketPanel';
+import { MissionModal } from '@/components/learn/MissionModal';
 import { Sparkles } from 'lucide-react';
 import { triggerProgression } from '@/services/progressionEngine';
 import { formatDate } from '@/utils/formatters';
@@ -45,40 +47,22 @@ export default function LessonPage() {
   const [initialPrompt, setInitialPrompt] = useState<string | null>(null);
   const [isRevisiting, setIsRevisiting] = useState(false);
   const [isChatExpanded, setIsChatExpanded] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
+  const [focusTab, setFocusTab] = useState<'lesson' | 'chart' | 'mission'>('lesson');
   const [showCertificate, setShowCertificate] = useState(false);
+  const [isMissionOpen, setIsMissionOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string | null>(null);
+  const isLab = lesson.category === 'Live Trading Labs';
   
-  // Selection state
-  const [selection, setSelection] = useState<{ text: string, x: number, y: number } | null>(null);
-
   // Sync current chapter to global store
   useEffect(() => {
     updateCourseProgress(lessonId, { currentChapterIdx });
   }, [currentChapterIdx, lessonId, updateCourseProgress]);
 
-  // Handle text selection
-  useEffect(() => {
-    const handleMouseUp = () => {
-      const sel = window.getSelection();
-      if (sel && sel.toString().trim().length > 0) {
-        const range = sel.getRangeAt(0);
-        const rect = range.getBoundingClientRect();
-        setSelection({
-          text: sel.toString().trim(),
-          x: rect.left + rect.width / 2,
-          y: rect.top
-        });
-      } else {
-        // Need a slight timeout so if they clicked the tooltip it doesn't disappear before click registers
-        setTimeout(() => setSelection(null), 100);
-      }
-    };
-    document.addEventListener('mouseup', handleMouseUp);
-    return () => document.removeEventListener('mouseup', handleMouseUp);
-  }, []);
-
   const currentChapter = courseChapters[currentChapterIdx];
   const answeredIdx = miniQuizAnswers[currentChapterIdx];
   const hasMiniQuiz = !!currentChapter?.miniQuiz;
+  const hasMission = !!currentChapter?.mission;
   const isCorrect = answeredIdx === currentChapter?.miniQuiz?.answerIndex;
 
   const handleMiniQuizAnswer = (optIdx: number) => {
@@ -89,6 +73,14 @@ export default function LessonPage() {
     if (currentChapter?.miniQuiz?.answerIndex === optIdx) {
       triggerProgression('PASS_QUIZ', 'learning');
     }
+  };
+
+  const handleMissionComplete = () => {
+    const newAnswers = { ...miniQuizAnswers, [currentChapterIdx]: 1 }; // 1 means completed
+    setMiniQuizAnswers(newAnswers);
+    updateCourseProgress(lessonId, { miniQuizAnswers: newAnswers });
+    setIsMissionOpen(false);
+    triggerProgression('first_trade', 'Investing'); // example
   };
 
   const retryQuestion = () => {
@@ -158,16 +150,10 @@ export default function LessonPage() {
     }
   };
 
-  const handleExplainSelection = () => {
-    if (selection) {
-      setInitialPrompt(`Explain this section from the lesson: "${selection.text}"`);
-      setSelection(null);
-    }
-  };
-
-
-
   let specificContext = "Reading the chapter.";
+  if (activeSection) {
+    specificContext = `Currently reading the section about: "${activeSection}".`;
+  }
   let contextMode: 'reading' | 'quiz' | 'summary' = 'reading';
   
   if (isCompleted && !isRevisiting) {
@@ -180,6 +166,21 @@ export default function LessonPage() {
     specificContext = `Currently looking at the mini-quiz: "${currentChapter.miniQuiz?.question}". They selected option ${answeredIdx + 1}, which is ${isCorrect ? 'correct' : 'incorrect'}.`;
   }
 
+  // Intersection Observer for headings
+  useEffect(() => {
+    const headings = document.querySelectorAll(`.${styles.heading}`);
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          setActiveSection(entry.target.textContent);
+        }
+      });
+    }, { rootMargin: '-100px 0px -400px 0px' });
+
+    headings.forEach(h => observer.observe(h));
+    return () => observer.disconnect();
+  }, [currentChapterIdx, isFocusMode, focusTab]);
+
   const lessonContextForAi = {
     lessonTitle: lesson.title,
     chapterTitle: currentChapter.title,
@@ -191,12 +192,13 @@ export default function LessonPage() {
 
   return (
     <AppLayout>
-      <div className={styles.workspace}>
+      <div className={styles.workspace} style={isFocusMode ? { paddingLeft: '50vw', transition: 'padding 0.3s cubic-bezier(0.16, 1, 0.3, 1)' } : { transition: 'padding 0.3s cubic-bezier(0.16, 1, 0.3, 1)' }}>
         {/* Top Navigation */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <button className={styles.backBtn} onClick={() => router.push('/learn')}>
-            <ArrowLeft size={16} /> Course Overview
-          </button>
+        {!isFocusMode && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+            <button className={styles.backBtn} onClick={() => router.push('/learn')}>
+              <ArrowLeft size={16} /> Course Overview
+            </button>
           
           {(!isCompleted || isRevisiting) && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
@@ -207,12 +209,41 @@ export default function LessonPage() {
                 <div style={{ width: `${percentComplete}%`, height: '100%', background: '#10b981', transition: 'width 0.3s ease' }} />
               </div>
             </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
-        <div className={`${styles.contentLayout} ${isChatExpanded ? styles.chatExpanded : ''}`}>
+        {isFocusMode && (
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', padding: '0 24px' }}>
+            <button 
+              onClick={() => setFocusTab('lesson')}
+              style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: focusTab === 'lesson' ? '#111827' : '#f3f4f6', color: focusTab === 'lesson' ? 'white' : '#4b5563', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Lesson
+            </button>
+            {isLab && (
+              <button 
+                onClick={() => setFocusTab('chart')}
+                style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: focusTab === 'chart' ? '#111827' : '#f3f4f6', color: focusTab === 'chart' ? 'white' : '#4b5563', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Chart
+              </button>
+            )}
+            {hasMission && (
+              <button 
+                onClick={() => setFocusTab('mission')}
+                style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: focusTab === 'mission' ? '#111827' : '#f3f4f6', color: focusTab === 'mission' ? 'white' : '#4b5563', fontWeight: 600, cursor: 'pointer' }}
+              >
+                Mission
+              </button>
+            )}
+          </div>
+        )}
+
+        <div className={`${styles.contentLayout} ${isChatExpanded ? styles.chatExpanded : ''}`} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
           {/* Main Reading Area */}
-          <main className={styles.mainContent}>
+          {(!isFocusMode || focusTab === 'lesson') && (
+            <main className={styles.mainContent} style={isFocusMode ? { maxWidth: '100%' } : {}}>
             {(!isCompleted || isRevisiting) ? (
               <>
                 <header className={styles.lessonHeader}>
@@ -315,6 +346,39 @@ export default function LessonPage() {
                       )}
                     </motion.div>
                   </AnimatePresence>
+
+                  {/* Integrated Live Market for Labs */}
+                  {isLab && currentChapter.mission?.type !== 'action' && (
+                    <div style={{ marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
+                      <h3 style={{ marginBottom: '24px', fontSize: '20px', fontWeight: 600 }}>Live Market Sandbox</h3>
+                      <div style={{ minHeight: '500px', width: '100%', display: 'flex', flexDirection: 'column' }}>
+                        <LiveMarketPanel 
+                          lessonId={lessonId}
+                          onExplainChart={() => setInitialPrompt("Please explain the current chart pattern.")}
+                          onPractice={() => setIsMissionOpen(true)}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {hasMission && (
+                    <div className={styles.quizBox} style={{ marginTop: '40px', padding: '24px', backgroundColor: 'var(--color-card-bg)', border: '1px solid var(--color-border)', borderRadius: '16px', textAlign: 'center' }}>
+                      <h3 style={{ marginBottom: '16px' }}>{currentChapter.mission.title}</h3>
+                      <p style={{ marginBottom: '24px', fontSize: '16px', color: '#4b5563' }}>{currentChapter.mission.prompt}</p>
+                      {answeredIdx !== undefined ? (
+                        <div style={{ padding: '16px', backgroundColor: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: '12px', color: '#166534', fontWeight: 500, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                          <CheckCircle2 size={20} /> Mission Completed
+                        </div>
+                      ) : (
+                        <button 
+                          onClick={() => setIsMissionOpen(true)}
+                          style={{ padding: '12px 24px', background: '#10b981', color: 'white', borderRadius: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', margin: '0 auto' }}
+                        >
+                          Practice This Concept <ChevronRight size={18} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </article>
 
                 <footer className={styles.lessonFooter} style={{ display: 'flex', justifyContent: 'space-between', marginTop: '48px', paddingTop: '24px', borderTop: '1px solid #e5e7eb' }}>
@@ -328,8 +392,8 @@ export default function LessonPage() {
 
                   <button 
                     onClick={handleNext}
-                    disabled={hasMiniQuiz && !isCorrect}
-                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '8px', border: 'none', background: (hasMiniQuiz && !isCorrect) ? '#e5e7eb' : '#111827', color: (hasMiniQuiz && !isCorrect) ? '#9ca3af' : 'white', cursor: (hasMiniQuiz && !isCorrect) ? 'not-allowed' : 'pointer', fontWeight: 600, transition: 'all 0.2s' }}
+                    disabled={(hasMiniQuiz && !isCorrect) || (hasMission && answeredIdx === undefined)}
+                    style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '12px 24px', borderRadius: '8px', border: 'none', background: ((hasMiniQuiz && !isCorrect) || (hasMission && answeredIdx === undefined)) ? '#e5e7eb' : '#111827', color: ((hasMiniQuiz && !isCorrect) || (hasMission && answeredIdx === undefined)) ? '#9ca3af' : 'white', cursor: ((hasMiniQuiz && !isCorrect) || (hasMission && answeredIdx === undefined)) ? 'not-allowed' : 'pointer', fontWeight: 600, transition: 'all 0.2s' }}
                   >
                     {currentChapterIdx < courseChapters.length - 1 ? 'Next Chapter' : (isRevisiting ? 'Finish Revisiting' : 'Take Lesson Quiz')}
                     <ChevronRight size={18} />
@@ -405,39 +469,54 @@ export default function LessonPage() {
               </div>
             )}
           </main>
+          )}
+
+          {isFocusMode && focusTab === 'chart' && isLab && (
+            <main className={styles.mainContent} style={{ maxWidth: '100%', height: 'calc(100vh - 200px)' }}>
+              <LiveMarketPanel 
+                lessonId={lessonId}
+                onExplainChart={() => setInitialPrompt("Please explain the current chart pattern.")}
+                onPractice={() => setFocusTab('mission')}
+              />
+            </main>
+          )}
+
+          {isFocusMode && focusTab === 'mission' && hasMission && (
+            <main className={styles.mainContent} style={{ maxWidth: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', minHeight: '50vh' }}>
+              <Target size={48} color="#3b82f6" style={{ marginBottom: '24px' }} />
+              <h2 style={{ fontSize: '24px', marginBottom: '16px' }}>{currentChapter.mission.title}</h2>
+              <p style={{ fontSize: '18px', color: '#4b5563', marginBottom: '32px', maxWidth: '600px' }}>{currentChapter.mission.prompt}</p>
+              <button 
+                onClick={() => setIsMissionOpen(true)}
+                style={{ padding: '16px 32px', background: '#10b981', color: 'white', borderRadius: '12px', fontWeight: 600, border: 'none', cursor: 'pointer', fontSize: '16px' }}
+              >
+                Start Mission
+              </button>
+            </main>
+          )}
         </div>
       </div>
 
       {/* Render the side chat overlay only when learning for the first time */}
-      {(!isCompleted && !isRevisiting) && (
-        <LessonSideChat 
-          lessonId={lessonId}
-          lessonContext={lessonContextForAi}
-          contextMode={contextMode}
-          initialPrompt={initialPrompt}
-          onInitialPromptSent={() => setInitialPrompt(null)}
-          onStateChange={setIsChatExpanded}
-        />
-      )}
-
-      {/* Render Text Selection Tooltip */}
-      <AnimatePresence>
-        {selection && (
-          <motion.div 
-            className={styles.selectionTooltip}
-            style={{ left: selection.x, top: selection.y }}
-            initial={{ opacity: 0, y: 10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
-            onClick={(e) => {
-              e.stopPropagation();
-              handleExplainSelection();
-            }}
-          >
-            <Sparkles size={14} color="#10b981" /> Explain Selection
-          </motion.div>
+        {(!isCompleted && !isRevisiting) && (
+          <LessonSideChat 
+            lessonId={lessonId}
+            lessonContext={lessonContextForAi}
+            contextMode={contextMode}
+            initialPrompt={initialPrompt}
+            onInitialPromptSent={() => setInitialPrompt(null)}
+            onStateChange={setIsChatExpanded}
+            isFocusMode={isFocusMode}
+            onFocusModeChange={setIsFocusMode}
+          />
         )}
-      </AnimatePresence>
+
+      <MissionModal 
+        isOpen={isMissionOpen}
+        onClose={() => setIsMissionOpen(false)}
+        mission={hasMission ? currentChapter.mission : null}
+        onComplete={handleMissionComplete}
+      />
     </AppLayout>
   );
 }
