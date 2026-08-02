@@ -62,34 +62,10 @@ export interface SettingsState {
   terminateSession: (id: string) => void;
   terminateAllOtherSessions: () => void;
   resetAllSettings: () => void;
+  setSessions: (sessions: SecuritySession[]) => void;
 }
 
-const DEFAULT_SESSIONS: SecuritySession[] = [
-  {
-    id: 's1',
-    device: 'Chrome on Windows (Current)',
-    ip: '192.168.1.1',
-    location: 'New York, USA',
-    lastActive: 'Active now',
-    isCurrent: true,
-  },
-  {
-    id: 's2',
-    device: 'Finwise Mobile App (iOS)',
-    ip: '172.56.21.4',
-    location: 'New York, USA',
-    lastActive: '2 hours ago',
-    isCurrent: false,
-  },
-  {
-    id: 's3',
-    device: 'Safari on macOS',
-    ip: '74.125.200.10',
-    location: 'San Francisco, USA',
-    lastActive: '3 days ago',
-    isCurrent: false,
-  },
-];
+const DEFAULT_SESSIONS: SecuritySession[] = [];
 
 const DEFAULT_SETTINGS = {
   profile: {
@@ -185,6 +161,8 @@ export const useSettingsStore = create<SettingsState>()(
         set((state) => ({
           sessions: state.sessions.filter((s) => s.isCurrent),
         })),
+
+      setSessions: (sessions) => set({ sessions }),
 
       resetAllSettings: () => set(DEFAULT_SETTINGS),
     }),

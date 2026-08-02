@@ -100,6 +100,7 @@ export function SettingsLayout() {
     terminateSession,
     terminateAllOtherSessions,
     resetAllSettings,
+    setSessions,
   } = useSettingsStore();
 
   const { chats, createNewChat, user: appUser } = useAppStore();
@@ -144,6 +145,104 @@ export function SettingsLayout() {
       }));
     }
   }, [profile.name, profile.email, profile.avatar, appUser.name, appUser.email]);
+
+  // Fetch real session data
+  useEffect(() => {
+    async function fetchSessionData() {
+      try {
+        let ip = 'Unknown IP';
+        let location = profile.location || 'Unknown Location';
+        try {
+          // Fetch from an API that returns both IP and location
+          const res = await fetch('https://ipapi.co/json/');
+          if (res.ok) {
+            const data = await res.json();
+            ip = data.ip || ip;
+            if (!profile.location && data.city && data.country_name) {
+              location = `${data.city}, ${data.country_name}`;
+            }
+          } else {
+            // Fallback to ipify if ipapi.co fails (e.g. rate limit)
+            const fallbackRes = await fetch('https://api.ipify.org?format=json');
+            if (fallbackRes.ok) {
+              const fallbackData = await fallbackRes.json();
+              ip = fallbackData.ip;
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to fetch IP and Location', e);
+        }
+
+        let device = 'Unknown Device';
+        if (typeof window !== 'undefined') {
+          const ua = window.navigator.userAgent;
+          let browser = 'Unknown Browser';
+          if (ua.indexOf('Firefox') > -1) browser = 'Firefox';
+          else if (ua.indexOf('SamsungBrowser') > -1) browser = 'Samsung Internet';
+          else if (ua.indexOf('Opera') > -1 || ua.indexOf('OPR') > -1) browser = 'Opera';
+          else if (ua.indexOf('Trident') > -1) browser = 'Internet Explorer';
+          else if (ua.indexOf('Edge') > -1 || ua.indexOf('Edg') > -1) browser = 'Edge';
+          else if (ua.indexOf('Chrome') > -1) browser = 'Chrome';
+          else if (ua.indexOf('Safari') > -1) browser = 'Safari';
+
+          let os = 'Unknown OS';
+          let isMobile = false;
+          if (ua.indexOf('Win') > -1) os = 'Windows';
+          else if (ua.indexOf('Mac') > -1 && ua.indexOf('Mobile') === -1) os = 'macOS';
+          else if (ua.indexOf('Linux') > -1 && ua.indexOf('Android') === -1) os = 'Linux';
+          else if (ua.indexOf('Android') > -1) { os = 'Android'; isMobile = true; }
+          else if (ua.indexOf('like Mac') > -1 || (ua.indexOf('Mac') > -1 && ua.indexOf('Mobile') > -1)) { os = 'iOS'; isMobile = true; }
+
+          device = `${browser} on ${os}${isMobile ? ' (Mobile)' : ''}`;
+        }
+
+        // Initialize session with IP location or profile location
+        const currentSession = {
+          id: 'real-session-' + Date.now(),
+          device,
+          ip,
+          location,
+          lastActive: 'Active now',
+          isCurrent: true,
+        };
+
+        // Set it initially
+        setSessions([currentSession]);
+
+        // Attempt to get exact physical location if user allows
+        if (typeof navigator !== 'undefined' && 'geolocation' in navigator) {
+          navigator.geolocation.getCurrentPosition(
+            async (position) => {
+              try {
+                const { latitude, longitude } = position.coords;
+                const geoRes = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+                if (geoRes.ok) {
+                  const geoData = await geoRes.json();
+                  if (geoData.city) {
+                    const exactLocation = `${geoData.city}, ${geoData.countryName || 'India'}`;
+                    setSessions([{ ...currentSession, location: exactLocation }]);
+                  }
+                }
+              } catch (e) {
+                console.warn('Reverse geocoding failed', e);
+              }
+            },
+            (err) => {
+              console.warn('Geolocation permission denied or failed', err);
+            },
+            { timeout: 5000 }
+          );
+        }
+      } catch (err) {
+        console.error('Error fetching session data', err);
+      }
+    }
+    
+    // Check if sessions array has mock data or is empty
+    if (sessions.length === 0 || sessions.some(s => s.id === 's1')) {
+      fetchSessionData();
+    }
+  }, []); // Run once on mount
 
   // Click outside listener for dropdowns
   useEffect(() => {
