@@ -46,6 +46,8 @@ export default function LearnPage() {
   // State for viewing a specific certificate
   const [selectedCertLesson, setSelectedCertLesson] = useState<Lesson | null>(null);
 
+  const difficultyWeight: Record<string, number> = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
+
   const filteredLessons = lessons.filter(l => {
     const matchesCategory = activeCategory === 'All' || l.category === activeCategory;
     const matchesSearch = l.title.toLowerCase().includes(searchQuery.toLowerCase());
@@ -53,7 +55,7 @@ export default function LearnPage() {
                        || l.status === filterStatus 
                        || l.difficulty === filterStatus;
     return matchesCategory && matchesSearch && matchesStatus;
-  });
+  }).sort((a, b) => (difficultyWeight[a.difficulty] || 99) - (difficultyWeight[b.difficulty] || 99));
 
   const completedLessons = lessons.filter(l => l.status === 'Completed');
   const progressPercent = Math.round((completedLessons.length / lessons.length) * 100) || 0;

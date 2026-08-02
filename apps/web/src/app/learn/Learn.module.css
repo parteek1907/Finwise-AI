@@ -185,6 +185,7 @@
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
   flex-direction: column;
+  will-change: transform;
 }
 
 .lessonCard:hover {
@@ -195,6 +196,7 @@
 .cardThumbnail {
   height: 160px;
   position: relative;
+  flex-shrink: 0;
 }
 
 .thumbnailBg {
