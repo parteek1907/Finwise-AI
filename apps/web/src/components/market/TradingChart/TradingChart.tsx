@@ -443,7 +443,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
   }
 
   return (
-    <div className={styles.chartWrapper}>
+    <div className={`${styles.chartWrapper} ${hideHeader ? styles.miniChart : ''}`}>
       {!hideHeader && (
         <ChartHeader 
           quote={quote}
