@@ -53,10 +53,12 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
           </div>
           <div className={styles.headerTags}>
             {quote.exchange && <span className={styles.tag}>{quote.exchange}</span>}
-            {quote.isMarketOpen && (
+            {quote.isMarketOpen ? (
               <span className={`${styles.tag} ${styles.tagLive}`}>
                 <span className={styles.liveDot} /> LIVE
               </span>
+            ) : (
+              <span className={`${styles.tag} ${styles.tagClosed}`}>CLOSED</span>
             )}
           </div>
         </div>
@@ -96,6 +98,19 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
       {/* Right: Controls */}
       <div className={styles.headerRight}>
         <div className={styles.toolbarContainer}>
+          <div className={styles.timeframes}>
+            {timeframes.map((tf) => (
+              <button
+                key={tf}
+                className={`${styles.timeframeBtn} ${selectedTimeframe === tf ? styles.activeTimeframe : ''}`}
+                onClick={() => onSelectTimeframe(tf)}
+              >
+                {tf}
+              </button>
+            ))}
+          </div>
+          
+          <div className={styles.divider} />
 
           <div className={styles.chartTypeWrapper}>
             <select 

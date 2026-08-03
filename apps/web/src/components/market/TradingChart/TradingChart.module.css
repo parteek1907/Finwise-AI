@@ -17,9 +17,9 @@
   min-height: 0 !important;
 }
 
-/* Hide TradingView Attribution Logo */
-.chartContainer a, 
-.chartContainer [id^="tv-attr-logo"] {
+/* Hide TradingView Attribution Logo ONLY on mini charts */
+.chartWrapper.miniChart .chartContainer a, 
+.chartWrapper.miniChart .chartContainer [id^="tv-attr-logo"] {
   display: none !important;
 }
 

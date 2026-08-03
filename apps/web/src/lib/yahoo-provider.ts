@@ -210,11 +210,11 @@ export class YahooFinanceProvider implements MarketProvider {
       switch (timeframe) {
         case '1D':
           interval = '5m';
-          period1.setDate(now.getDate() - 1);
+          period1.setDate(now.getDate() - 5); // Fetch extra days to handle weekends
           break;
         case '5D':
           interval = '15m';
-          period1.setDate(now.getDate() - 5);
+          period1.setDate(now.getDate() - 14); // Fetch extra days to handle weekends
           break;
         case '1M':
           interval = '1d';
@@ -244,7 +244,7 @@ export class YahooFinanceProvider implements MarketProvider {
         return [];
       }
 
-      const candles: ProviderCandle[] = chart.quotes
+      let candles: ProviderCandle[] = chart.quotes
         .filter((q: any) => q.open !== null && q.close !== null)
         .map((q: any) => ({
           time: ((interval as string) === '1d' || (interval as string) === '1wk' || (interval as string) === '1mo')
@@ -256,6 +256,26 @@ export class YahooFinanceProvider implements MarketProvider {
           close: q.close,
           volume: q.volume || 0,
         }));
+
+      if (candles.length > 0) {
+        if (timeframe === '1D') {
+          // Filter to only the most recent trading day
+          const lastCandleDate = new Date((candles[candles.length - 1].time as number) * 1000);
+          const lastDateStr = lastCandleDate.toISOString().split('T')[0];
+          candles = candles.filter(c => {
+             const d = new Date((c.time as number) * 1000);
+             return d.toISOString().split('T')[0] === lastDateStr;
+          });
+        } else if (timeframe === '5D') {
+           // Filter to only the last 5 unique trading days
+           const uniqueDays = [...new Set(candles.map(c => new Date((c.time as number) * 1000).toISOString().split('T')[0]))];
+           const last5Days = uniqueDays.slice(-5);
+           candles = candles.filter(c => {
+             const d = new Date((c.time as number) * 1000);
+             return last5Days.includes(d.toISOString().split('T')[0]);
+           });
+        }
+      }
 
       candleCache.set(cacheKey, { data: candles, timestamp: Date.now() });
       return candles;
