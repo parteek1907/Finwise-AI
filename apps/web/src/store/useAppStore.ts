@@ -146,6 +146,7 @@ export interface AppState {
   clearLessonChat: (lessonId: string) => void;
   completeLesson: (id: string) => void;
   addMessage: (chatId: string, message: Omit<MentorMessage, 'id' | 'timestamp'>) => void;
+  removeMessage: (chatId: string, messageId: string) => void;
   createNewChat: (title?: string) => string;
   setActiveChat: (id: string) => void;
   updateChatTitle: (id: string, title: string) => void;
@@ -658,6 +659,18 @@ export const useAppStore = create<AppState>()(
           return chat;
         })
       })),
+
+    removeMessage: (chatId, messageId) => set((state) => ({
+      chats: state.chats.map(chat => {
+        if (chat.id === chatId) {
+          return {
+            ...chat,
+            messages: chat.messages.filter(m => m.id !== messageId)
+          };
+        }
+        return chat;
+      })
+    })),
 
       createNewChat: (title = 'New Chat') => {
         const newChatId = `chat_${Date.now()}`;

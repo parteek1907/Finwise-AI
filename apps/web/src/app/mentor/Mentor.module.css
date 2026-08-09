@@ -442,6 +442,46 @@
   width: 100%;
 }
 
+.messageActions {
+  display: flex;
+  gap: 16px;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  padding: 0 4px;
+}
+
+.messageWrapper:hover .messageActions {
+  opacity: 1;
+}
+
+.msgActionBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #8c9091;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.msgActionBtn:hover {
+  background-color: rgba(48,58,60,0.05);
+  color: #303A3C;
+}
+
+.wrapperUser .messageActions {
+  justify-content: flex-end;
+}
+
+.wrapperAi .messageActions {
+  justify-content: flex-start;
+}
+
 /* Rich AI Components */
 .richBlock {
   margin-bottom: 1.5rem;

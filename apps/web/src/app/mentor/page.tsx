@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight, Home, LineChart, ShieldCheck, BookOpen, Paperclip, X } from 'lucide-react';
+import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight, Home, LineChart, ShieldCheck, BookOpen, Paperclip, X, Copy, Check, RefreshCw } from 'lucide-react';
 import styles from './Mentor.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -12,7 +12,7 @@ import { RichMessage } from '@/components/mentor/RichMessage';
 import { triggerProgression } from '@/services/progressionEngine';
 
 export default function MentorPage() {
-  const { chats, activeChatId, addMessage, createNewChat, user, goals, updateGoal, addGoal, updateChatTitle } = useAppStore();
+  const { chats, activeChatId, addMessage, removeMessage, createNewChat, user, goals, updateGoal, addGoal, updateChatTitle } = useAppStore();
   const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
   const profileName = useSettingsStore(state => state.profile?.name) || user.name || 'User';
   
@@ -28,6 +28,51 @@ export default function MentorPage() {
   const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (text: string, id: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const handleRetry = (msgId: string) => {
+    const currentChatId = activeChatId;
+    if (!currentChatId || !activeChat) return;
+
+    removeMessage(currentChatId, msgId);
+
+    setIsTyping(true);
+    
+    const currentHistory = useAppStore.getState().chats.find(c => c.id === currentChatId)?.messages || [];
+    const apiMessages = currentHistory.map(msg => ({
+      role: (msg.sender === 'user' || msg.sender === 'system') ? 'user' : 'assistant',
+      content: msg.text,
+      image_base64: msg.imageBase64
+    }));
+
+    apiMessages.push({ role: 'user', content: 'Please provide a different response or explanation for the previous prompt.', image_base64: undefined });
+
+    const aiSettings = useSettingsStore.getState().aiMentor;
+
+    const apiUrl = '/api';
+    fetch(`${apiUrl}/mentor`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: apiMessages, goals, aiSettings, userName: user.name }),
+    })
+    .then(res => res.json())
+    .then(data => {
+      setIsTyping(false);
+      addMessage(currentChatId, { sender: 'ai', text: data.content || "I'm having trouble right now." });
+    })
+    .catch(err => {
+      console.error(err);
+      setIsTyping(false);
+      addMessage(currentChatId, { sender: 'ai', text: "Sorry, I encountered an error." });
+    });
+  };
 
   const adjustTextareaHeight = () => {
     const textarea = textareaRef.current;
@@ -384,29 +429,50 @@ export default function MentorPage() {
                         </div>
                       )}
                       
-                      <div className={`${styles.messageBubble} ${msg.sender === 'user' ? styles.bubbleUser : styles.bubbleAi}`}>
-                        {msg.sender === 'user' ? (
-                          <>
-                            {msg.imageBase64 && (
-                              <img 
-                                src={msg.imageBase64} 
-                                alt="User upload" 
-                                style={{ maxWidth: '100%', borderRadius: '12px', marginBottom: '8px', maxHeight: '300px', objectFit: 'contain' }} 
-                              />
-                            )}
-                            {msg.text}
-                          </>
-                        ) : (
-                          <>
-                            {/* Occasional Context Note */}
-                            {index === 1 && (
-                              <div className={styles.contextNote}>
-                                <Sparkles size={12} /> AI remembers your Guardian investor profile.
-                              </div>
-                            )}
-                            <RichMessage content={msg.text} onActionClick={handleSendHiddenContext} />
-                          </>
-                        )}
+                      <div style={{ display: 'flex', flexDirection: 'column', maxWidth: msg.sender === 'user' ? '100%' : 'calc(100% - 50px)' }}>
+                        <div className={`${styles.messageBubble} ${msg.sender === 'user' ? styles.bubbleUser : styles.bubbleAi}`}>
+                          {msg.sender === 'user' ? (
+                            <>
+                              {msg.imageBase64 && (
+                                <img 
+                                  src={msg.imageBase64} 
+                                  alt="User upload" 
+                                  style={{ maxWidth: '100%', borderRadius: '12px', marginBottom: '8px', maxHeight: '300px', objectFit: 'contain' }} 
+                                />
+                              )}
+                              {msg.text}
+                            </>
+                          ) : (
+                            <>
+                              {/* Occasional Context Note */}
+                              {index === 1 && (
+                                <div className={styles.contextNote}>
+                                  <Sparkles size={12} /> AI remembers your Guardian investor profile.
+                                </div>
+                              )}
+                              <RichMessage content={msg.text} onActionClick={handleSendHiddenContext} />
+                            </>
+                          )}
+                        </div>
+
+                        {/* Hover Actions Outside Bubble */}
+                        <div className={styles.messageActions}>
+                          <button 
+                            className={styles.msgActionBtn}
+                            onClick={() => handleCopy(msg.text, msg.id)}
+                          >
+                            {copiedId === msg.id ? <Check size={14} /> : <Copy size={14} />} {copiedId === msg.id ? 'Copied' : 'Copy'}
+                          </button>
+                          
+                          {msg.sender === 'ai' && index === visibleHistory.length - 1 && (
+                            <button 
+                              className={styles.msgActionBtn}
+                              onClick={() => handleRetry(msg.id)}
+                            >
+                              <RefreshCw size={14} /> Retry
+                            </button>
+                          )}
+                        </div>
                       </div>
                       
                       {msg.sender === 'user' && (
