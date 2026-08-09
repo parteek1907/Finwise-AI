@@ -78,6 +78,7 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
               <NumberFlow 
                 value={quote.changePercent / 100} 
                 format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+                trend={0}
               />
             </div>
           </div>

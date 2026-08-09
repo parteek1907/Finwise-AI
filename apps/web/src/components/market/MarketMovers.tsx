@@ -18,7 +18,7 @@ const AnimatedNumberFlow = ({ value, format }: { value: number, format?: any }) 
     return () => clearTimeout(timer);
   }, [value]);
 
-  return <NumberFlow value={displayValue} format={format} />;
+  return <NumberFlow value={displayValue} format={format} trend={0} />;
 };
 
 interface MarketMoversProps {

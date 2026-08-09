@@ -56,6 +56,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
               (<NumberFlow 
                 value={summary.totalReturnPercent / 100} 
                 format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+                trend={0}
               />)
             </span>
           </h3>
@@ -130,6 +131,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                         <NumberFlow 
                           value={pos.allocationPercent / 100} 
                           format={{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }} 
+                          trend={0}
                         />
                       </td>
                       <td className={pos.todaysReturn >= 0 ? styles.positiveText : styles.negativeText}>
@@ -141,6 +143,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                           (<NumberFlow 
                             value={pos.todaysReturnPercent / 100} 
                             format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+                            trend={0}
                           />)
                         </span>
                       </td>
@@ -153,6 +156,7 @@ export const PortfolioTable: React.FC<PortfolioTableProps> = ({
                           (<NumberFlow 
                             value={pos.totalReturnPercent / 100} 
                             format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
+                            trend={0}
                           />)
                         </span>
                       </td>
