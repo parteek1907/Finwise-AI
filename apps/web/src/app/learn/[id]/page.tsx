@@ -52,12 +52,17 @@ export default function LessonPage() {
   const [showCertificate, setShowCertificate] = useState(false);
   const [isMissionOpen, setIsMissionOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
+  const [hasVideoError, setHasVideoError] = useState(false);
   const isLab = lesson.category === 'Live Trading Labs';
   
   // Sync current chapter to global store
   useEffect(() => {
     updateCourseProgress(lessonId, { currentChapterIdx });
   }, [currentChapterIdx, lessonId, updateCourseProgress]);
+
+  useEffect(() => {
+    setHasVideoError(false);
+  }, [lessonId]);
 
   const currentChapter = courseChapters[currentChapterIdx];
   const answeredIdx = miniQuizAnswers[currentChapterIdx];
@@ -257,6 +262,19 @@ export default function LessonPage() {
                   <h1 className={styles.title}>{lesson.title}</h1>
                   <p className={styles.objectives}>Chapter {currentChapterIdx + 1} of {courseChapters.length}: {currentChapter.title}</p>
                 </header>
+
+                {!hasVideoError && (
+                  <div style={{ marginBottom: '32px', borderRadius: '16px', overflow: 'hidden', backgroundColor: '#000', width: '100%' }}>
+                    <video 
+                      controls 
+                      style={{ width: '100%', display: 'block', maxHeight: '60vh' }}
+                      onError={() => setHasVideoError(true)}
+                      src={`/videos/${lesson.id}.mp4`}
+                    >
+                      Your browser does not support the video tag.
+                    </video>
+                  </div>
+                )}
 
                 <article className={styles.article}>
                   <AnimatePresence mode="wait">
