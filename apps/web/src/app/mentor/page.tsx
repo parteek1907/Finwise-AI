@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
-import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight, Home, LineChart, ShieldCheck, BookOpen } from 'lucide-react';
+import { Send, Mic, Sparkles, PanelLeft, PanelLeftClose, ChevronRight, Home, LineChart, ShieldCheck, BookOpen, Paperclip, X } from 'lucide-react';
 import styles from './Mentor.module.css';
 import { useAppStore } from '@/store/useAppStore';
 import { useSettingsStore } from '@/store/useSettingsStore';
@@ -20,6 +20,8 @@ export default function MentorPage() {
   const history = activeChat ? activeChat.messages : [];
   
   const [inputValue, setInputValue] = useState('');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isTyping, setIsTyping] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -112,14 +114,57 @@ export default function MentorPage() {
     recognition.start();
   };
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        const img = new Image();
+        img.src = result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const MAX_WIDTH = 1200;
+          const MAX_HEIGHT = 1200;
+          let width = img.width;
+          let height = img.height;
+          
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height *= MAX_WIDTH / width;
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width *= MAX_HEIGHT / height;
+              height = MAX_HEIGHT;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          const compressed = canvas.toDataURL('image/jpeg', 0.8);
+          setSelectedImage(compressed);
+        };
+      };
+      reader.readAsDataURL(file);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   const handleSend = async () => {
-    if (!inputValue.trim()) return;
+    if (!inputValue.trim() && !selectedImage) return;
     
     let currentChatId = activeChatId;
     const userMessage = inputValue;
+    const currentImage = selectedImage;
+    
     setInputValue('');
+    setSelectedImage(null);
 
-    const newTitle = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '');
+    const newTitle = userMessage.substring(0, 30) + (userMessage.length > 30 ? '...' : '') || 'Image Upload';
 
     // If there is no active chat (empty state), create one
     if (!currentChatId || !activeChat) {
@@ -128,7 +173,7 @@ export default function MentorPage() {
       updateChatTitle(currentChatId, newTitle);
     }
 
-    addMessage(currentChatId, { sender: 'user', text: userMessage });
+    addMessage(currentChatId, { sender: 'user', text: userMessage, imageBase64: currentImage || undefined });
     setIsTyping(true);
 
     try {
@@ -153,10 +198,11 @@ export default function MentorPage() {
       // Prepare messages payload for backend
       const apiMessages = aiSettings.rememberChatHistory ? history.map(msg => ({
         role: (msg.sender === 'user' || msg.sender === 'system') ? 'user' : 'assistant',
-        content: msg.text
+        content: msg.text,
+        image_base64: msg.imageBase64
       })) : [];
       
-      apiMessages.push({ role: 'user', content: userMessage });
+      apiMessages.push({ role: 'user', content: userMessage, image_base64: currentImage || undefined });
 
       const apiUrl = '/api';
       const response = await fetch(`${apiUrl}/mentor`, {
@@ -340,7 +386,16 @@ export default function MentorPage() {
                       
                       <div className={`${styles.messageBubble} ${msg.sender === 'user' ? styles.bubbleUser : styles.bubbleAi}`}>
                         {msg.sender === 'user' ? (
-                          msg.text
+                          <>
+                            {msg.imageBase64 && (
+                              <img 
+                                src={msg.imageBase64} 
+                                alt="User upload" 
+                                style={{ maxWidth: '100%', borderRadius: '12px', marginBottom: '8px', maxHeight: '300px', objectFit: 'contain' }} 
+                              />
+                            )}
+                            {msg.text}
+                          </>
                         ) : (
                           <>
                             {/* Occasional Context Note */}
@@ -416,14 +471,53 @@ export default function MentorPage() {
                 )}
               </AnimatePresence>
 
+              <AnimatePresence>
+                {selectedImage && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10, height: 0 }}
+                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                    exit={{ opacity: 0, y: 10, height: 0 }}
+                    style={{ marginBottom: '12px', position: 'relative', display: 'inline-block' }}
+                  >
+                    <img 
+                      src={selectedImage} 
+                      alt="Preview" 
+                      style={{ height: '80px', borderRadius: '8px', objectFit: 'cover', border: '1px solid rgba(0,0,0,0.1)' }} 
+                    />
+                    <button 
+                      onClick={() => setSelectedImage(null)}
+                      style={{ position: 'absolute', top: '-8px', right: '-8px', background: 'white', borderRadius: '50%', padding: '4px', cursor: 'pointer', border: '1px solid rgba(0,0,0,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <X size={12} color="#8c9091" />
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
               <div className={styles.inputWrapper}>
-                <button 
-                  className={`${styles.inputIconBtn} ${isListening ? styles.listening : ''}`} 
-                  title="Voice Input"
-                  onClick={handleVoiceInput}
-                >
-                  <Mic size={20} />
-                </button>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '2px', paddingBottom: '4px' }}>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={fileInputRef} 
+                    style={{ display: 'none' }} 
+                    onChange={handleImageUpload} 
+                  />
+                  <button 
+                    className={styles.inputIconBtn} 
+                    title="Attach Image"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Paperclip size={20} />
+                  </button>
+                  <button 
+                    className={`${styles.inputIconBtn} ${isListening ? styles.listening : ''}`} 
+                    title="Voice Input"
+                    onClick={handleVoiceInput}
+                  >
+                    <Mic size={20} />
+                  </button>
+                </div>
                 <textarea 
                   ref={textareaRef}
                   placeholder="Ask about investing, budgeting, scams, savings..." 
@@ -438,7 +532,7 @@ export default function MentorPage() {
                 <button 
                   className={styles.sendBtn} 
                   onClick={handleSend}
-                  disabled={!inputValue.trim()}
+                  disabled={!inputValue.trim() && !selectedImage}
                 >
                   <Send size={16} />
                 </button>

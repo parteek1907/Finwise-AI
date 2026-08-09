@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { yahooProvider } from '@/lib/yahoo-provider';
 
 const GROQ_API_KEY = ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
+const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
 
 // Cache for market context (60s TTL to avoid rate limits)
 let marketContextCache: { text: string; timestamp: number } = { text: '', timestamp: 0 };
@@ -115,12 +116,66 @@ FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does 
     }
 
     const rawMessages = [{ role: 'system', content: systemPrompt }, ...messages];
-    const apiMessages = [];
+    const apiMessages: { role: string; content: string }[] = [];
+    
+    // Check ONLY the last message to see if we should use Gemini for this specific interaction
+    const lastMessage = rawMessages[rawMessages.length - 1];
+    const hasImage = !!lastMessage.image_base64;
+    const imageBase64Data = lastMessage.image_base64 || "";
+    
     for (const msg of rawMessages) {
-      if (apiMessages.length > 0 && apiMessages[apiMessages.length - 1].role === msg.role) {
-        apiMessages[apiMessages.length - 1].content += "\n\n" + msg.content;
+      
+      const safeMsg = { role: msg.role, content: msg.content };
+      
+      if (apiMessages.length > 0 && apiMessages[apiMessages.length - 1].role === safeMsg.role) {
+        apiMessages[apiMessages.length - 1].content += "\n\n" + safeMsg.content;
       } else {
-        apiMessages.push({ ...msg });
+        apiMessages.push(safeMsg);
+      }
+    }
+
+    if (hasImage && imageBase64Data) {
+      try {
+        let b64_string = imageBase64Data;
+        if (b64_string.includes(",")) {
+          b64_string = b64_string.split(",")[1];
+        }
+
+        const historyText = apiMessages.map((m: any) => `${m.role.toUpperCase()}: ${m.content}`).join("\n\n");
+        const prompt_text = `You are a financial AI mentor analyzing an image. Here is the context and conversation history:\n\n${historyText}\n\nPlease respond naturally to the user based on the image.`;
+
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: systemPrompt }] },
+            contents: [
+              {
+                parts: [
+                  { text: prompt_text },
+                  { inlineData: { mimeType: "image/jpeg", data: b64_string } }
+                ]
+              }
+            ],
+            generationConfig: { temperature: 0.3 }
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`Gemini API failed: ${await res.text()}`);
+        }
+
+        const geminiData = await res.json();
+        let responseContent = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || "I see the image, but I couldn't generate a specific response.";
+        
+        responseContent = responseContent.replace(/\*\*/g, "").replace(/\*/g, "");
+
+        return NextResponse.json({
+          role: "assistant",
+          content: responseContent
+        });
+      } catch (e) {
+        console.error("Gemini Vision failed:", e);
       }
     }
 

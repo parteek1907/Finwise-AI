@@ -48,6 +48,7 @@ gemini_client = genai.Client(
 class Message(BaseModel):
     role: str
     content: str
+    image_base64: Optional[str] = None
 
 class ChatRequest(BaseModel):
     messages: List[Message]
@@ -231,29 +232,73 @@ def mentor_endpoint(request: ChatRequest):
         "6. GOAL MANAGEMENT (CRITICAL): If the user explicitly asks you to add, remove, deposit, or deduct funds from one of their goals, you MUST output the following exact tag anywhere in your response text: `[ACTION: UPDATE_GOAL, goal_id: \"{id}\", amount: {amount}]`. Use a negative amount to remove funds. For example: `[ACTION: UPDATE_GOAL, goal_id: \"g1\", amount: 500]`."
     )
     
-    # Format messages for Groq API
-    api_messages = [{"role": "system", "content": system_prompt}]
+    has_image = any(msg.image_base64 for msg in request.messages)
     
-    for msg in request.messages:
-        api_messages.append({"role": msg.role, "content": msg.content})
+    if has_image:
+        try:
+            # We will use Gemini 1.5 Flash to handle multimodal chat
+            last_msg = request.messages[-1]
+            b64_string = last_msg.image_base64
+            if b64_string and "," in b64_string:
+                b64_string = b64_string.split(",")[1]
+            
+            image_part = None
+            if b64_string:
+                import base64
+                image_bytes = base64.b64decode(b64_string)
+                image_part = types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")
+
+            history_text = "\n".join([f"{msg.role.upper()}: {msg.content}" for msg in request.messages[:-1]])
+            
+            prompt_text = system_prompt
+            if history_text:
+                prompt_text += f"\n\n--- PREVIOUS CHAT HISTORY ---\n{history_text}\n"
+            
+            prompt_text += f"\n--- CURRENT REQUEST ---\nUSER: {last_msg.content}"
+
+            contents = [prompt_text]
+            if image_part:
+                contents.append(image_part)
+                
+            response = gemini_client.models.generate_content(
+                model='gemini-flash-latest',
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    temperature=0.3
+                )
+            )
+            response_content = response.text.replace("**", "").replace("*", "")
+            return {
+                "role": "assistant",
+                "content": response_content
+            }
+        except Exception as e:
+            print(f"Error calling Gemini API: {e}")
+            raise HTTPException(status_code=503, detail="I apologize, but I am having trouble analyzing that image right now.")
+    else:
+        # Format messages for Groq API
+        api_messages = [{"role": "system", "content": system_prompt}]
         
-    try:
-        chat_completion = client.chat.completions.create(
-            messages=api_messages,
-            model="llama-3.1-8b-instant", # Groq supports llama-3.1 models
-        )
-        
-        response_content = chat_completion.choices[0].message.content
-        # Hard strip asterisks to guarantee clean UI
-        response_content = response_content.replace("**", "").replace("*", "")
-        
-        return {
-            "role": "assistant",
-            "content": response_content
-        }
-    except Exception as e:
-        print(f"Error calling Groq API: {e}")
-        raise HTTPException(status_code=503, detail="I apologize, but I am having trouble connecting to my brain right now. Please check the API configuration.")
+        for msg in request.messages:
+            api_messages.append({"role": msg.role, "content": msg.content})
+            
+        try:
+            chat_completion = client.chat.completions.create(
+                messages=api_messages,
+                model="llama-3.1-8b-instant", # Groq supports llama-3.1 models
+            )
+            
+            response_content = chat_completion.choices[0].message.content
+            # Hard strip asterisks to guarantee clean UI
+            response_content = response_content.replace("**", "").replace("*", "")
+            
+            return {
+                "role": "assistant",
+                "content": response_content
+            }
+        except Exception as e:
+            print(f"Error calling Groq API: {e}")
+            raise HTTPException(status_code=503, detail="I apologize, but I am having trouble connecting to my brain right now. Please check the API configuration.")
 
 @app.get("/api/myths/generate")
 def generate_myths():

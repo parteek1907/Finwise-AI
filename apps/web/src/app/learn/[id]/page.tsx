@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, Award, BookOpen, CheckCircle2, MessageSquare, Zap, ChevronRight, ChevronLeft, XCircle } from 'lucide-react';
+import { ArrowLeft, Clock, Award, BookOpen, CheckCircle2, MessageSquare, Zap, ChevronRight, ChevronLeft, XCircle, Target } from 'lucide-react';
 import styles from './Lesson.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
@@ -85,7 +85,7 @@ export default function LessonPage() {
     setMiniQuizAnswers(newAnswers);
     updateCourseProgress(lessonId, { miniQuizAnswers: newAnswers });
     setIsMissionOpen(false);
-    triggerProgression('first_trade', 'Investing'); // example
+    triggerProgression('first_trade', 'learning'); // example
   };
 
   const retryQuestion = () => {

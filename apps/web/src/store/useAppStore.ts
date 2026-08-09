@@ -82,6 +82,7 @@ export interface MentorMessage {
   timestamp: string;
   actionRequired?: boolean;
   isHiddenContext?: boolean;
+  imageBase64?: string;
 }
 
 export interface ChatSession {
