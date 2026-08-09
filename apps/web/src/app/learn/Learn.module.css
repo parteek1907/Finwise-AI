@@ -302,6 +302,11 @@
   color: #1a1a1a;
 }
 
+.btnResume {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
 .btnSecondary {
   background-color: var(--color-surface-bg);
   color: var(--color-text-primary);

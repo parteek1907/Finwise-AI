@@ -181,11 +181,12 @@ export default function LearnPage() {
                   transition={{ duration: 0.4, delay: 0.1 + (idx * 0.05), ease: [0.16, 1, 0.3, 1] }}
                 >
                   <div className={styles.cardThumbnail}>
-                    <div className={styles.thumbnailOverlay}>
-                      {lesson.status === 'Completed' && <CheckCircle2 className={styles.statusIcon} color="#22c55e" />}
-                      {lesson.status === 'Locked' && <Lock className={styles.statusIcon} color="#9ca3af" />}
-                      {lesson.status !== 'Completed' && lesson.status !== 'Locked' && <Play className={styles.statusIcon} color="#3b82f6" fill="#3b82f6" style={{ marginLeft: '2px', width: '16px', height: '16px' }} />}
-                    </div>
+                    { (lesson.status === 'Completed' || lesson.status === 'Locked') && (
+                      <div className={styles.thumbnailOverlay}>
+                        {lesson.status === 'Completed' && <CheckCircle2 className={styles.statusIcon} color="#22c55e" />}
+                        {lesson.status === 'Locked' && <Lock className={styles.statusIcon} color="#9ca3af" />}
+                      </div>
+                    )}
                     <img 
                       src={getLessonImage(lesson.id, lesson.title)} 
                       alt={lesson.title}
@@ -211,7 +212,7 @@ export default function LearnPage() {
 
                     <div className={styles.cardActions}>
                       <button 
-                        className={`${styles.actionBtn} ${lesson.status === 'Completed' ? styles.btnSecondary : lesson.status === 'Locked' ? styles.btnDisabled : styles.btnPrimary}`}
+                        className={`${styles.actionBtn} ${lesson.status === 'Completed' ? styles.btnSecondary : lesson.status === 'Locked' ? styles.btnDisabled : (courseProgressMap[lesson.id]?.currentChapterIdx > 0 ? styles.btnResume : styles.btnPrimary)}`}
                         onClick={() => lesson.status !== 'Locked' && router.push(`/learn/${lesson.id}`)}
                         disabled={lesson.status === 'Locked'}
                       >
