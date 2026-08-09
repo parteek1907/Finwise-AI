@@ -116,7 +116,7 @@ export default function ScamDetectorPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          text: activeTab === 'text' ? (inputText.trim() || undefined) : undefined,
+          text: inputText.trim() || undefined,
           image_base64: activeTab === 'image' ? (imageBase64 || undefined) : undefined
         })
       });
@@ -203,52 +203,69 @@ export default function ScamDetectorPage() {
                   disabled={isScanning}
                 ></textarea>
               ) : (
-                <div 
-                  className={styles.uploadZone} 
-                  onClick={() => fileInputRef.current?.click()}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={async (e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files?.[0];
-                    if (file && file.type.startsWith('image/')) {
-                      try {
-                        const base64String = await compressImage(file);
-                        setImageBase64(base64String);
-                        setActiveTab('image');
-                      } catch (error) {
-                        console.error("Image processing error", error);
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', height: '100%' }}>
+                  <div 
+                    className={styles.uploadZone} 
+                    onClick={() => fileInputRef.current?.click()}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={async (e) => {
+                      e.preventDefault();
+                      const file = e.dataTransfer.files?.[0];
+                      if (file && file.type.startsWith('image/')) {
+                        try {
+                          const base64String = await compressImage(file);
+                          setImageBase64(base64String);
+                          setActiveTab('image');
+                        } catch (error) {
+                          console.error("Image processing error", error);
+                        }
                       }
-                    }
-                  }}
-                  style={{ position: 'relative' }}
-                >
-                  <input 
-                    type="file" 
-                    ref={fileInputRef} 
-                    onChange={handleImageUpload} 
-                    accept="image/*" 
-                    style={{display: 'none'}} 
-                  />
-                  {imageBase64 ? (
-                    <div style={{ textAlign: 'center' }}>
-                      <img 
-                        src={`data:image/jpeg;base64,${imageBase64}`} 
-                        alt="Preview" 
-                        style={{ maxHeight: '150px', borderRadius: '8px', marginBottom: '1rem' }} 
-                      />
-                      <p style={{ margin: 0 }}>Image attached. Click to change.</p>
-                      <button 
-                        onClick={clearImage}
-                        style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer' }}
-                      >
-                        <X size={16} />
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <Upload size={20} className={styles.uploadIcon} />
-                      <span>Click to upload or drag and drop a screenshot here</span>
-                    </>
+                    }}
+                    style={{ position: 'relative', cursor: 'pointer' }}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      onChange={handleImageUpload} 
+                      accept="image/*" 
+                      style={{display: 'none'}} 
+                    />
+                    {imageBase64 ? (
+                      <div style={{ textAlign: 'center' }}>
+                        <img 
+                          src={`data:image/jpeg;base64,${imageBase64}`} 
+                          alt="Preview" 
+                          style={{ maxHeight: '150px', borderRadius: '8px', marginBottom: '1rem' }} 
+                        />
+                        <p style={{ margin: 0 }}>Image attached. Click to change.</p>
+                        <button 
+                          onClick={clearImage}
+                          style={{ position: 'absolute', top: '10px', right: '10px', background: 'rgba(0,0,0,0.5)', color: 'white', border: 'none', borderRadius: '50%', padding: '4px', cursor: 'pointer' }}
+                        >
+                          <X size={16} />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <Upload size={20} className={styles.uploadIcon} />
+                        <span>Click to upload or drag and drop a screenshot here</span>
+                      </>
+                    )}
+                  </div>
+                  
+                  {imageBase64 && (
+                    <textarea
+                      className={styles.textarea}
+                      style={{ height: '100px', minHeight: '100px', overflow: 'hidden' }}
+                      placeholder="Add any additional context or questions about this image (optional)..."
+                      value={inputText}
+                      onChange={(e) => {
+                        setInputText(e.target.value);
+                        e.target.style.height = '100px';
+                        e.target.style.height = `${e.target.scrollHeight}px`;
+                      }}
+                      disabled={isScanning}
+                    ></textarea>
                   )}
                 </div>
               )}
