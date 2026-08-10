@@ -71,14 +71,23 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
             <div className={styles.headerPriceText}>
               <NumberFlow 
                 value={quote.price} 
-                format={{ style: 'currency', currency: preferredCurrency || 'USD' }} 
+                format={{ style: 'currency', currency: preferredCurrency || 'USD' }}
+                willChange
+                continuous
+                animated
+                transformTiming={{ duration: 600, easing: 'ease-out' }}
+                spinTiming={{ duration: 600, easing: 'ease-out' }}
               />
             </div>
             <div className={isPositive ? styles.headerChangePosText : styles.headerChangeNegText}>
               <NumberFlow 
                 value={quote.changePercent / 100} 
-                format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }} 
-                trend={0}
+                format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }}
+                willChange
+                continuous
+                animated
+                transformTiming={{ duration: 600, easing: 'ease-out' }}
+                spinTiming={{ duration: 600, easing: 'ease-out' }}
               />
             </div>
           </div>

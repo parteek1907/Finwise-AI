@@ -62,7 +62,7 @@ const candleCache = new Map<string, CacheEntry<ProviderCandle[]>>();
 const exchangeRateCache: CacheEntry<Record<string, number>> | null = { data: {}, timestamp: 0 };
 let exchangeRateCacheRef = exchangeRateCache;
 
-const QUOTE_CACHE_TTL_OPEN = 15 * 1000;      // 15s during market hours
+const QUOTE_CACHE_TTL_OPEN = 3 * 1000;        // 3s during market hours (near real-time)
 const QUOTE_CACHE_TTL_CLOSED = 5 * 60 * 1000; // 5min when market closed
 const CANDLE_CACHE_TTL = 5 * 60 * 1000;        // 5min
 const EXCHANGE_RATE_CACHE_TTL = 15 * 60 * 1000; // 15min
@@ -461,6 +461,17 @@ export class YahooFinanceProvider implements MarketProvider {
     // Check cached quote marketState
     const cached = quoteCache.get(symbol);
     if (cached?.data.marketState === 'REGULAR') return true;
+    // Fallback: check by current time in EST (handles first fetch before cache is populated)
+    try {
+      const estStr = new Date().toLocaleString('en-US', { timeZone: 'America/New_York' });
+      const estDate = new Date(estStr);
+      const day = estDate.getDay();
+      const hours = estDate.getHours();
+      const minutes = estDate.getMinutes();
+      const isWeekday = day >= 1 && day <= 5;
+      const isMarketHours = (hours > 9 || (hours === 9 && minutes >= 30)) && hours < 16;
+      if (isWeekday && isMarketHours) return true;
+    } catch {}
     return false;
   }
 }

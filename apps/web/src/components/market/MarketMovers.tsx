@@ -9,16 +9,17 @@ import NumberFlow from '@/components/ui/ClientNumberFlow';
 import styles from './Market.module.css';
 
 const AnimatedNumberFlow = ({ value, format }: { value: number, format?: any }) => {
-  const [displayValue, setDisplayValue] = React.useState(0);
-  
-  React.useEffect(() => {
-    const timer = setTimeout(() => {
-      setDisplayValue(value);
-    }, 50);
-    return () => clearTimeout(timer);
-  }, [value]);
-
-  return <NumberFlow value={displayValue} format={format} trend={0} />;
+  return (
+    <NumberFlow 
+      value={value} 
+      format={format}
+      willChange
+      continuous
+      animated
+      transformTiming={{ duration: 600, easing: 'ease-out' }}
+      spinTiming={{ duration: 600, easing: 'ease-out' }}
+    />
+  );
 };
 
 interface MarketMoversProps {

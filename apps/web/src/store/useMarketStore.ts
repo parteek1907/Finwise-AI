@@ -69,15 +69,28 @@ let moversPollTimer: ReturnType<typeof setTimeout> | null = null;
 let ratesPollTimer: ReturnType<typeof setTimeout> | null = null;
 let isPolling = false;
 
-const POLL_INTERVAL_OPEN = 15 * 1000;    // 15s during market hours
-const POLL_INTERVAL_CLOSED = 10 * 60 * 1000; // 10min when closed
-const MOVERS_POLL_INTERVAL = 60 * 1000;  // 60s
+const POLL_INTERVAL_OPEN = 5 * 1000;     // 5s during market hours (near real-time)
+const POLL_INTERVAL_CLOSED = 5 * 60 * 1000;  // 5min when closed
+const MOVERS_POLL_INTERVAL = 30 * 1000;  // 30s
 const RATES_POLL_INTERVAL = 15 * 60 * 1000; // 15min
 const CANDLE_CACHE_TTL = 5 * 60 * 1000;  // 5min
 
-function getPollInterval(marketStatus: Record<string, MarketStatusDetails>): number {
-  // If any subscribed exchange is open, use the faster interval
-  const anyOpen = Object.values(marketStatus).some(s => s.isOpen);
+/**
+ * Determine the native market currency from a symbol.
+ * Yahoo returns prices in the market's native currency, so we need this
+ * to correctly convert candle data (raw API data is always in native currency).
+ */
+function getNativeCurrency(symbol: string): string {
+  if (symbol.endsWith('.NS') || symbol.endsWith('.BO')) return 'INR';
+  if (symbol.endsWith('.L')) return 'GBP';
+  if (symbol.endsWith('.PA') || symbol.endsWith('.DE')) return 'EUR';
+  return 'USD'; // US stocks, crypto (*-USD), commodities, ETFs
+}
+
+function getPollInterval(quotes: Record<string, Quote>): number {
+  // Derive market-open status directly from quote data (which has isMarketOpen)
+  // instead of the separate marketStatus map which may not be populated.
+  const anyOpen = Object.values(quotes).some(q => q.isMarketOpen);
   return anyOpen ? POLL_INTERVAL_OPEN : POLL_INTERVAL_CLOSED;
 }
 
@@ -96,7 +109,9 @@ function startPolling() {
 
     await state.fetchQuotes();
 
-    const interval = getPollInterval(state.marketStatus);
+    // Re-read state AFTER fetch so we have the freshly-updated quotes
+    const updatedState = useMarketStore.getState();
+    const interval = getPollInterval(updatedState.quotes);
     pollTimer = setTimeout(poll, interval);
   };
 
@@ -160,6 +175,8 @@ export const useMarketStore = create<MarketState>((set, get) => ({
     set({ loading: false, error: null });
     // Start exchange rate polling
     startRatesPoll();
+    // Start periodic movers refresh
+    startMoversPoll();
   },
 
   subscribe: (symbol: string) => {
@@ -272,11 +289,12 @@ export const useMarketStore = create<MarketState>((set, get) => ({
       const { preferredCurrency, exchangeRates } = useSettingsStore.getState().financial || {};
       const userCurr = preferredCurrency || 'USD';
       
-      // We need the original currency to convert. We can get it from the cached quote.
-      const quote = state.quotes[symbol];
-      const fromCurrency = quote ? quote.currency : 'USD'; // If we don't have it, assume USD (unlikely)
+      // Determine the native market currency from the symbol directly.
+      // We can't use the cached quote's currency because it may have already
+      // been converted to the user's preferred currency.
+      const fromCurrency = getNativeCurrency(symbol);
 
-      const convertedCandles = CurrencyService.convertCandles(rawCandles, fromCurrency || 'USD', userCurr, exchangeRates || {});
+      const convertedCandles = CurrencyService.convertCandles(rawCandles, fromCurrency, userCurr, exchangeRates || {});
 
       set({
         candles: {

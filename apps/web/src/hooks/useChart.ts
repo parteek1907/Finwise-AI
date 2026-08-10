@@ -5,7 +5,7 @@
  * No direct service calls for quotes.
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Asset, Candle, Quote } from '../types/market';
 import { getWatchlist } from '../services/market';
 import { Timeframe } from '../constants/symbols';
@@ -26,6 +26,18 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
   } = useMarketStore();
 
   const quote = quotes[asset] || null;
+
+  // Derive a real-time tick from the live quote so the chart candle updates too
+  const realTimeTick = useMemo(() => {
+    if (!quote || !quote.price) return null;
+    return {
+      price: quote.price,
+      time: Date.now(),
+      volume: quote.volume || 0,
+    };
+    // Only recompute when price actually changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [quote?.price]);
 
   const fetchChartData = useCallback(async () => {
     if (!asset) return;
@@ -79,7 +91,7 @@ export const useChart = (asset: string = 'AAPL', timeframe: Timeframe = '1D') =>
     watchlist,
     loading,
     error,
-    realTimeTick: null, // Deprecated: live ticks handled by quote polling now
+    realTimeTick,
     refresh: fetchChartData
   };
 };

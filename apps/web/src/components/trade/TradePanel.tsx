@@ -3,6 +3,8 @@ import { BookOpen, CheckCircle, Loader2, Lightbulb } from 'lucide-react';
 import { Quote } from '../../types/market';
 import { useTradeExecution } from '../../hooks/usePortfolio';
 import { formatCurrency } from '../../utils/formatters';
+import NumberFlow from '@/components/ui/ClientNumberFlow';
+import { useSettingsStore } from '@/store/useSettingsStore';
 import styles from './Trade.module.css';
 
 import { EmotionCheckModal } from './EmotionCheckModal';
@@ -23,6 +25,7 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
   const router = useRouter();
   
   const { submitOrder, isSubmitting, error } = useTradeExecution();
+  const preferredCurrency = useSettingsStore(state => state.financial?.preferredCurrency) || 'USD';
 
   if (!quote) return null;
 
@@ -106,11 +109,31 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
         </div>
         <div className={styles.inputGroup}>
           <label>Market Price</label>
-          <input type="text" value={formatCurrency(quote.price)} readOnly />
+          <div className={styles.livePrice}>
+            <NumberFlow 
+              value={quote.price}
+              format={{ style: 'currency', currency: preferredCurrency }}
+              willChange
+              continuous
+              animated
+              transformTiming={{ duration: 600, easing: 'ease-out' }}
+              spinTiming={{ duration: 600, easing: 'ease-out' }}
+            />
+          </div>
         </div>
         <div className={styles.inputGroup}>
           <label>Estimated Total</label>
-          <input type="text" value={formatCurrency(total)} readOnly className={styles.totalInput} />
+          <div className={`${styles.livePrice} ${styles.totalInput}`}>
+            <NumberFlow 
+              value={total}
+              format={{ style: 'currency', currency: preferredCurrency }}
+              willChange
+              continuous
+              animated
+              transformTiming={{ duration: 600, easing: 'ease-out' }}
+              spinTiming={{ duration: 600, easing: 'ease-out' }}
+            />
+          </div>
         </div>
       </div>
       
