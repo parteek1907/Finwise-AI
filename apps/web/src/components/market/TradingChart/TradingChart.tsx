@@ -382,16 +382,17 @@ export const TradingChart: React.FC<TradingChartProps> = ({
     let newCandle: any;
     
     if (tickChartTime !== live.time && tickChartTime > live.time) {
+      // Advance to a new candle bucket
       newCandle = {
         time: tickChartTime,
-        open: newPrice,
-        high: newPrice,
-        low: newPrice,
+        open: live.close, // Open at previous close
+        high: Math.max(live.close, newPrice),
+        low: Math.min(live.close, newPrice),
         close: newPrice,
         volume: realTimeTick.volume || 0
       };
     } else {
-      // Update existing candle
+      // Update existing candle in-place
       newCandle = {
         time: live.time,
         open: Number(live.open),
@@ -426,7 +427,7 @@ export const TradingChart: React.FC<TradingChartProps> = ({
         color: newPrice >= newCandle.open ? 'rgba(22, 163, 74, 0.5)' : 'rgba(220, 38, 38, 0.5)'
       });
     }
-  }, [realTimeTick, timeframe, chartType]);
+  }, [realTimeTick, chartType, timeframe]);
 
   if (!asset) {
     return (
