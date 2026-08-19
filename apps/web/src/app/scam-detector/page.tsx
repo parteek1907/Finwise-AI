@@ -14,6 +14,7 @@ interface ScamResult {
   probability: number;
   redFlags: Array<{title: string; description: string}>;
   lesson: string;
+  isQuotaError?: boolean;
 }
 
 interface SavedReport {

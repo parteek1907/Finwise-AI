@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { yahooProvider } from '@/lib/yahoo-provider';
 
-const GROQ_API_KEY = ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
-const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
+const GROQ_API_KEY = process.env.GROQ_API_KEY!;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 
 // Cache for market context (60s TTL to avoid rate limits)
 let marketContextCache: { text: string; timestamp: number } = { text: '', timestamp: 0 };
@@ -201,14 +201,14 @@ FOLLOWUPS: ["Why does this matter?", "Can you give another example?", "How does 
     };
 
     try {
-      data = await attemptFetch("llama-3.1-8b-instant");
+      data = await attemptFetch("openai/gpt-oss-20b");
     } catch (e) {
       console.warn("First model failed, trying fallback 1...", e);
       try {
-        data = await attemptFetch("llama-3.3-70b-versatile");
+        data = await attemptFetch("openai/gpt-oss-20b");
       } catch (e2) {
         console.warn("Second model failed, trying fallback 2...", e2);
-        data = await attemptFetch("mixtral-8x7b-32768");
+        data = await attemptFetch("openai/gpt-oss-20b");
       }
     }
     let responseContent = data?.choices?.[0]?.message?.content || "I am here to help with your financial goals!";

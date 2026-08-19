@@ -34,10 +34,9 @@ Based on this exact progress and deadline, provide exactly 2 highly relevant, sp
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "llama-3.3-70b-versatile",
+        model: "openai/gpt-oss-20b",
         messages: [{ role: "user", content: prompt }],
-        temperature: 0.3,
-        response_format: { type: "json_object" }
+        temperature: 0.3
       })
     });
 
@@ -46,7 +45,12 @@ Based on this exact progress and deadline, provide exactly 2 highly relevant, sp
     }
 
     const data = await res.json();
-    const content = data.choices?.[0]?.message?.content;
+    let content = data.choices?.[0]?.message?.content || "";
+    const firstBrace = content.indexOf('{');
+    const lastBrace = content.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      content = content.substring(firstBrace, lastBrace + 1);
+    }
     const parsed = JSON.parse(content || '{"suggestions":[]}');
 
     return NextResponse.json(parsed);

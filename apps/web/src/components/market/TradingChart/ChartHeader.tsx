@@ -73,7 +73,6 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
                 value={quote.price} 
                 format={{ style: 'currency', currency: preferredCurrency || 'USD' }}
                 willChange
-                continuous
                 animated
                 transformTiming={{ duration: 600, easing: 'ease-out' }}
                 spinTiming={{ duration: 600, easing: 'ease-out' }}
@@ -84,7 +83,6 @@ export const ChartHeader: React.FC<ChartHeaderProps> = ({
                 value={quote.changePercent / 100} 
                 format={{ style: 'percent', minimumFractionDigits: 2, maximumFractionDigits: 2, signDisplay: 'always' }}
                 willChange
-                continuous
                 animated
                 transformTiming={{ duration: 600, easing: 'ease-out' }}
                 spinTiming={{ duration: 600, easing: 'ease-out' }}

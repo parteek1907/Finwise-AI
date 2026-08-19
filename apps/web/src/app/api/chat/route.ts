@@ -1,62 +1,55 @@
 import { NextResponse } from 'next/server';
 
-const GROQ_API_KEY = ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
+const GROQ_API_KEY = process.env.GROQ_API_KEY!;
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { messages = [] } = body;
 
-    const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
-    
-    // Map messages to Gemini format
-    const geminiContents = [];
-    for (const msg of messages) {
-      if (geminiContents.length > 0 && geminiContents[geminiContents.length - 1].role === (msg.role === 'assistant' ? 'model' : 'user')) {
-        geminiContents[geminiContents.length - 1].parts[0].text += "\n\n" + msg.content;
-      } else {
-        geminiContents.push({
-          role: msg.role === 'assistant' ? 'model' : 'user',
-          parts: [{ text: msg.content }]
-        });
-      }
-    }
-
-    let res;
     let responseContent = "";
     
-    res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+    let groqRes;
+    let retries = 0;
+    while (retries < 3) {
+      groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Authorization": `Bearer ${GROQ_API_KEY}`,
+        "Content-Type": "application/json"
+      },
       body: JSON.stringify({
-        contents: geminiContents,
-        generationConfig: { temperature: 0.7, maxOutputTokens: 1024 }
+        model: "qwen/qwen3.6-27b",
+        messages,
+        temperature: 0.7,
+        max_tokens: 2048
       })
     });
+                        if (groqRes.status === 429) {
+        let errData;
+        try { errData = await groqRes.json(); } catch(e) { errData = {}; }
+        let waitTime = 5000;
+        if (errData?.error?.message) {
+            const match = errData.error.message.match(/try again in (\d+\.?\d*)s/);
+            if (match) {
+                waitTime = (parseFloat(match[1]) * 1000) + 1000;
+            }
+        }
+        console.warn(`Groq rate limit hit (429), waiting ${waitTime}ms and retrying...`);
+        await new Promise(r => setTimeout(r, waitTime));
+        retries++;
+        continue;
+      }
+      break;
+    }
 
-    if (res.ok) {
-      const data = await res.json();
-      responseContent = data.candidates?.[0]?.content?.parts?.[0]?.text || "I am here to help!";
-    } else {
-      console.warn("Gemini API failed in chat, falling back to Groq", await res.text());
-      const groqRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${GROQ_API_KEY}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          model: "llama-3.1-8b-instant",
-          messages,
-          temperature: 0.7,
-          max_tokens: 1024
-        })
-      });
+    if (!groqRes) throw new Error("No response from Groq");
+    if (!groqRes.ok) throw new Error(`Groq error: ${await groqRes.text()}`);
 
-      if (!groqRes.ok) throw new Error(`Both APIs failed. Groq error: ${await groqRes.text()}`);
-
-      const data = await groqRes.json();
-      responseContent = data.choices?.[0]?.message?.content || "I am here to help!";
+    const data = await groqRes.json();
+    responseContent = data.choices?.[0]?.message?.content || "I am here to help!";
+    if (responseContent && typeof responseContent === "string") { 
+      responseContent = responseContent.replace(/<think>[\s\S]*?<\/think>\n?/gi, "").trim(); 
     }
     responseContent = responseContent.replace(/\*\*/g, "").replace(/\*/g, "");
 

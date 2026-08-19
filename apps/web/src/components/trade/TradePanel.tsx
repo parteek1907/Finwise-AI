@@ -114,7 +114,6 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
               value={quote.price}
               format={{ style: 'currency', currency: preferredCurrency }}
               willChange
-              continuous
               animated
               transformTiming={{ duration: 600, easing: 'ease-out' }}
               spinTiming={{ duration: 600, easing: 'ease-out' }}
@@ -128,7 +127,6 @@ export const TradePanel: React.FC<TradePanelProps> = ({ quote, buyingPower }) =>
               value={total}
               format={{ style: 'currency', currency: preferredCurrency }}
               willChange
-              continuous
               animated
               transformTiming={{ duration: 600, easing: 'ease-out' }}
               spinTiming={{ duration: 600, easing: 'ease-out' }}

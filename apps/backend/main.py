@@ -285,10 +285,13 @@ def mentor_endpoint(request: ChatRequest):
         try:
             chat_completion = client.chat.completions.create(
                 messages=api_messages,
-                model="llama-3.1-8b-instant", # Groq supports llama-3.1 models
+                model="qwen/qwen3.6-27b", # Groq supports llama-3.1 models
             )
             
             response_content = chat_completion.choices[0].message.content
+            if isinstance(response_content, str):
+                import re as _re
+                response_content = _re.sub(r'<think>.*?</think>\\n?', '', response_content, flags=_re.DOTALL).strip()
             # Hard strip asterisks to guarantee clean UI
             response_content = response_content.replace("**", "").replace("*", "")
             
@@ -327,7 +330,7 @@ def generate_myths():
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "system", "content": system_prompt}],
-            model="llama-3.3-70b-versatile",
+            model="qwen/qwen3.6-27b",
             response_format={"type": "json_object"},
             temperature=0.7
         )
@@ -441,7 +444,7 @@ def scam_detect_endpoint(request: ScamDetectRequest):
         try:
             chat_completion = client.chat.completions.create(
                 messages=api_messages,
-                model="llama-3.3-70b-versatile",
+                model="qwen/qwen3.6-27b",
                 response_format={"type": "json_object"},
                 temperature=0.1
             )
@@ -495,7 +498,7 @@ def goal_suggestions_endpoint(request: GoalSuggestionRequest):
     try:
         chat_completion = client.chat.completions.create(
             messages=[{"role": "user", "content": prompt}],
-            model="llama-3.1-8b-instant",
+            model="qwen/qwen3.6-27b",
             response_format={"type": "json_object"},
             temperature=0.3
         )
@@ -516,10 +519,13 @@ def chat_title_endpoint(request: TitleRequest):
                 {"role": "system", "content": "You are a helpful assistant. Create a concise, 3-5 word title for a chat based on the user's first message. Do NOT use quotes or punctuation in the output. Just the raw text."},
                 {"role": "user", "content": f"Generate a title for this message: {request.message}"}
             ],
-            model="llama-3.1-8b-instant",
+            model="qwen/qwen3.6-27b",
             temperature=0.3
         )
         title = completion.choices[0].message.content.strip()
+        if isinstance(title, str):
+            import re as _re
+            title = _re.sub(r'<think>.*?</think>\\n?', '', title, flags=_re.DOTALL).strip()
         # Remove any surrounding quotes if the model adds them despite instructions
         if title.startswith('"') and title.endswith('"'):
             title = title[1:-1]
@@ -572,7 +578,7 @@ def emotion_ai_endpoint(request: EmotionRequest):
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": request.message}
             ],
-            model="llama-3.3-70b-versatile",
+            model="qwen/qwen3.6-27b",
             response_format={"type": "json_object"},
             temperature=0.1
         )

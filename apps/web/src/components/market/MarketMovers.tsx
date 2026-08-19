@@ -14,7 +14,6 @@ const AnimatedNumberFlow = ({ value, format }: { value: number, format?: any }) 
       value={value} 
       format={format}
       willChange
-      continuous
       animated
       transformTiming={{ duration: 600, easing: 'ease-out' }}
       spinTiming={{ duration: 600, easing: 'ease-out' }}

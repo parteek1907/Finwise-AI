@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 
-const GROQ_API_KEY = ["gsk_", "Cd3HiRLfS2rFYqV6poP", "EWGdyb3FY66HrwROvimBRCwJsnei6sfS0"].join('');
-const GEMINI_API_KEY = ["AQ.", "Ab8RN6KfP1lQ", "VjrZ0-64hpeBtkQQin8H3I2WaDHwoVECnr1UqA"].join('');
+const GROQ_API_KEY = process.env.GROQ_API_KEY!;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY!;
 
 const SYSTEM_PROMPT = `You are an elite, highly strict cybersecurity analyst specializing in financial fraud, phishing, and social engineering detection.
 You operate as a deep-analysis engine for the FinWise AI Scam Shield. Your job is to instantly warn the user about ANY possible scam.
@@ -25,14 +25,22 @@ CATEGORY C — 'EDUCATIONAL / LEGITIMATE': Safe context, standard portfolios, ve
 - Apply MAXIMUM AI THINKING: analyze the psychological vectors and hidden technical threats.
 - You must write out your step-by-step logical deduction in the 'reasoning' field before returning your final verdict.
 
-=== OUTPUT FORMAT ===
-You MUST output ONLY valid JSON matching this exact schema. DO NOT wrap the JSON in Markdown formatting like \`\`\`json ... \`\`\`. Just return raw JSON:
+CRITICAL: You MUST return the output in ONLY valid JSON format matching the EXACT structure below. Do NOT output any reasoning outside of the JSON, comments (NO // or /*), or extra text.
+
+EXAMPLE JSON OUTPUT FORMAT:
 {
-  "reasoning": "Your step-by-step deep analysis and logic",
-  "isScam": boolean,
-  "probability": number (0-100),
-  "redFlags": [{"title": "short title", "description": "detailed explanation citing specific evidence"}],
-  "lesson": "An educational takeaway or confirmation of safety"
+  "reasoning": "Step 1: Analyzed intent. Step 2: Identified urgency.",
+  "isScam": true,
+  "probability": 85,
+  "riskLevel": "High",
+  "analysis": "This message is a definitive phishing attempt...",
+  "redFlags": [
+    {
+      "title": "Unsolicited Request",
+      "description": "The message directly asks for sensitive info..."
+    }
+  ],
+  "lesson": "Never share information in response to unsolicited messages."
 }`;
 
 export async function POST(req: Request) {
@@ -56,87 +64,100 @@ export async function POST(req: Request) {
         prompt_text += `\n\nAdditional user-provided context: ${text}`;
       }
 
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-          contents: [
-            {
-              parts: [
-                { text: prompt_text },
-                { inlineData: { mimeType: "image/jpeg", data: b64_string } }
-              ]
-            }
-          ],
-          generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
-        })
-      });
+      let res;
+      let retries = 0;
+      while (retries < 3) {
+        res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent?key=${GEMINI_API_KEY}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: [
+              {
+                parts: [
+                  { text: prompt_text },
+                  { inlineData: { mimeType: "image/jpeg", data: b64_string } }
+                ]
+              }
+            ],
+            generationConfig: { responseMimeType: "application/json", temperature: 0.1 }
+          })
+        });
 
-      if (!res.ok) {
-        if (res.status === 429) {
-          return NextResponse.json({
-            isQuotaError: true,
-            reasoning: "The free daily limit for image scam detection has been reached on this API key. Please wait 24 hours to use the screenshot feature again, or paste the text instead.",
-            isScam: false,
-            probability: 0,
-            redFlags: [
-              { title: "Gemini Vision Quota Hit", description: "The daily limit of 20 images has been reached. Please paste your text instead, as text analysis uses Groq which has much higher limits!" }
-            ]
-          });
+        if (res.status === 503 || res.status === 429) {
+          console.warn(`Gemini rate limit or 503 hit (${res.status}), retrying in 3s...`);
+          await new Promise(r => setTimeout(r, 3000));
+          retries++;
+          continue;
         }
-        throw new Error(`Gemini API failed: ${await res.text()}`);
+        break;
       }
 
+      if (!res) throw new Error("No response from Gemini");
+      if (!res.ok) throw new Error(`Gemini API error: ${await res.text()}`);
+
       const data = await res.json();
-      let content = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!content) throw new Error("No content returned from Gemini");
+      let content = data?.candidates?.[0]?.content?.parts?.[0]?.text || "";
       
-      content = content.trim();
-      if (content.startsWith("\`\`\`")) {
-        const lines = content.split('\n');
-        if (lines[0].startsWith("\`\`\`")) lines.shift();
-        if (lines[lines.length - 1].startsWith("\`\`\`")) lines.pop();
-        content = lines.join('\n').trim();
+      const firstBrace = content.indexOf('{');
+      const lastBrace = content.lastIndexOf('}');
+      if (firstBrace !== -1 && lastBrace !== -1) {
+        content = content.substring(firstBrace, lastBrace + 1);
+      } else {
+        throw new Error("No valid JSON object found in response");
       }
       
       return NextResponse.json(JSON.parse(content));
     } else {
       // Use Groq API for text
       let data;
-      const attemptFetch = async (modelName: string) => {
-        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${GROQ_API_KEY}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            model: modelName,
-            messages: [
-              { role: "system", content: SYSTEM_PROMPT },
-              { role: "user", content: `Analyze this message: ${text}` }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.1
-          })
+      let res;
+      let retries = 0;
+      while (retries < 3) {
+        res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${GROQ_API_KEY}`,
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              model: "openai/gpt-oss-20b",
+              messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: `Analyze this message: ${text}` }
+              ],
+              temperature: 0.1,
+              max_tokens: 4000
+            })
         });
-        if (!res.ok) throw new Error(`API error: ${res.status}`);
-        return res.json();
-      };
-
-      try {
-        data = await attemptFetch("llama-3.1-8b-instant");
-      } catch (e) {
-        console.warn("First model failed in scam-detect, trying fallback...", e);
-        data = await attemptFetch("llama-3.3-70b-versatile");
+        if (res.status === 429) {
+          let errData;
+          try { errData = await res.clone().json(); } catch(e) { errData = {}; }
+          let waitTime = 5000;
+          if (errData?.error?.message) {
+              const match = errData.error.message.match(/try again in (\d+\.?\d*)s/);
+              if (match) {
+                  waitTime = (parseFloat(match[1]) * 1000) + 1000;
+              }
+          }
+          console.warn(`Groq rate limit hit (429), waiting ${waitTime}ms and retrying...`);
+          await new Promise(r => setTimeout(r, waitTime));
+          retries++;
+          continue;
+        }
+        break;
       }
       
+      if (!res) throw new Error("No response from Groq");
+      if (!res.ok) throw new Error(`Groq API error: ${await res.text()}`);
+      
+      data = await res.json();
+      
       let content = data?.choices?.[0]?.message?.content || "";
+      if (content && typeof content === 'string') { content = content.replace(/<think>[\s\S]*?<\/think>\n?/gi, '').trim(); }
 
       if (!content) throw new Error("No content returned from Groq");
       
-      // Robust JSON extraction
       const firstBrace = content.indexOf('{');
       const lastBrace = content.lastIndexOf('}');
       
@@ -150,18 +171,19 @@ export async function POST(req: Request) {
     }
   } catch (error: any) {
     console.error("Error in scam-detect endpoint:", error);
-    // Graceful fallback so UI doesn't crash or show connection failure
     return NextResponse.json({
       reasoning: "Our AI analysis encountered an error parsing the content. However, always exercise extreme caution.",
       isScam: true,
       probability: 75,
+      riskLevel: "High",
       redFlags: [
         {
           title: "System Warning",
           description: "Unable to verify the safety of this message due to a system error."
         }
       ],
-      lesson: "When in doubt, never share personal information or click on unknown links."
+      lesson: "When in doubt, never share personal information or click on unknown links.",
+      analysis: "Unable to verify safety."
     });
   }
 }
