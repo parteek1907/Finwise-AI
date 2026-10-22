@@ -450,6 +450,37 @@ export function PayUCheckoutModal({ isOpen, onClose, plan }: PayUCheckoutModalPr
     }
   };
 
+  const handleSimulateDevSuccess = async () => {
+    if (!currentUser) return;
+    setIsLoading(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/payment/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          plan_id: activePlan.id,
+          user_id: currentUser.uid,
+          amount: activePlan.amount.toFixed(2),
+          productinfo: activePlan.name,
+          firstname: (name || currentUser.displayName || "Customer").split(" ")[0],
+          email: email || currentUser.email || "test@finwise.ai",
+          status: "success"
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        onClose();
+        window.location.href = `/payment/status?txnid=${encodeURIComponent(data.payment?.txnid || `FW_TEST_${Date.now()}`)}&status=success&plan_id=${encodeURIComponent(activePlan.id)}`;
+      } else {
+        throw new Error(data.detail || "Simulation failed.");
+      }
+    } catch (err: any) {
+      setError(err.message || "Failed to simulate payment.");
+      setIsLoading(false);
+    }
+  };
+
   // Features display calculation
   const displayFeatures = (activePlan.features && activePlan.features.length > 0 
     ? activePlan.features 
@@ -1159,6 +1190,28 @@ export function PayUCheckoutModal({ isOpen, onClose, plan }: PayUCheckoutModalPr
                 <div className={styles.securityNote}>
                   <Shield size={13} color="#059669" style={{ flexShrink: 0 }} />
                   <span>Your payment data is fully encrypted with 256-bit SSL encryption.</span>
+                </div>
+
+                {/* Developer Fast-Track Test Option */}
+                <div style={{ marginTop: '12px', textAlign: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={handleSimulateDevSuccess}
+                    disabled={isLoading}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#9CA3AF',
+                      fontSize: '11px',
+                      cursor: 'pointer',
+                      textDecoration: 'underline',
+                      transition: 'color 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.color = '#059669')}
+                    onMouseLeave={(e) => (e.currentTarget.style.color = '#9CA3AF')}
+                  >
+                    ⚡ [Dev Sandbox] Instant Test Checkout (Bypass PayU portal)
+                  </button>
                 </div>
               </div>
             </div>
