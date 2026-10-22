@@ -46,7 +46,9 @@ export function PayUCheckoutModal({ isOpen, onClose, plan }: PayUCheckoutModalPr
   const profile = useSettingsStore((state) => state.profile);
   const updateProfile = useSettingsStore((state) => state.updateProfile);
 
-  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(auth.currentUser);
+  const [currentUser, setCurrentUser] = useState<FirebaseUser | null>(
+    auth.currentUser || (user && (user.email || user.name || user.id) ? ({ uid: user.id || "finwise-user", email: user.email || profile.email || "demo@finwise.ai", displayName: user.name || profile.name || "User" } as unknown as FirebaseUser) : null)
+  );
   const [activePlan, setActivePlan] = useState<CheckoutPlan>(plan);
 
   // Form Fields - Strictly dynamic from authenticated user / profile. No hardcoded mock values.
@@ -74,8 +76,8 @@ export function PayUCheckoutModal({ isOpen, onClose, plan }: PayUCheckoutModalPr
   // Track Firebase Auth state & populate profile dynamically
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (fbUser) => {
-      setCurrentUser(fbUser);
       if (fbUser) {
+        setCurrentUser(fbUser);
         setName(fbUser.displayName || profile.name || user.name || "");
         setEmail(fbUser.email || profile.email || user.email || "");
         const rawPhone = fbUser.phoneNumber || profile.phone || "";
@@ -94,7 +96,33 @@ export function PayUCheckoutModal({ isOpen, onClose, plan }: PayUCheckoutModalPr
             }
           }
         }
+      } else if (user && (user.email || user.name || user.id)) {
+        const effectiveEmail = user.email || profile.email || "demo@finwise.ai";
+        const effectiveName = user.name || profile.name || "Demo User";
+        setCurrentUser({
+          uid: user.id || "finwise-user",
+          email: effectiveEmail,
+          displayName: effectiveName,
+        } as FirebaseUser);
+        setName(profile.name || user.name || "");
+        setEmail(effectiveEmail);
+        const rawPhone = profile.phone || "";
+        const cleanPhone = rawPhone.replace(/\+91/, "").replace(/\s+/g, "");
+        setPhone(cleanPhone);
+
+        if (profile.location) {
+          const parts = profile.location.split(",");
+          const locCity = parts[0]?.trim() || "";
+          setCity(locCity);
+          if (parts.length > 1) {
+            const locState = parts[1]?.trim() || "";
+            if (isValidIndianState(locState)) {
+              setStateName(locState);
+            }
+          }
+        }
       } else {
+        setCurrentUser(null);
         // Clear all fields for unauthenticated users. Never prefill demo data.
         setName("");
         setEmail("");

@@ -22,6 +22,7 @@
   max-width: 920px;
   max-height: min(92vh, 760px);
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   padding: 28px 32px;
   color: #111827;
@@ -313,6 +314,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+  min-width: 0;
+}
+
+.splitInputs > * {
+  min-width: 0;
 }
 
 .errorBox {
@@ -659,6 +665,11 @@
 .stateSelectPlaceholder {
   color: #9CA3AF;
   font-weight: 400;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .stateSelectValue {
@@ -667,6 +678,8 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex: 1;
+  min-width: 0;
 }
 
 .stateSelectChevron {
@@ -683,24 +696,50 @@
 
 .stateDropdownMenu {
   position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
   right: 0;
+  left: auto;
+  width: 290px;
+  max-width: calc(200% + 8px);
+  min-width: 100%;
   background: #FFFFFF;
   border: 1px solid #E5E7EB;
   border-radius: 12px;
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.14), 0 6px 12px -4px rgba(0, 0, 0, 0.08);
   z-index: 1000;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
+}
+
+.stateDropdownMenuDown {
+  top: calc(100% + 5px);
+  bottom: auto;
   animation: fadeInDown 0.15s ease-out;
+}
+
+.stateDropdownMenuUp {
+  bottom: calc(100% + 5px);
+  top: auto;
+  animation: fadeInUp 0.15s ease-out;
+  box-shadow: 0 -12px 28px -4px rgba(0, 0, 0, 0.14), 0 -6px 12px -4px rgba(0, 0, 0, 0.08);
 }
 
 @keyframes fadeInDown {
   from {
     opacity: 0;
     transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
@@ -715,10 +754,13 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .stateSearchInput {
   flex: 1;
+  min-width: 0;
   border: 1px solid #E5E7EB;
   border-radius: 6px;
   padding: 6px 10px;
@@ -726,6 +768,7 @@
   color: #111827;
   outline: none;
   background: #FFFFFF;
+  box-sizing: border-box;
   transition: border-color 0.15s;
 }
 
@@ -743,6 +786,7 @@
   align-items: center;
   justify-content: center;
   border-radius: 4px;
+  flex-shrink: 0;
 }
 
 .stateClearSearchBtn:hover {
@@ -752,19 +796,34 @@
 
 .stateOptionsList {
   max-height: 200px;
+  max-height: min(200px, 35vh);
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 4px;
   margin: 0;
   list-style: none;
+  box-sizing: border-box;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #D1D5DB transparent;
 }
 
 .stateOptionsList::-webkit-scrollbar {
   width: 5px;
+  height: 0;
+}
+
+.stateOptionsList::-webkit-scrollbar-track {
+  background: transparent;
 }
 
 .stateOptionsList::-webkit-scrollbar-thumb {
   background: #D1D5DB;
-  border-radius: 4px;
+  border-radius: 9999px;
+}
+
+.stateOptionsList::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
 }
 
 .stateOptionItem {
@@ -776,7 +835,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 8px;
+  box-sizing: border-box;
   transition: background 0.15s, color 0.15s;
+  min-height: 36px;
+}
+
+.stateOptionItem span {
+  flex: 1;
+  min-width: 0;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .stateOptionItem:hover {

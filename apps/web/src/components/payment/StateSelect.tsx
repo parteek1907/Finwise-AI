@@ -25,6 +25,7 @@ export function StateSelect({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [dropDirection, setDropDirection] = useState<"down" | "up">("down");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -46,6 +47,42 @@ export function StateSelect({
       setSearchQuery("");
       setHighlightedIndex(-1);
     }
+  }, [isOpen]);
+ 
+  // Dynamically calculate whether dropdown opens downward or upward to avoid cutoffs
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const updateDirection = () => {
+      if (!triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      const spaceBelowViewport = window.innerHeight - rect.bottom;
+
+      // Check distance to bottom of scrollable modal container if present
+      const modalEl = triggerRef.current.closest(`.${styles.modal}`);
+      let spaceBelowModal = spaceBelowViewport;
+      if (modalEl) {
+        const modalRect = modalEl.getBoundingClientRect();
+        spaceBelowModal = modalRect.bottom - rect.bottom;
+      }
+
+      // Height of menu is ~245px. If space below is constrained (< 265px) and space above is ample (> 240px), flip up
+      const requiredSpace = 265;
+      if (
+        (spaceBelowModal < requiredSpace || spaceBelowViewport < requiredSpace) &&
+        rect.top > 240
+      ) {
+        setDropDirection("up");
+      } else {
+        setDropDirection("down");
+      }
+    };
+
+    updateDirection();
+    window.addEventListener("resize", updateDirection);
+    return () => {
+      window.removeEventListener("resize", updateDirection);
+    };
   }, [isOpen]);
 
   // Click outside listener
@@ -166,7 +203,11 @@ export function StateSelect({
       {/* Custom Dropdown Menu */}
       {isOpen && (
         <div
-          className={styles.stateDropdownMenu}
+          className={`${styles.stateDropdownMenu} ${
+            dropDirection === "up"
+              ? styles.stateDropdownMenuUp
+              : styles.stateDropdownMenuDown
+          }`}
           role="listbox"
           onClick={(e) => e.stopPropagation()}
         >
