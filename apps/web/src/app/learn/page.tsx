@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useRouter } from 'next/navigation';
-import { Search, Filter, Play, CheckCircle2, Lock, Bookmark, Clock, Award, BookOpen, X, ChevronRight, GraduationCap } from 'lucide-react';
+import { Search, Filter, Play, CheckCircle2, Lock, Bookmark, Clock, Award, BookOpen, X, ChevronRight, GraduationCap, Sparkles, CreditCard } from 'lucide-react';
 import styles from './Learn.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore, Lesson } from '@/store/useAppStore';
 import { Certificate } from '@/components/learn/Certificate';
 import { formatDate } from '@/utils/formatters';
 import { Tabs } from '@/components/ui/vercel-tabs';
+import { PayUCheckoutModal, CheckoutPlan } from '@/components/payment/PayUCheckoutModal';
 
 const getLessonImage = (lessonId: string, title: string) => {
   // Hardcode the demo course image to guarantee it loads even if local storage ID is weird
@@ -45,6 +46,10 @@ export default function LearnPage() {
   
   // State for viewing a specific certificate
   const [selectedCertLesson, setSelectedCertLesson] = useState<Lesson | null>(null);
+
+  // PayU Test Checkout State
+  const [checkoutPlan, setCheckoutPlan] = useState<CheckoutPlan | null>(null);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
 
   const difficultyWeight: Record<string, number> = { 'Easy': 1, 'Medium': 2, 'Hard': 3 };
 
@@ -211,13 +216,103 @@ export default function LearnPage() {
                     </div>
 
                     <div className={styles.cardActions}>
-                      <button 
-                        className={`${styles.actionBtn} ${lesson.status === 'Completed' ? styles.btnSecondary : lesson.status === 'Locked' ? styles.btnDisabled : (courseProgressMap[lesson.id]?.currentChapterIdx > 0 ? styles.btnResume : styles.btnPrimary)}`}
-                        onClick={() => lesson.status !== 'Locked' && router.push(`/learn/${lesson.id}`)}
-                        disabled={lesson.status === 'Locked'}
-                      >
-                        {lesson.status === 'Completed' ? 'Review Lesson' : lesson.status === 'Locked' ? 'Locked - Complete previous to unlock' : (courseProgressMap[lesson.id]?.currentChapterIdx > 0 ? 'Resume Lesson' : 'Start Lesson')}
-                      </button>
+                      {(() => {
+                        const isTierLockedLab = lesson.category === 'Live Trading Labs' && user.tier === 'FOUNDATION' && !(user.purchasedItems || []).includes('TRADING_LABS_PASS');
+                        const isTierLockedHard = lesson.difficulty === 'Hard' && user.tier === 'FOUNDATION';
+
+                        if (lesson.status === 'Completed') {
+                          return (
+                            <button 
+                              className={`${styles.actionBtn} ${styles.btnSecondary}`}
+                              onClick={() => router.push(`/learn/${lesson.id}`)}
+                            >
+                              Review Lesson
+                            </button>
+                          );
+                        }
+
+                        if (lesson.status === 'Locked') {
+                          if (isTierLockedLab) {
+                            return (
+                              <button
+                                className={styles.actionBtn}
+                                style={{
+                                  backgroundColor: '#19533B',
+                                  color: '#FFFFFF',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                  setCheckoutPlan({
+                                    id: 'TRADING_LABS_PASS',
+                                    name: 'Live Trading Labs & Simulator Pass',
+                                    amount: 199,
+                                    period: 'lifetime',
+                                    features: ['Stock Market Basics Lab', 'Candlestick Analysis', 'Virtual Trading Simulator'],
+                                    description: 'One-time unlock for interactive live trading labs.'
+                                  });
+                                  setIsCheckoutOpen(true);
+                                }}
+                              >
+                                <Lock size={14} /> Unlock Lab (₹199)
+                              </button>
+                            );
+                          }
+
+                          if (isTierLockedHard) {
+                            return (
+                              <button
+                                className={styles.actionBtn}
+                                style={{
+                                  backgroundColor: '#19533B',
+                                  color: '#FFFFFF',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  gap: '6px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer'
+                                }}
+                                onClick={() => {
+                                  setCheckoutPlan({
+                                    id: 'PREMIUM_MONTHLY',
+                                    name: 'FinWise Premium (Monthly)',
+                                    amount: 299,
+                                    period: 'month',
+                                    features: ['All Hard Modules Unlocked', 'Unlimited AI Mentor', 'Scam Detector Shield', 'Live Trading Labs'],
+                                    description: 'Full access to all advanced modules and AI tools.'
+                                  });
+                                  setIsCheckoutOpen(true);
+                                }}
+                              >
+                                <Sparkles size={14} /> Unlock with Premium (₹299)
+                              </button>
+                            );
+                          }
+
+                          return (
+                            <button 
+                              className={`${styles.actionBtn} ${styles.btnDisabled}`}
+                              disabled
+                            >
+                              Locked - Complete previous to unlock
+                            </button>
+                          );
+                        }
+
+                        return (
+                          <button 
+                            className={`${styles.actionBtn} ${courseProgressMap[lesson.id]?.currentChapterIdx > 0 ? styles.btnResume : styles.btnPrimary}`}
+                            onClick={() => router.push(`/learn/${lesson.id}`)}
+                          >
+                            {courseProgressMap[lesson.id]?.currentChapterIdx > 0 ? 'Resume Lesson' : 'Start Lesson'}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </motion.div>
@@ -339,6 +434,18 @@ export default function LearnPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* PayU Test Checkout Modal */}
+      {checkoutPlan && (
+        <PayUCheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => {
+            setIsCheckoutOpen(false);
+            useAppStore.getState().syncEntitlements();
+          }}
+          plan={checkoutPlan}
+        />
+      )}
     </AppLayout>
   );
 }

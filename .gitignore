@@ -17,3 +17,6 @@ scratch/
 venv/
 __pycache__/
 *.pyc
+*.db
+*.sqlite
+*.sqlite3

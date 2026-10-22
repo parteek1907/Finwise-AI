@@ -18,18 +18,32 @@ import {
   Sparkles,
   Camera,
   Settings,
-  Zap
+  Zap,
+  CreditCard,
+  RefreshCw,
+  ExternalLink,
+  ShieldCheck,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  ArrowUpRight,
+  Loader2,
+  Download,
+  RotateCcw
 } from 'lucide-react';
 import { useSettingsStore } from '@/store/useSettingsStore';
 import { useAppStore } from '@/store/useAppStore';
 import { auth } from '@/lib/firebase';
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal';
+import { PayUCheckoutModal, CheckoutPlan } from '@/components/payment/PayUCheckoutModal';
+import { SubscriptionCancelModal, SubscriptionData } from '@/components/subscription/SubscriptionCancelModal';
+import { downloadReceiptPdf } from '@/utils/generateReceiptPdf';
 import { motion } from 'framer-motion';
 import styles from './Settings.module.css';
-import { signOut } from 'firebase/auth';
+import { signOut, onAuthStateChanged } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 
-type TabType = 'profile' | 'aiMentor' | 'financial' | 'notifications' | 'security' | 'appearance' | 'privacy';
+type TabType = 'profile' | 'aiMentor' | 'financial' | 'notifications' | 'security' | 'appearance' | 'privacy' | 'billing';
 
 const COUNTRY_CODES = [
   { code: '+1', country: 'US/Canada' },
@@ -304,6 +318,251 @@ export function SettingsLayout() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  // Payment & Billing States
+  const [paymentHistory, setPaymentHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [checkoutModalOpen, setCheckoutModalOpen] = useState(false);
+  const [selectedPlanForCheckout, setSelectedPlanForCheckout] = useState<CheckoutPlan | null>(null);
+
+  // Subscription Management States
+  const [subscriptionData, setSubscriptionData] = useState<SubscriptionData | null>(null);
+  const [loadingSubscription, setLoadingSubscription] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isReactivatingSub, setIsReactivatingSub] = useState(false);
+
+  const fetchSubscriptionData = async () => {
+    setLoadingSubscription(true);
+    try {
+      const currentUser = auth.currentUser;
+      const headers: Record<string, string> = {};
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`/api/subscription/current`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setSubscriptionData(data);
+      }
+    } catch (err) {
+      console.error("Failed to load subscription details:", err);
+    } finally {
+      setLoadingSubscription(false);
+    }
+  };
+
+  const handleReactivateSubscription = async () => {
+    setIsReactivatingSub(true);
+    try {
+      const currentUser = auth.currentUser;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json"
+      };
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`/api/subscription/reactivate`, {
+        method: "POST",
+        headers
+      });
+      const data = await res.json();
+      if (res.ok) {
+        showToast("Your subscription has been successfully reactivated!");
+        await fetchSubscriptionData();
+        await useAppStore.getState().syncEntitlements();
+      } else {
+        showToast(data.detail || "Failed to reactivate subscription.");
+      }
+    } catch (err) {
+      console.error("Error reactivating subscription:", err);
+      showToast("Network error. Please try again.");
+    } finally {
+      setIsReactivatingSub(false);
+    }
+  };
+
+  const [isDevResetting, setIsDevResetting] = useState(false);
+
+  const handleDevReset = async () => {
+    if (!window.confirm("Developer Test Reset:\n\nImmediately cancel all active subscriptions, revert tier to Free Foundation, and clear all payment history records so you can test payment again from scratch?\n\nProceed?")) {
+      return;
+    }
+
+    setIsDevResetting(true);
+    try {
+      const currentUser = auth.currentUser;
+      const headers: Record<string, string> = {
+        "Content-Type": "application/json"
+      };
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`/api/subscription/dev-reset`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          user_id: currentUser?.uid || appUser.id || "demo_user",
+          email: currentUser?.email || profile.email || appUser.email || ""
+        })
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        // Immediately reset local store user tier to Foundation
+        useAppStore.getState().updateUser({
+          tier: 'FOUNDATION',
+          subscriptionPlan: 'FOUNDATION',
+          subscriptionStatus: 'inactive',
+          subscriptionExpiresAt: null,
+          purchasedItems: []
+        });
+
+        // Immediately clear payment history table and close any cancel modal
+        setPaymentHistory([]);
+        setIsCancelModalOpen(false);
+
+        showToast("✓ Developer Reset: All subscriptions cancelled & payment history cleared! You can test payment again.");
+        await Promise.allSettled([
+          useAppStore.getState().syncEntitlements(),
+          fetchSubscriptionData(),
+          fetchPaymentHistory()
+        ]);
+      } else {
+        showToast(data.detail || "Failed to reset billing test data.");
+      }
+    } catch (err: any) {
+      console.error("Error during dev reset:", err);
+      showToast(err.message || "Failed to reset billing test data.");
+    } finally {
+      setIsDevResetting(false);
+    }
+  };
+
+  const fetchPaymentHistory = async () => {
+    setLoadingHistory(true);
+    try {
+      const currentUser = auth.currentUser;
+      const headers: Record<string, string> = {};
+      if (currentUser) {
+        const token = await currentUser.getIdToken();
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      const res = await fetch(`/api/payment/history`, { headers });
+      if (res.ok) {
+        const data = await res.json();
+        setPaymentHistory(data.payments || []);
+      }
+    } catch (err) {
+      console.error("Failed to load payment history:", err);
+    } finally {
+      setLoadingHistory(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'billing') {
+      fetchPaymentHistory();
+      fetchSubscriptionData();
+      useAppStore.getState().syncEntitlements();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, (usr) => {
+      if (usr && activeTab === 'billing') {
+        fetchPaymentHistory();
+        fetchSubscriptionData();
+      }
+    });
+    return () => unsub();
+  }, [activeTab]);
+
+  // Handle returning from login with ?openPlan=
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const openPlanParam = params.get("openPlan");
+      if (openPlanParam) {
+        setActiveTab("billing");
+        const planDefs: Record<string, CheckoutPlan> = {
+          PREMIUM_MONTHLY: {
+            id: "PREMIUM_MONTHLY",
+            name: "FinWise Premium (Monthly)",
+            amount: 299,
+            period: "month",
+            features: [
+              "All AI Mentors, unlocked with no query limits",
+              "Real-time Scam Shield & Fraud detection",
+              "Live Trading Labs & Candlestick simulator",
+              "Emotion AI behavioral bias tracking",
+            ],
+            description: "Flexible monthly subscription & cancel anytime.",
+          },
+          PREMIUM_YEARLY: {
+            id: "PREMIUM_YEARLY",
+            name: "FinWise Premium (Yearly)",
+            amount: 2799,
+            period: "year",
+            features: [
+              "Everything in Premium Monthly",
+              "All 10 Courses & Final Exam Master Access",
+              "Verified FinWise Completion Certificate",
+              "Priority AI mentor speed & deep analysis",
+            ],
+            description: "Commit for a year with 22% annual savings.",
+          },
+          STUDENT_MONTHLY: {
+            id: "STUDENT_MONTHLY",
+            name: "FinWise Student Pass (Monthly)",
+            amount: 149,
+            period: "month",
+            features: [
+              "Full Financial Academy courses & quizzes",
+              "Interactive Trading Simulations",
+              "Story simulations & gamified quests",
+              "Leaderboards & community challenges",
+            ],
+            description: "Flexible academic monthly subscription.",
+          },
+          STUDENT_YEARLY: {
+            id: "STUDENT_YEARLY",
+            name: "FinWise Student Pass (Yearly)",
+            amount: 1399,
+            period: "year",
+            features: [
+              "Everything in Student Monthly",
+              "All Academic Certifications & Exams",
+              "Interactive Trading Simulations",
+              "Save 22% compared to monthly renewal",
+            ],
+            description: "Commit for a year with 22% academic savings.",
+          },
+          TRADING_LABS_PASS: {
+            id: "TRADING_LABS_PASS",
+            name: "Trading Labs Pass (Lifetime)",
+            amount: 199,
+            period: "lifetime",
+            features: [
+              "Stock Market Basics Simulator",
+              "Interactive Candlestick pattern recognition",
+              "Virtual portfolio order execution",
+              "Real-time simulated price feeds",
+            ],
+            description: "One-time standalone lab pass for practical trading.",
+          },
+        };
+
+        if (planDefs[openPlanParam]) {
+          setSelectedPlanForCheckout(planDefs[openPlanParam]);
+          setCheckoutModalOpen(true);
+        }
+      }
+    }
+  }, []);
+
   // Profile Save Handler
   const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
@@ -435,6 +694,7 @@ export function SettingsLayout() {
 
   const tabs = [
     { id: 'profile' as TabType, label: 'Profile', icon: User },
+    { id: 'billing' as TabType, label: 'Billing & Plans', icon: CreditCard },
     { id: 'aiMentor' as TabType, label: 'AI Mentor', icon: Bot },
     { id: 'financial' as TabType, label: 'Financial Preferences', icon: DollarSign },
     { id: 'notifications' as TabType, label: 'Notifications', icon: Bell },
@@ -1109,6 +1369,866 @@ export function SettingsLayout() {
               </div>
             </div>
           )}
+
+          {/* BILLING & PLANS SECTION */}
+          {activeTab === 'billing' && (
+            <div className={styles.cardStack}>
+              {/* MANAGE SUBSCRIPTION CARD */}
+              <div className={styles.billingCurrentCard}>
+                <div className={styles.billingCurrentHeader}>
+                  <div>
+                    <span className={`${styles.billingTierPill} ${
+                      appUser.tier === 'PREMIUM' 
+                        ? styles.billingTierPillPremium 
+                        : appUser.tier === 'STUDENT' 
+                        ? styles.billingTierPillStudent 
+                        : ''
+                    }`}>
+                      <Sparkles size={14} />
+                      {appUser.tier || 'FOUNDATION'} TIER
+                    </span>
+                    <h2 className={styles.billingCurrentTitle}>
+                      {subscriptionData?.plan_name || (
+                        appUser.tier === 'PREMIUM'
+                          ? 'FinWise Premium Membership'
+                          : appUser.tier === 'STUDENT'
+                          ? 'Student Academic Pass'
+                          : 'Free Foundation Plan'
+                      )}
+                    </h2>
+                    <p className={styles.billingCurrentSubtitle}>
+                      {subscriptionData?.status === 'cancels_at_period_end'
+                        ? 'Cancellation is scheduled. You retain full access to all premium features until your paid period ends.'
+                        : appUser.tier === 'PREMIUM'
+                        ? 'Unlimited access to all AI Mentors, Scam Shield, Emotion AI, and Live Trading Labs.'
+                        : appUser.tier === 'STUDENT'
+                        ? 'Academic learning modules and story simulations active.'
+                        : 'Essential learning modules active. Upgrade to unlock unlimited AI and Trading Labs.'}
+                    </p>
+                  </div>
+                  <div className={styles.billingCurrentStatusWrap}>
+                    {subscriptionData?.status === 'cancels_at_period_end' ? (
+                      <span className={styles.billingStatusBadgeCancelling}>
+                        <Clock size={14} />
+                        Cancels at Period End
+                      </span>
+                    ) : subscriptionData?.status === 'expired' ? (
+                      <span className={styles.billingStatusBadgeExpired}>
+                        <AlertCircle size={14} />
+                        Expired
+                      </span>
+                    ) : (
+                      <span className={styles.billingStatusBadge}>
+                        <span className={styles.billingStatusDot} />
+                        {appUser.subscriptionStatus === 'active' && appUser.tier !== 'FOUNDATION'
+                          ? 'Active Subscription'
+                          : 'Free Tier'}
+                      </span>
+                    )}
+
+                    {subscriptionData?.expires_at ? (
+                      <p className={styles.billingRenewsText} suppressHydrationWarning>
+                        {subscriptionData.status === 'cancels_at_period_end'
+                          ? `Access until: ${new Date(subscriptionData.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                          : subscriptionData.auto_renew
+                          ? `Renews: ${new Date(subscriptionData.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`
+                          : `Expires: ${new Date(subscriptionData.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}`}
+                      </p>
+                    ) : appUser.subscriptionExpiresAt ? (
+                      <p className={styles.billingRenewsText} suppressHydrationWarning>
+                        Renews: {new Date(appUser.subscriptionExpiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                    ) : null}
+                  </div>
+                </div>
+
+                {/* Actual Real Subscription Details Grid */}
+                <div className={styles.subscriptionMetaGrid}>
+                  <div className={styles.subMetaItem}>
+                    <span className={styles.subMetaLabel}>Current Plan</span>
+                    <span className={styles.subMetaVal}>
+                      {subscriptionData?.period === 'year'
+                        ? 'Annual Plan'
+                        : subscriptionData?.period === 'month'
+                        ? 'Monthly Plan'
+                        : subscriptionData?.is_lifetime
+                        ? 'Lifetime Pass'
+                        : appUser.tier === 'PREMIUM'
+                        ? 'Monthly Plan'
+                        : 'Free Tier'}
+                    </span>
+                    <span className={styles.subMetaValSmall}>
+                      {subscriptionData?.plan_name || (appUser.tier === 'PREMIUM' ? 'FinWise Premium' : 'Foundation')}
+                    </span>
+                  </div>
+
+                  <div className={styles.subMetaItem}>
+                    <span className={styles.subMetaLabel}>Amount & Frequency</span>
+                    <span className={styles.subMetaVal}>
+                      {subscriptionData?.amount
+                        ? `₹${subscriptionData.amount} / ${subscriptionData.period || 'mo'}`
+                        : appUser.tier === 'PREMIUM'
+                        ? '₹499 / mo'
+                        : appUser.tier === 'STUDENT'
+                        ? '₹149 / mo'
+                        : '₹0 (Free)'}
+                    </span>
+                    <span className={styles.subMetaValSmall}>
+                      {subscriptionData?.is_lifetime
+                        ? 'One-time payment'
+                        : subscriptionData?.status === 'cancels_at_period_end'
+                        ? 'Renewal stopped'
+                        : subscriptionData?.auto_renew
+                        ? 'Automatic renewal'
+                        : 'Fixed period access'}
+                    </span>
+                  </div>
+
+                  <div className={styles.subMetaItem}>
+                    <span className={styles.subMetaLabel}>Activation Date</span>
+                    <span className={styles.subMetaVal} suppressHydrationWarning>
+                      {subscriptionData?.activated_at
+                        ? new Date(subscriptionData.activated_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : subscriptionData?.created_at
+                        ? new Date(subscriptionData.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : 'Active since signup'}
+                    </span>
+                    <span className={styles.subMetaValSmall}>
+                      {subscriptionData?.latest_payment ? 'Verified via PayU' : 'Account default'}
+                    </span>
+                  </div>
+
+                  <div className={styles.subMetaItem}>
+                    <span className={styles.subMetaLabel}>
+                      {subscriptionData?.status === 'cancels_at_period_end'
+                        ? 'Access Through'
+                        : subscriptionData?.auto_renew
+                        ? 'Next Renewal'
+                        : 'Expiry Date'}
+                    </span>
+                    <span className={styles.subMetaVal} suppressHydrationWarning>
+                      {subscriptionData?.expires_at
+                        ? new Date(subscriptionData.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : appUser.subscriptionExpiresAt
+                        ? new Date(appUser.subscriptionExpiresAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                        : 'No expiration'}
+                    </span>
+                    <span className={styles.subMetaValSmall}>
+                      {subscriptionData?.status === 'cancels_at_period_end'
+                        ? 'No charges on expiry'
+                        : subscriptionData?.auto_renew
+                        ? 'Standard billing cycle'
+                        : 'Access granted'}
+                    </span>
+                  </div>
+                </div>
+
+                {/* If Cancelling Notice Banner */}
+                {subscriptionData?.status === 'cancels_at_period_end' && (
+                  <div className={styles.subscriptionNoticeBanner}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <AlertCircle size={18} color="#D97706" style={{ flexShrink: 0 }} />
+                      <div>
+                        <strong>Cancellation scheduled:</strong> Your subscription will end on{' '}
+                        {subscriptionData?.expires_at
+                          ? new Date(subscriptionData.expires_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
+                          : 'the end of your period'}
+                        . No further renewal charges will be made. You retain full access to all features until then.
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      className={styles.reactivateSubBtn}
+                      onClick={handleReactivateSubscription}
+                      disabled={isReactivatingSub}
+                    >
+                      {isReactivatingSub ? <Loader2 size={14} className={styles.spinner} /> : <CheckCircle2 size={14} />}
+                      Reactivate Subscription
+                    </button>
+                  </div>
+                )}
+
+                {/* Available Management Actions */}
+                <div className={styles.manageActionsRow}>
+                  <div className={styles.manageActionsLeft}>
+                    {/* If Active Paid Subscription */}
+                    {subscriptionData?.can_cancel && (
+                      <button
+                        type="button"
+                        className={styles.cancelSubBtn}
+                        onClick={() => setIsCancelModalOpen(true)}
+                        id="cancel-subscription-btn"
+                      >
+                        Cancel Subscription
+                      </button>
+                    )}
+
+                    {/* Developer Instant Cancel & Reset Action - properly integrated & discrete */}
+                    <button
+                      type="button"
+                      id="dev-cancel-subs-btn"
+                      className={styles.devCancelBtn}
+                      onClick={handleDevReset}
+                      disabled={isDevResetting}
+                      title="[Dev Tool] Instantly cancel all subscriptions, revert tier to Free Foundation, and clear payment history so you can test payment again."
+                    >
+                      <RotateCcw size={12} style={{ animation: isDevResetting ? 'spin 1s linear infinite' : 'none' }} />
+                      <span>{subscriptionData?.has_subscription ? 'Dev Instant Cancel' : 'Dev Reset Billing'}</span>
+                    </button>
+
+                    {/* Switch to Annual Offer if on monthly */}
+                    {subscriptionData?.can_cancel && subscriptionData?.period === 'month' && (
+                      <button
+                        type="button"
+                        className={styles.switchAnnualSubBtn}
+                        onClick={() => {
+                          const annualPlan: CheckoutPlan = {
+                            id: "PREMIUM_YEARLY",
+                            name: "FinWise Premium (Yearly)",
+                            amount: 2799,
+                            period: "year",
+                            features: [
+                              "Everything in Premium Monthly",
+                              "All 10 Courses & Final Exam Master Access",
+                              "Verified FinWise Completion Certificate",
+                              "Priority AI mentor speed & deep analysis",
+                            ],
+                            description: "Commit for a year with 22% annual savings.",
+                          };
+                          setSelectedPlanForCheckout(annualPlan);
+                          setCheckoutModalOpen(true);
+                        }}
+                      >
+                        <Sparkles size={14} />
+                        Switch to Annual (Save 22%)
+                      </button>
+                    )}
+
+                    {/* If Cancelling, allow Reactivate */}
+                    {subscriptionData?.can_reactivate && (
+                      <button
+                        type="button"
+                        className={styles.reactivateSubBtn}
+                        onClick={handleReactivateSubscription}
+                        disabled={isReactivatingSub}
+                      >
+                        {isReactivatingSub ? <Loader2 size={14} className={styles.spinner} /> : <CheckCircle2 size={14} />}
+                        Reactivate Subscription
+                      </button>
+                    )}
+
+                    {/* If Free Tier, prompt Upgrade */}
+                    {(!subscriptionData?.has_subscription || appUser.tier === 'FOUNDATION') && (
+                      <button
+                        type="button"
+                        className={styles.reactivateSubBtn}
+                        onClick={() => {
+                          const premiumMonthly: CheckoutPlan = {
+                            id: "PREMIUM_MONTHLY",
+                            name: "FinWise Premium (Monthly)",
+                            amount: 299,
+                            period: "month",
+                            features: [
+                              "All AI Mentors, unlocked with no query limits",
+                              "Real-time Scam Shield & Fraud detection",
+                              "Live Trading Labs & Candlestick simulator",
+                              "Emotion AI behavioral bias tracking",
+                            ],
+                            description: "Flexible monthly subscription & cancel anytime.",
+                          };
+                          setSelectedPlanForCheckout(premiumMonthly);
+                          setCheckoutModalOpen(true);
+                        }}
+                      >
+                        <Sparkles size={14} />
+                        Upgrade to Premium
+                      </button>
+                    )}
+                  </div>
+
+                  <span style={{ fontSize: '12px', color: '#9CA3AF' }}>
+                    Secured by PayU Payment Gateway • Idempotent Billing
+                  </span>
+                </div>
+
+                <div className={styles.billingFeaturesList}>
+                  <div className={styles.billingFeatureItem}>
+                    <CheckCircle2 size={16} color="#19533B" />
+                    <span>AI Mentor: <strong>{appUser.tier === 'PREMIUM' ? 'Unlimited queries' : '5 queries/day'}</strong></span>
+                  </div>
+                  <div className={styles.billingFeatureItem}>
+                    <CheckCircle2 size={16} color="#19533B" />
+                    <span>Scam Shield: <strong>{appUser.tier === 'PREMIUM' ? 'Unlimited scans' : '5 scans/day'}</strong></span>
+                  </div>
+                  <div className={styles.billingFeatureItem}>
+                    <CheckCircle2 size={16} color="#19533B" />
+                    <span>Live Trading Labs: <strong>{appUser.tier === 'PREMIUM' || appUser.tier === 'STUDENT' ? 'Unlocked & Active' : 'Requires Pass'}</strong></span>
+                  </div>
+                  <div className={styles.billingFeatureItem}>
+                    <CheckCircle2 size={16} color="#19533B" />
+                    <span>Emotion AI Biases: <strong>{appUser.tier === 'PREMIUM' ? 'Unlocked' : 'Locked'}</strong></span>
+                  </div>
+                </div>
+              </div>
+
+              {/* PLANS GRID */}
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>
+                      Available Membership Plans & Passes
+                    </h3>
+                    <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0 0' }}>
+                      Choose your plan or switch anytime. All transactions are securely processed via PayU.
+                    </p>
+                  </div>
+                </div>
+
+                <div className={styles.plansGrid}>
+                  {/* Plan 1: Premium Monthly */}
+                  {(() => {
+                    const isCurrent = appUser.tier === 'PREMIUM' && (appUser.subscriptionPlan === 'PREMIUM_MONTHLY' || !appUser.subscriptionPlan || appUser.subscriptionPlan === 'PREMIUM');
+                    const isYearlyActive = appUser.tier === 'PREMIUM' && appUser.subscriptionPlan === 'PREMIUM_YEARLY';
+
+                    return (
+                      <div className={`${styles.planCardItem} ${isCurrent ? styles.planCardActive : ''}`}>
+                        {isCurrent && (
+                          <span className={styles.currentTierBadge}>
+                            <Sparkles size={13} />
+                            CURRENT TIER
+                          </span>
+                        )}
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <h4 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#111827' }}>Premium Monthly</h4>
+                          </div>
+                          <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0 0' }}>Flexible monthly subscription</p>
+                          {isCurrent && (
+                            <div className={styles.currentPlanStatusText}>
+                              <CheckCircle2 size={13} />
+                              <span>Active Subscription</span>
+                            </div>
+                          )}
+                          <div className={styles.planCardPrice}>
+                            ₹299 <span>/ month</span>
+                          </div>
+                          <ul className={styles.planFeaturesUl}>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Unlimited AI Financial Mentor</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Real-time Scam & Fraud Shield</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Full Live Trading Labs & Simulator</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Emotion AI Behavioral Tracking</li>
+                          </ul>
+                        </div>
+                        {isCurrent ? (
+                          <button
+                            type="button"
+                            className={styles.currentPlanBtn}
+                            disabled
+                          >
+                            <CheckCircle2 size={16} />
+                            Current Plan Active
+                          </button>
+                        ) : isYearlyActive ? (
+                          <button
+                            type="button"
+                            className={styles.planCtaIncluded}
+                            disabled
+                          >
+                            <Check size={16} />
+                            Included in Yearly VIP
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.planCtaBtn}
+                            onClick={() => {
+                              setSelectedPlanForCheckout({
+                                id: 'PREMIUM_MONTHLY',
+                                name: 'FinWise Premium (Monthly)',
+                                amount: 299,
+                                period: 'month',
+                                features: ['Unlimited AI Mentor', 'Scam Shield', 'Live Trading Labs', 'Emotion AI'],
+                                description: 'Full monthly access to all FinWise premium features.'
+                              });
+                              setCheckoutModalOpen(true);
+                            }}
+                          >
+                            <CreditCard size={16} />
+                            Upgrade (₹299)
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Plan 2: Premium Yearly */}
+                  {(() => {
+                    const isCurrent = appUser.tier === 'PREMIUM' && appUser.subscriptionPlan === 'PREMIUM_YEARLY';
+                    const isMonthlyActive = appUser.tier === 'PREMIUM' && (appUser.subscriptionPlan === 'PREMIUM_MONTHLY' || !appUser.subscriptionPlan || appUser.subscriptionPlan === 'PREMIUM');
+
+                    return (
+                      <div className={`${styles.planCardItem} ${styles.planCardPopular} ${isCurrent ? styles.planCardActive : ''}`}>
+                        {isCurrent ? (
+                          <>
+                            <span className={styles.currentTierBadge}>
+                              <Sparkles size={13} />
+                              CURRENT TIER
+                            </span>
+                            <span className={styles.planPopularBadge}>Best Value</span>
+                          </>
+                        ) : (
+                          <span className={styles.planPopularBadge}>Best Value • Save 22%</span>
+                        )}
+                        <div>
+                          <h4 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#111827' }}>Premium Yearly</h4>
+                          <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0 0' }}>All-inclusive annual membership</p>
+                          {isCurrent && (
+                            <div className={styles.currentPlanStatusText}>
+                              <CheckCircle2 size={13} />
+                              <span>Active Annual VIP</span>
+                            </div>
+                          )}
+                          <div className={styles.planCardPrice}>
+                            ₹2,799 <span>/ year</span>
+                          </div>
+                          <ul className={styles.planFeaturesUl}>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Everything in Premium Monthly</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Priority AI processing & advice</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> All 10 Courses & Final Exam Master</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Verified FinWise Completion Badge</li>
+                          </ul>
+                        </div>
+                        {isCurrent ? (
+                          <button
+                            type="button"
+                            className={styles.currentPlanBtn}
+                            disabled
+                          >
+                            <CheckCircle2 size={16} />
+                            Current Plan Active
+                          </button>
+                        ) : isMonthlyActive ? (
+                          <button
+                            type="button"
+                            className={styles.planCtaBtn}
+                            onClick={() => {
+                              setSelectedPlanForCheckout({
+                                id: 'PREMIUM_YEARLY',
+                                name: 'FinWise Premium (Yearly)',
+                                amount: 2799,
+                                period: 'year',
+                                features: ['Full Ecosystem Access', 'Priority AI Mentor', 'All Labs & Certifications'],
+                                description: 'Annual VIP access with 22% discount.'
+                              });
+                              setCheckoutModalOpen(true);
+                            }}
+                          >
+                            <Sparkles size={16} />
+                            Switch to Yearly (Save 22%)
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={styles.planCtaBtn}
+                            onClick={() => {
+                              setSelectedPlanForCheckout({
+                                id: 'PREMIUM_YEARLY',
+                                name: 'FinWise Premium (Yearly)',
+                                amount: 2799,
+                                period: 'year',
+                                features: ['Full Ecosystem Access', 'Priority AI Mentor', 'All Labs & Certifications'],
+                                description: 'Annual VIP access with 22% discount.'
+                              });
+                              setCheckoutModalOpen(true);
+                            }}
+                          >
+                            <Sparkles size={16} />
+                            Upgrade Yearly (₹2,799)
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Plan 3: Student Pass */}
+                  {(() => {
+                    const isCurrent = appUser.tier === 'STUDENT';
+                    const isPremiumActive = appUser.tier === 'PREMIUM';
+
+                    return (
+                      <div className={`${styles.planCardItem} ${isCurrent ? styles.planCardActive : ''}`}>
+                        {isCurrent && (
+                          <span className={styles.currentTierBadge}>
+                            <Sparkles size={13} />
+                            CURRENT TIER
+                          </span>
+                        )}
+                        <div>
+                          <h4 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#111827' }}>Student Pass</h4>
+                          <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0 0' }}>Special academic discount</p>
+                          {isCurrent && (
+                            <div className={styles.currentPlanStatusText}>
+                              <CheckCircle2 size={13} />
+                              <span>Active Academic Tier</span>
+                            </div>
+                          )}
+                          <div className={styles.planCardPrice}>
+                            ₹149 <span>/ month</span>
+                          </div>
+                          <ul className={styles.planFeaturesUl}>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Full Financial Academy modules</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Interactive Trading Simulations</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Quests, Badges & Leaderboard</li>
+                          </ul>
+                        </div>
+                        {isCurrent ? (
+                          <button
+                            type="button"
+                            className={styles.currentPlanBtn}
+                            disabled
+                          >
+                            <CheckCircle2 size={16} />
+                            Current Plan Active
+                          </button>
+                        ) : isPremiumActive ? (
+                          <button
+                            type="button"
+                            className={styles.planCtaIncluded}
+                            disabled
+                          >
+                            <Check size={16} />
+                            Included with Premium
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={`${styles.planCtaBtn} ${styles.planCtaSecondary}`}
+                            onClick={() => {
+                              setSelectedPlanForCheckout({
+                                id: 'STUDENT_MONTHLY',
+                                name: 'FinWise Student Pass (Monthly)',
+                                amount: 149,
+                                period: 'month',
+                                features: ['All Courses Unlocked', 'Trading Labs Pass', 'Certification Exams'],
+                                description: 'Affordable academic plan for students.'
+                              });
+                              setCheckoutModalOpen(true);
+                            }}
+                          >
+                            <CreditCard size={16} />
+                            Get Student Pass (₹149)
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Plan 4: Trading Labs Pass */}
+                  {(() => {
+                    const isPremiumActive = appUser.tier === 'PREMIUM';
+                    const isStudentActive = appUser.tier === 'STUDENT';
+                    const hasStandalonePass = appUser.purchasedItems?.includes('TRADING_LABS_PASS') ?? false;
+
+                    return (
+                      <div className={`${styles.planCardItem} ${hasStandalonePass && !isPremiumActive && !isStudentActive ? styles.planCardActive : ''}`}>
+                        {isPremiumActive ? (
+                          <span className={styles.planUnlockedBadge}>
+                            <Check size={12} />
+                            Unlocked with Premium
+                          </span>
+                        ) : isStudentActive ? (
+                          <span className={styles.planUnlockedBadge}>
+                            <Check size={12} />
+                            Included in Student Pass
+                          </span>
+                        ) : hasStandalonePass ? (
+                          <span className={styles.currentTierBadge}>
+                            <Check size={13} />
+                            ACTIVE PASS
+                          </span>
+                        ) : null}
+                        <div>
+                          <h4 style={{ fontSize: '18px', fontWeight: 700, margin: 0, color: '#111827' }}>Trading Labs Pass</h4>
+                          <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0 0' }}>One-time standalone lab pass</p>
+                          {(isPremiumActive || isStudentActive || hasStandalonePass) && (
+                            <div className={styles.currentPlanStatusText}>
+                              <CheckCircle2 size={13} />
+                              <span>Labs Unlocked & Active</span>
+                            </div>
+                          )}
+                          <div className={styles.planCardPrice}>
+                            ₹199 <span>/ one-time</span>
+                          </div>
+                          <ul className={styles.planFeaturesUl}>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Stock Market Basics Lab</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Candlestick Analysis Simulator</li>
+                            <li className={styles.planFeatureLi}><Check size={14} color="#19533B" /> Virtual Trading Portfolio</li>
+                          </ul>
+                        </div>
+                        {isPremiumActive ? (
+                          <button
+                            type="button"
+                            className={styles.planCtaIncluded}
+                            disabled
+                          >
+                            <Check size={16} />
+                            Unlocked with Premium
+                          </button>
+                        ) : isStudentActive ? (
+                          <button
+                            type="button"
+                            className={styles.planCtaIncluded}
+                            disabled
+                          >
+                            <Check size={16} />
+                            Included in Student Pass
+                          </button>
+                        ) : hasStandalonePass ? (
+                          <button
+                            type="button"
+                            className={styles.currentPlanBtn}
+                            disabled
+                          >
+                            <CheckCircle2 size={16} />
+                            Pass Active & Unlocked
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className={`${styles.planCtaBtn} ${styles.planCtaSecondary}`}
+                            onClick={() => {
+                              setSelectedPlanForCheckout({
+                                id: 'TRADING_LABS_PASS',
+                                name: 'Live Trading Labs & Simulator Pass',
+                                amount: 199,
+                                period: 'lifetime',
+                                features: ['Stock Market Basics Lab', 'Candlestick Analysis', 'Virtual Order Execution'],
+                                description: 'One-time unlock for all interactive live trading labs.'
+                              });
+                              setCheckoutModalOpen(true);
+                            }}
+                          >
+                            <CreditCard size={16} />
+                            Unlock Labs (₹199)
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              {/* PAYMENT & TRANSACTION HISTORY TABLE */}
+              <div className={styles.card}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <div>
+                    <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#111827', margin: 0 }}>
+                      Payment History & Receipts
+                    </h2>
+                    <p style={{ fontSize: '13px', color: '#6B7280', margin: '4px 0 0 0' }}>
+                      Verified payment transactions, downloadable official payment receipts, and billing records.
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <button
+                      type="button"
+                      id="dev-reset-billing-btn"
+                      className={styles.devCancelBtn}
+                      onClick={handleDevReset}
+                      disabled={isDevResetting}
+                      title="[Dev Tool] Immediately cancel all subscriptions, revert tier to Foundation, and clear all payment records so you can test payments again from scratch."
+                    >
+                      <RotateCcw size={12} style={{ animation: isDevResetting ? 'spin 1s linear infinite' : 'none' }} />
+                      <span>{isDevResetting ? 'Resetting...' : 'Clear Test History'}</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={fetchPaymentHistory}
+                      className={styles.secondaryBtn}
+                      style={{ padding: '8px 14px', fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <RefreshCw size={14} style={{ animation: loadingHistory ? 'spin 1s linear infinite' : 'none' }} />
+                      Refresh
+                    </button>
+                  </div>
+                </div>
+
+                {paymentHistory.length === 0 ? (
+                  <div className={styles.emptyHistory}>
+                    <CreditCard size={36} color="#9CA3AF" style={{ margin: '0 auto 12px auto' }} />
+                    <p style={{ fontWeight: 600, color: '#374151', margin: '0 0 4px 0' }}>No payment records yet</p>
+                    <p style={{ fontSize: '13px', margin: 0 }}>
+                      When you activate or renew a subscription plan, your official transaction receipts will appear here.
+                    </p>
+                  </div>
+                ) : (
+                  <div className={styles.tableWrapper}>
+                    <table className={styles.historyTable}>
+                      <thead>
+                        <tr>
+                          <th>Txn ID</th>
+                          <th>Plan</th>
+                          <th>Amount</th>
+                          <th>Date</th>
+                          <th>Status</th>
+                          <th>PayU ID</th>
+                          <th>Action</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {paymentHistory.map((p: any) => {
+                          const isSuccess = p.status?.toLowerCase() === 'success';
+                          const isPending = p.status?.toLowerCase() === 'pending';
+                          return (
+                            <tr key={p.txnid}>
+                              <td style={{ fontFamily: 'monospace', fontWeight: 600, fontSize: '12px' }}>
+                                {p.txnid}
+                              </td>
+                              <td style={{ fontWeight: 500 }}>
+                                {p.plan_id}
+                              </td>
+                              <td style={{ fontWeight: 700 }}>
+                                ₹{Number(p.amount).toFixed(2)}
+                              </td>
+                              <td style={{ color: '#6B7280', fontSize: '12px', whiteSpace: 'nowrap' }} suppressHydrationWarning>
+                                {p.created_at ? new Date(p.created_at).toLocaleString() : 'N/A'}
+                              </td>
+                              <td>
+                                <span className={`${styles.statusPill} ${
+                                  isSuccess 
+                                    ? styles.statusSuccess 
+                                    : isPending 
+                                    ? styles.statusPending 
+                                    : styles.statusFailure
+                                }`}>
+                                  {isSuccess ? (
+                                    <>
+                                      <CheckCircle2 size={12} />
+                                      SUCCESS
+                                    </>
+                                  ) : isPending ? (
+                                    <>
+                                      <Clock size={12} />
+                                      PENDING
+                                    </>
+                                  ) : (
+                                    <>
+                                      <XCircle size={12} />
+                                      {p.status?.toUpperCase() || 'FAILED'}
+                                    </>
+                                  )}
+                                </span>
+                              </td>
+                              <td style={{ fontFamily: 'monospace', color: '#6B7280', fontSize: '12px' }}>
+                                {p.payu_id || p.bank_ref_num || '—'}
+                              </td>
+                              <td>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  {isSuccess && (
+                                    <button
+                                      type="button"
+                                      title="Download official PDF receipt"
+                                      onClick={() => {
+                                        downloadReceiptPdf({
+                                          txnid: p.txnid,
+                                          receiptNumber: p.receipt_number,
+                                          date: p.created_at ? new Date(p.created_at).toLocaleString("en-IN", { dateStyle: "medium", timeStyle: "short" }) : "N/A",
+                                          planName: p.product_name || p.plan_id,
+                                          amount: String(p.amount),
+                                          currency: "INR",
+                                          customerName: p.user_name || profile.name || appUser.name || "FinWise Customer",
+                                          customerEmail: p.user_email || profile.email || appUser.email || "",
+                                          billingAddress: p.billing_address,
+                                          billingCity: p.billing_city,
+                                          billingState: p.billing_state,
+                                          billingPincode: p.billing_pincode,
+                                          billingCountry: p.billing_country || "India",
+                                          paymentMethod: p.payment_method || "Online Payment (PayU Gateway)",
+                                          payuId: p.payu_id,
+                                          bankRef: p.bank_ref_num && p.bank_ref_num !== p.txnid ? p.bank_ref_num : undefined,
+                                          status: "success",
+                                          verificationUrl: p.receipt_number ? `https://finwise.ai/receipt/verify?id=${encodeURIComponent(p.receipt_number)}` : undefined,
+                                        });
+                                      }}
+                                      style={{
+                                        background: '#ECFDF5',
+                                        color: '#065F46',
+                                        border: '1px solid #A7F3D0',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        fontWeight: 600,
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}
+                                    >
+                                      <Download size={12} />
+                                      PDF
+                                    </button>
+                                  )}
+                                  <button
+                                    type="button"
+                                    onClick={() => router.push(`/payment/status?txnid=${encodeURIComponent(p.txnid)}&status=${encodeURIComponent(p.status)}`)}
+                                    style={{
+                                      background: 'transparent',
+                                      border: '1px solid #D1D5DB',
+                                      padding: '4px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '12px',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      color: '#374151'
+                                    }}
+                                  >
+                                    <ExternalLink size={12} />
+                                    View
+                                  </button>
+                                  {!isSuccess && (
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setSelectedPlanForCheckout({
+                                          id: p.plan_id,
+                                          name: p.plan_id,
+                                          amount: p.amount,
+                                          period: 'subscription',
+                                          features: ['Retry previous transaction'],
+                                        });
+                                        setCheckoutModalOpen(true);
+                                      }}
+                                      style={{
+                                        background: '#19533B',
+                                        color: '#FFFFFF',
+                                        border: 'none',
+                                        padding: '4px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '12px',
+                                        cursor: 'pointer',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}
+                                    >
+                                      Retry
+                                    </button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
         </main>
       </div>
 
@@ -1121,6 +2241,44 @@ export function SettingsLayout() {
         confirmLabel={modalState.confirmLabel}
         onConfirm={modalState.onConfirm}
         onClose={() => setModalState((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      {/* PayU Test Checkout Modal */}
+      {selectedPlanForCheckout && (
+        <PayUCheckoutModal
+          isOpen={checkoutModalOpen}
+          onClose={() => {
+            setCheckoutModalOpen(false);
+            fetchPaymentHistory();
+            fetchSubscriptionData();
+          }}
+          plan={selectedPlanForCheckout}
+        />
+      )}
+
+      {/* Subscription Cancellation Flow Modal */}
+      <SubscriptionCancelModal
+        isOpen={isCancelModalOpen}
+        onClose={() => setIsCancelModalOpen(false)}
+        onDevReset={handleDevReset}
+        subscription={
+          subscriptionData || {
+            plan_id: (appUser as any).planId || (appUser.tier === 'PREMIUM' ? 'PREMIUM_MONTHLY' : appUser.tier === 'STUDENT' ? 'STUDENT_MONTHLY' : 'FOUNDATION'),
+            plan_name: appUser.tier === 'PREMIUM' ? 'FinWise Premium' : appUser.tier === 'STUDENT' ? 'Student Academic Pass' : 'Free Foundation Plan',
+            tier: appUser.tier || 'FOUNDATION',
+            amount: appUser.tier === 'PREMIUM' ? 299 : appUser.tier === 'STUDENT' ? 149 : 0,
+            period: 'month',
+            expires_at: appUser.subscriptionExpiresAt,
+            activated_at: null,
+            status: appUser.subscriptionStatus || 'active'
+          }
+        }
+        onSuccess={async () => {
+          setIsCancelModalOpen(false);
+          showToast("Cancellation scheduled. Your premium access remains active until the end of the billing period.");
+          await fetchSubscriptionData();
+          await useAppStore.getState().syncEntitlements();
+        }}
       />
     </div>
   );

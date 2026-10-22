@@ -60,7 +60,9 @@ function AuthForm() {
             const provider = new GoogleAuthProvider();
             await signInWithPopup(auth, provider);
             toast({ title: "Success", description: "Successfully signed in with Google!" });
-            window.location.href = '/dashboard';
+            const params = new URLSearchParams(window.location.search);
+            const red = params.get("redirect");
+            window.location.href = red && red.startsWith("/") ? red : '/dashboard';
           } catch (error: any) {
             toast({ title: "Authentication Failed", description: error.message });
           }
@@ -70,7 +72,9 @@ function AuthForm() {
             const provider = new OAuthProvider('apple.com');
             await signInWithPopup(auth, provider);
             toast({ title: "Success", description: "Successfully signed in with Apple!" });
-            window.location.href = '/dashboard';
+            const params = new URLSearchParams(window.location.search);
+            const red = params.get("redirect");
+            window.location.href = red && red.startsWith("/") ? red : '/dashboard';
           } catch (error: any) {
             toast({ title: "Authentication Failed", description: error.message });
           }
@@ -94,12 +98,16 @@ function AuthForm() {
           if (email.toLowerCase() === 'demo@finwise.ai' && password === 'demo123') {
             useAppStore.getState().seedDemoData();
             toast({ title: "Success", description: "Successfully signed in to demo account!" });
-            window.location.href = '/dashboard';
+            const params = new URLSearchParams(window.location.search);
+            const red = params.get("redirect");
+            window.location.href = red && red.startsWith("/") ? red : '/dashboard';
             return;
           }
           await signInWithEmailAndPassword(auth, email, password);
           toast({ title: "Success", description: "Successfully signed in!" });
-          window.location.href = '/dashboard';
+          const params = new URLSearchParams(window.location.search);
+          const red = params.get("redirect");
+          window.location.href = red && red.startsWith("/") ? red : '/dashboard';
         } catch (error: any) {
           toast({ 
             title: "Authentication Failed", 

@@ -1,5 +1,14 @@
-from fastapi import FastAPI, HTTPException, Depends
+import os
+from dotenv import load_dotenv
+
+# Load environment variables before any module imports
+load_dotenv(".env.local")
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env.local"))
+
+from fastapi import FastAPI, HTTPException, Depends, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
+import database
+import payment_service
 
 app = FastAPI(
     title="Finwise AI Backend",
@@ -32,7 +41,7 @@ import base64
 load_dotenv(".env.local")
 
 from firebase_admin import auth as firebase_admin_auth
-from auth_utils import get_current_user, login_with_email_password
+from auth_utils import get_current_user, get_optional_current_user, login_with_email_password, verify_firebase_token
 from firebase_config import db
 
 # Initialize Groq client
@@ -53,6 +62,7 @@ class Message(BaseModel):
 class ChatRequest(BaseModel):
     messages: List[Message]
     goals: Optional[List[Dict]] = None
+    user_id: Optional[str] = "demo_user"
 
 class AuthRegisterRequest(BaseModel):
     email: str
@@ -67,18 +77,237 @@ class SocialAuthRequest(BaseModel):
 
 class LessonCompletionRequest(BaseModel):
     xp_earned: int
+    lesson_id: Optional[str] = None
+    user_id: Optional[str] = None
 
 class ScamDetectRequest(BaseModel):
     text: Optional[str] = None
     image_base64: Optional[str] = None
+    user_id: Optional[str] = "demo_user"
+
+class CreatePaymentRequest(BaseModel):
+    plan_id: str
+    user_name: str
+    user_email: str
+    user_phone: str
+    billing_address: str
+    billing_city: str
+    billing_state: str
+    billing_pincode: str
+    billing_country: Optional[str] = "India"
+    return_url: Optional[str] = None
+
+class VerifyPaymentRequest(BaseModel):
+    txnid: str
+    status: str
+    amount: str
+    productinfo: str
+    firstname: str
+    email: str
+    key: str
+    hash: str
+    udf1: Optional[str] = ""
+    udf2: Optional[str] = ""
+    udf3: Optional[str] = ""
+    udf4: Optional[str] = ""
+    udf5: Optional[str] = ""
+    mihpayid: Optional[str] = ""
+    bank_ref_num: Optional[str] = ""
+    error_Message: Optional[str] = ""
+    additionalCharges: Optional[str] = ""
+
+class SimulatePaymentRequest(BaseModel):
+    txnid: str
+    outcome: Optional[str] = "success"
 
 import json as json_module
+
 
 
 
 @app.get("/api/health")
 def health_check():
     return {"status": "ok", "message": "Finwise AI Backend is running"}
+
+# ==========================================
+# PAYU TEST MODE PAYMENT ENDPOINTS
+# ==========================================
+
+@app.get("/api/payment/plans")
+def get_payment_plans():
+    return {"plans": payment_service.PLAN_CATALOG}
+
+@app.post("/api/payment/create")
+def create_payment(request: CreatePaymentRequest, user_token=Depends(get_current_user)):
+    try:
+        user_id = user_token.get("uid")
+        if not user_id:
+            raise HTTPException(status_code=401, detail="Authentication required to subscribe.")
+
+        order = payment_service.create_payment_order(
+            user_id=user_id,
+            user_email=request.user_email,
+            user_name=request.user_name,
+            user_phone=request.user_phone,
+            plan_id=request.plan_id,
+            billing_address=request.billing_address,
+            billing_city=request.billing_city,
+            billing_state=request.billing_state,
+            billing_pincode=request.billing_pincode,
+            billing_country=request.billing_country or "India",
+            return_url=request.return_url
+        )
+        return order
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create payment: {str(e)}")
+
+@app.post("/api/payment/verify")
+async def verify_payment(request: Request):
+    try:
+        content_type = request.headers.get("content-type", "")
+        if "application/json" in content_type:
+            payload = await request.json()
+        elif "application/x-www-form-urlencoded" in content_type:
+            form_data = await request.form()
+            payload = dict(form_data)
+        else:
+            payload = await request.json()
+
+        result = payment_service.verify_and_process_callback(payload)
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Payment verification failed: {str(e)}")
+
+@app.post("/api/payment/simulate")
+def simulate_payment(request: SimulatePaymentRequest):
+    try:
+        result = payment_service.simulate_test_callback(
+            txnid=request.txnid,
+            outcome=request.outcome or "success"
+        )
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Simulation error: {str(e)}")
+
+@app.get("/api/payment/status/{txnid}")
+def get_payment_status(txnid: str):
+    payment = database.get_payment(txnid)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Payment not found")
+    return {"payment": payment}
+
+@app.get("/api/payment/history")
+def get_payment_history(user_token=Depends(get_current_user)):
+    user_id = user_token.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to view payment history.")
+    email = user_token.get("email")
+    payments = database.get_user_payments(user_id, email)
+    return {"payments": payments}
+
+@app.get("/api/payment/receipt/{identifier}")
+def get_payment_receipt_endpoint(identifier: str, user_token=Depends(get_current_user)):
+    user_id = user_token.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to view receipt.")
+    try:
+        receipt = database.get_payment_receipt(identifier, user_id=user_id)
+        if not receipt:
+            raise HTTPException(status_code=404, detail="Payment record not found.")
+        return {"receipt": receipt}
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except PermissionError as pe:
+        raise HTTPException(status_code=403, detail=str(pe))
+
+@app.get("/api/receipt/verify")
+def verify_receipt_endpoint(id: str = Query(..., description="Receipt number or transaction ID")):
+    result = database.get_public_receipt_verification(id)
+    if not result.get("valid"):
+        raise HTTPException(status_code=404, detail=result.get("error", "No verified payment record found for this receipt identifier."))
+    return {"verification": result}
+
+# ==========================================
+# SUBSCRIPTION MANAGEMENT & CANCELLATION
+# ==========================================
+
+class CancelSubscriptionRequest(BaseModel):
+    reason: Optional[str] = "User requested cancellation"
+    feedback: Optional[str] = ""
+
+@app.get("/api/subscription/current")
+def get_current_subscription(user_token=Depends(get_current_user)):
+    user_id = user_token.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to view subscription.")
+    email = user_token.get("email")
+    details = database.get_subscription_details(user_id, email)
+    res = dict(details)
+    res["subscription"] = details
+    return res
+
+@app.post("/api/subscription/cancel")
+def cancel_user_subscription(request: CancelSubscriptionRequest, user_token=Depends(get_current_user)):
+    user_id = user_token.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to cancel subscription.")
+    try:
+        result = database.cancel_subscription(user_id, reason=request.reason, feedback=request.feedback)
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to cancel subscription: {str(e)}")
+
+@app.post("/api/subscription/reactivate")
+def reactivate_user_subscription(user_token=Depends(get_current_user)):
+    user_id = user_token.get("uid")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Authentication required to reactivate subscription.")
+    try:
+        result = database.reactivate_subscription(user_id)
+        return result
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reactivate subscription: {str(e)}")
+
+class DevResetRequest(BaseModel):
+    user_id: Optional[str] = None
+    email: Optional[str] = None
+
+@app.post("/api/subscription/dev-reset")
+def dev_reset_subscription(request: Optional[DevResetRequest] = None, user_token=Depends(get_optional_current_user)):
+    """
+    Developer Test Tool:
+    Immediately cancels all subscriptions, reverts tier to FOUNDATION,
+    and clears all payment history records so checkout can be tested again cleanly.
+    """
+    user_id = (user_token.get("uid") if user_token else None) or (request.user_id if request else None) or "demo_user"
+    email = (user_token.get("email") if user_token else None) or (request.email if request else None) or ""
+    try:
+        result = database.dev_reset_user_billing(user_id, email)
+        return result
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to reset billing data: {str(e)}")
+
+
+@app.get("/api/user/access")
+def get_user_access(user_id: Optional[str] = "demo_user", email: Optional[str] = None):
+    entitlement = database.get_user_entitlement(user_id or "demo_user", email)
+    usage = database.get_daily_usage(user_id or "demo_user")
+    return {
+        "entitlement": entitlement,
+        "daily_usage": usage
+    }
 
 @app.post("/api/auth/register")
 def register_user(request: AuthRegisterRequest):
@@ -88,12 +317,16 @@ def register_user(request: AuthRegisterRequest):
             password=request.password
         )
         
-        # Initialize user in Firestore with Level 0 and XP 0
-        db.collection("users").document(user.uid).set({
-            "email": request.email,
-            "xp": 0,
-            "level": 0
-        })
+        # Initialize user in Firestore if available
+        if db is not None:
+            try:
+                db.collection("users").document(user.uid).set({
+                    "email": request.email,
+                    "xp": 0,
+                    "level": 0
+                })
+            except Exception as fe:
+                print(f"Firestore set error: {fe}")
         
         return {"uid": user.uid, "email": user.email, "message": "User created successfully"}
     except Exception as e:
@@ -110,18 +343,21 @@ def login_user(request: AuthLoginRequest):
 @app.post("/api/auth/social")
 def verify_social_token(request: SocialAuthRequest):
     try:
-        decoded_token = firebase_admin_auth.verify_id_token(request.id_token)
+        decoded_token = verify_firebase_token(request.id_token)
         uid = decoded_token.get("uid")
         email = decoded_token.get("email")
         
-        # Check if user exists in Firestore, if not create them with Level 0 and XP 0
-        user_ref = db.collection("users").document(uid)
-        if not user_ref.get().exists:
-            user_ref.set({
-                "email": email,
-                "xp": 0,
-                "level": 0
-            })
+        if db is not None:
+            try:
+                user_ref = db.collection("users").document(uid)
+                if not user_ref.get().exists:
+                    user_ref.set({
+                        "email": email,
+                        "xp": 0,
+                        "level": 0
+                    })
+            except Exception as fe:
+                print(f"Firestore social sync error: {fe}")
 
         return {
             "uid": uid,
@@ -139,32 +375,55 @@ def complete_lesson(request: LessonCompletionRequest, user_token=Depends(get_cur
             raise HTTPException(status_code=400, detail="XP earned must be positive")
             
         uid = user_token.get("uid")
-        user_ref = db.collection("users").document(uid)
-        user_doc = user_ref.get()
-        
-        if not user_doc.exists:
-            current_xp = 0
-            current_level = 0
-            user_ref.set({
-                "email": user_token.get("email", ""),
-                "xp": current_xp,
-                "level": current_level
-            })
-        else:
-            data = user_doc.to_dict()
-            current_xp = data.get("xp", 0)
-            current_level = data.get("level", 0)
-            
+
+        # Check premium lesson access
+        if request.lesson_id in ["l8", "l9", "l10", "lab1", "lab2"]:
+            user_id = uid or request.user_id or "demo_user"
+            access = database.check_feature_access(user_id, request.lesson_id)
+            if not access["allowed"]:
+                raise HTTPException(
+                    status_code=403,
+                    detail={
+                        "error": "PREMIUM_FEATURE_LOCKED",
+                        "message": access["reason"],
+                        "required_tier": access.get("required_tier", "STUDENT")
+                    }
+                )
+
+        current_xp = 0
+        current_level = 0
+
+        if db is not None:
+            try:
+                user_ref = db.collection("users").document(uid)
+                user_doc = user_ref.get()
+                
+                if not user_doc.exists:
+                    user_ref.set({
+                        "email": user_token.get("email", ""),
+                        "xp": current_xp,
+                        "level": current_level
+                    })
+                else:
+                    data = user_doc.to_dict()
+                    current_xp = data.get("xp", 0)
+                    current_level = data.get("level", 0)
+            except Exception as fe:
+                print(f"Firestore read error: {fe}")
+
         new_xp = current_xp + request.xp_earned
         import math
         new_level = math.floor((-1 + math.sqrt(1 + 8 * new_xp / 100)) / 2)
-        
         leveled_up = new_level > current_level
-        
-        user_ref.update({
-            "xp": new_xp,
-            "level": new_level
-        })
+
+        if db is not None:
+            try:
+                user_ref.update({
+                    "xp": new_xp,
+                    "level": new_level
+                })
+            except Exception as fe:
+                print(f"Firestore update error: {fe}")
         
         xp_for_next_level = 50 * (new_level + 1) * (new_level + 2)
         
@@ -185,19 +444,19 @@ def complete_lesson(request: LessonCompletionRequest, user_token=Depends(get_cur
 def get_user_progress(user_token=Depends(get_current_user)):
     try:
         uid = user_token.get("uid")
-        user_ref = db.collection("users").document(uid)
-        user_doc = user_ref.get()
-        
-        if not user_doc.exists:
-            return {
-                "xp": 0, 
-                "level": 0,
-                "xp_required_for_next_level": 100
-            }
-            
-        data = user_doc.to_dict()
-        current_xp = data.get("xp", 0)
-        current_level = data.get("level", 0)
+        current_xp = 0
+        current_level = 0
+
+        if db is not None:
+            try:
+                user_ref = db.collection("users").document(uid)
+                user_doc = user_ref.get()
+                if user_doc.exists:
+                    data = user_doc.to_dict()
+                    current_xp = data.get("xp", 0)
+                    current_level = data.get("level", 0)
+            except Exception as fe:
+                print(f"Firestore read progress error: {fe}")
         
         return {
             "xp": current_xp,
@@ -207,8 +466,23 @@ def get_user_progress(user_token=Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
+
 @app.post("/api/mentor")
 def mentor_endpoint(request: ChatRequest):
+    user_id = request.user_id or "demo_user"
+    access = database.check_feature_access(user_id, "ai_mentor")
+    if not access["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "FREE_TIER_LIMIT_REACHED",
+                "message": access["reason"],
+                "required_tier": access.get("required_tier", "PREMIUM"),
+                "upgrade_url": "/#pricing"
+            }
+        )
+    database.record_daily_usage(user_id, "mentor")
+
     goals_context = ""
     if request.goals:
         goals_text = "\n".join([
@@ -340,10 +614,6 @@ def generate_myths():
         print(f"Error calling Groq API for myths: {e}")
         raise HTTPException(status_code=500, detail="Failed to generate myths.")
 
-class ScamDetectRequest(BaseModel):
-    text: Optional[str] = None
-    image_base64: Optional[str] = None
-
 class RedFlag(BaseModel):
     title: str
     description: str
@@ -359,6 +629,20 @@ class ScamResult(BaseModel):
 def scam_detect_endpoint(request: ScamDetectRequest):
     if not request.text and not request.image_base64:
         raise HTTPException(status_code=400, detail="Must provide text or image")
+
+    user_id = request.user_id or "demo_user"
+    access = database.check_feature_access(user_id, "scam_detector")
+    if not access["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "FREE_TIER_LIMIT_REACHED",
+                "message": access["reason"],
+                "required_tier": access.get("required_tier", "PREMIUM"),
+                "upgrade_url": "/#pricing"
+            }
+        )
+    database.record_daily_usage(user_id, "scam")
 
     system_prompt = (
         "You are an elite, highly strict cybersecurity analyst specializing in financial fraud, phishing, and social engineering detection. "
@@ -536,9 +820,24 @@ def chat_title_endpoint(request: TitleRequest):
 
 class EmotionRequest(BaseModel):
     message: str
+    user_id: Optional[str] = "demo_user"
 
 @app.post("/api/emotion-ai")
 def emotion_ai_endpoint(request: EmotionRequest):
+    user_id = request.user_id or "demo_user"
+    access = database.check_feature_access(user_id, "emotion_ai")
+    if not access["allowed"]:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "PREMIUM_FEATURE_LOCKED",
+                "message": access["reason"],
+                "required_tier": access.get("required_tier", "PREMIUM"),
+                "upgrade_url": "/#pricing"
+            }
+        )
+    database.record_daily_usage(user_id, "emotion")
+
     system_prompt = (
         "You are Groq's expert financial psychologist and behavioral finance analyst. "
         "Your task is to carefully analyze the user's message to determine their true underlying emotion, "

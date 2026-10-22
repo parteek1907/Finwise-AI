@@ -84,7 +84,9 @@ function AuthForm() {
             useAppStore.getState().resetStore();
             await signInWithPopup(auth, provider);
             toast({ title: "Success", description: "Successfully signed up with Google!" });
-            window.location.href = '/dashboard';
+            const params = new URLSearchParams(window.location.search);
+            const red = params.get("redirect");
+            window.location.href = red && red.startsWith("/") ? red : '/dashboard';
           } catch (error: any) {
             toast({ title: "Sign Up Failed", description: error.message });
           }
@@ -95,7 +97,9 @@ function AuthForm() {
             useAppStore.getState().resetStore();
             await signInWithPopup(auth, provider);
             toast({ title: "Success", description: "Successfully signed up with Apple!" });
-            window.location.href = '/dashboard';
+            const params = new URLSearchParams(window.location.search);
+            const red = params.get("redirect");
+            window.location.href = red && red.startsWith("/") ? red : '/dashboard';
           } catch (error: any) {
             toast({ title: "Sign Up Failed", description: error.message });
           }
@@ -119,7 +123,9 @@ function AuthForm() {
           useAppStore.getState().resetStore();
           await createUserWithEmailAndPassword(auth, email, password);
           toast({ title: "Success", description: "Account created successfully!" });
-          window.location.href = '/dashboard';
+          const params = new URLSearchParams(window.location.search);
+          const red = params.get("redirect");
+          window.location.href = red && red.startsWith("/") ? red : '/dashboard';
         } catch (error: any) {
           toast({ 
             title: "Sign Up Failed", 

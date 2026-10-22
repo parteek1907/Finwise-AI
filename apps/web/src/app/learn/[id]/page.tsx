@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, Clock, Award, BookOpen, CheckCircle2, MessageSquare, Zap, ChevronRight, ChevronLeft, XCircle, Target } from 'lucide-react';
+import { ArrowLeft, Clock, Award, BookOpen, CheckCircle2, MessageSquare, Zap, ChevronRight, ChevronLeft, XCircle, Target, Lock, CreditCard, Sparkles } from 'lucide-react';
 import styles from './Lesson.module.css';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppStore } from '@/store/useAppStore';
@@ -12,9 +12,9 @@ import { LESSON_CONTENTS, LESSON_QUIZZES } from '@/mocks/lessons';
 import { Certificate } from '@/components/learn/Certificate';
 import { LiveMarketPanel } from '@/components/learn/LiveMarketPanel';
 import { MissionModal } from '@/components/learn/MissionModal';
-import { Sparkles } from 'lucide-react';
 import { triggerProgression } from '@/services/progressionEngine';
 import { formatDate } from '@/utils/formatters';
+import { PayUCheckoutModal, CheckoutPlan } from '@/components/payment/PayUCheckoutModal';
 
 export default function LessonPage() {
   const router = useRouter();
@@ -53,6 +53,7 @@ export default function LessonPage() {
   const [isMissionOpen, setIsMissionOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [hasVideoError, setHasVideoError] = useState(false);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const isLab = lesson.category === 'Live Trading Labs';
   
   // Sync current chapter to global store
@@ -194,6 +195,150 @@ export default function LessonPage() {
   };
 
   const percentComplete = Math.round((currentChapterIdx / courseChapters.length) * 100);
+
+  if (lesson.status === 'Locked') {
+    const isLab = lesson.category === 'Live Trading Labs';
+    const isHard = lesson.difficulty === 'Hard';
+    const upgradePlan: CheckoutPlan = isLab
+      ? {
+          id: 'TRADING_LABS_PASS',
+          name: 'Live Trading Labs & Simulator Pass',
+          amount: 199,
+          period: 'lifetime',
+          features: ['Stock Market Basics Lab', 'Candlestick Analysis', 'Virtual Trading Simulator'],
+          description: 'One-time unlock for interactive live trading labs.'
+        }
+      : {
+          id: 'PREMIUM_MONTHLY',
+          name: 'FinWise Premium (Monthly)',
+          amount: 299,
+          period: 'month',
+          features: ['All Hard Modules Unlocked', 'Unlimited AI Mentor', 'Scam Detector Shield', 'Live Trading Labs'],
+          description: 'Full access to all advanced modules and AI tools.'
+        };
+
+    return (
+      <AppLayout>
+        <div style={{ maxWidth: '800px', margin: '40px auto', padding: '32px 20px', textAlign: 'center' }}>
+          <div style={{
+            background: '#FFFFFF',
+            borderRadius: '24px',
+            border: '1px solid #E5E7EB',
+            padding: '48px 32px',
+            boxShadow: '0 10px 30px rgba(0, 0, 0, 0.05)'
+          }}>
+            <div style={{
+              width: '64px',
+              height: '64px',
+              borderRadius: '20px',
+              background: '#FEF3C7',
+              color: '#D97706',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              margin: '0 auto 20px auto'
+            }}>
+              <Lock size={32} />
+            </div>
+
+            <h1 style={{ fontSize: '28px', fontWeight: 800, color: '#111827', marginBottom: '10px' }}>
+              {lesson.title} is Locked
+            </h1>
+            <p style={{ fontSize: '15px', color: '#6B7280', maxWidth: '520px', margin: '0 auto 28px auto', lineHeight: 1.6 }}>
+              {isLab
+                ? 'Interactive Trading Labs require an active FinWise Premium membership or a Live Trading Labs Pass.'
+                : isHard
+                ? 'Advanced mastery lessons require a FinWise Student Pass or FinWise Premium subscription.'
+                : 'Please complete the previous learning modules in order to unlock this lesson.'}
+            </p>
+
+            {(isLab || isHard) ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '360px', margin: '0 auto' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsCheckoutOpen(true)}
+                  style={{
+                    background: '#19533B',
+                    color: '#FFFFFF',
+                    border: 'none',
+                    padding: '14px 24px',
+                    borderRadius: '12px',
+                    fontSize: '15px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    boxShadow: '0 4px 14px rgba(25, 83, 59, 0.25)'
+                  }}
+                >
+                  <CreditCard size={18} />
+                  Unlock Full Course Access (₹{upgradePlan.amount})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/settings')}
+                  style={{
+                    background: 'transparent',
+                    color: '#4B5563',
+                    border: '1px solid #D1D5DB',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    fontSize: '14px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}
+                >
+                  View All Plans & Billing
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push('/learn')}
+                  style={{
+                    background: 'transparent',
+                    color: '#6B7280',
+                    border: 'none',
+                    padding: '8px',
+                    fontSize: '13px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  ← Back to Course Library
+                </button>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => router.push('/learn')}
+                style={{
+                  background: '#19533B',
+                  color: '#FFFFFF',
+                  border: 'none',
+                  padding: '12px 24px',
+                  borderRadius: '12px',
+                  fontSize: '14px',
+                  fontWeight: 600,
+                  cursor: 'pointer'
+                }}
+              >
+                Back to Learning Path
+              </button>
+            )}
+          </div>
+
+          <PayUCheckoutModal
+            isOpen={isCheckoutOpen}
+            onClose={() => {
+              setIsCheckoutOpen(false);
+              useAppStore.getState().syncEntitlements();
+            }}
+            plan={upgradePlan}
+          />
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>

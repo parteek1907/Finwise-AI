@@ -5,10 +5,11 @@ import { Switch } from "@/components/ui/switch";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { Check, Star } from "lucide-react";
 import Link from "next/link";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import confetti from "canvas-confetti";
 import NumberFlow from "@/components/ui/ClientNumberFlow";
 import { useToast } from "@/components/ui/toast";
+import { PayUCheckoutModal, CheckoutPlan } from "@/components/payment/PayUCheckoutModal";
 
 interface PricingPlan {
   name: string;
@@ -34,8 +35,94 @@ export function Pricing({
   description = "Choose the plan that works for you. All plans include access to our platform, lead generation tools, and dedicated support.",
 }: PricingProps) {
   const [isMonthly, setIsMonthly] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<CheckoutPlan | null>(null);
   const switchRef = useRef<HTMLButtonElement>(null);
   const { toast } = useToast();
+
+  // Reopen checkout modal if returning from authentication with ?openPlan=
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const openPlanParam = params.get("openPlan");
+      if (openPlanParam) {
+        if (openPlanParam === "PREMIUM_MONTHLY") {
+          setIsMonthly(true);
+          setSelectedPlan({
+            id: "PREMIUM_MONTHLY",
+            name: "FinWise Premium (Monthly)",
+            amount: 299,
+            period: "month",
+            features: [
+              "All AI Mentors, unlocked with no query limits",
+              "Real-time Scam Shield & Fraud detection",
+              "Live Trading Labs & Candlestick simulator",
+              "Emotion AI behavioral bias tracking",
+            ],
+            description: "Flexible monthly subscription & cancel anytime.",
+          });
+        } else if (openPlanParam === "PREMIUM_YEARLY") {
+          setIsMonthly(false);
+          setSelectedPlan({
+            id: "PREMIUM_YEARLY",
+            name: "FinWise Premium (Yearly)",
+            amount: 2799,
+            period: "year",
+            features: [
+              "Everything in Premium Monthly",
+              "All 10 Courses & Final Exam Master Access",
+              "Verified FinWise Completion Certificate",
+              "Priority AI mentor speed & deep analysis",
+            ],
+            description: "Commit for a year with 22% annual savings.",
+          });
+        } else if (openPlanParam === "STUDENT_MONTHLY") {
+          setIsMonthly(true);
+          setSelectedPlan({
+            id: "STUDENT_MONTHLY",
+            name: "FinWise Student Pass (Monthly)",
+            amount: 149,
+            period: "month",
+            features: [
+              "Full Financial Academy courses & quizzes",
+              "Interactive Trading Simulations",
+              "Story simulations & gamified quests",
+              "Leaderboards & community challenges",
+            ],
+            description: "Flexible academic monthly subscription.",
+          });
+        } else if (openPlanParam === "STUDENT_YEARLY") {
+          setIsMonthly(false);
+          setSelectedPlan({
+            id: "STUDENT_YEARLY",
+            name: "FinWise Student Pass (Yearly)",
+            amount: 1399,
+            period: "year",
+            features: [
+              "Everything in Student Monthly",
+              "All Academic Certifications & Exams",
+              "Interactive Trading Simulations",
+              "Save 22% compared to monthly renewal",
+            ],
+            description: "Commit for a year with 22% academic savings.",
+          });
+        } else if (openPlanParam === "TRADING_LABS_PASS") {
+          setSelectedPlan({
+            id: "TRADING_LABS_PASS",
+            name: "Trading Labs Pass (Lifetime)",
+            amount: 199,
+            period: "lifetime",
+            features: [
+              "Stock Market Basics Simulator",
+              "Interactive Candlestick pattern recognition",
+              "Virtual portfolio order execution",
+              "Real-time simulated price feeds",
+            ],
+            description: "One-time standalone lab pass for practical trading.",
+          });
+        }
+      }
+    }
+  }, []);
 
   const handleToggle = (checked: boolean) => {
     setIsMonthly(!checked);
@@ -278,9 +365,18 @@ export function Pricing({
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    toast({
-                      title: "Early Access Beta",
-                      description: `Our ${plan.name} plan is currently in closed beta. We've noted your interest and will notify you when spots open up!`,
+                    const isPrem = plan.name === "PREMIUM";
+                    const planId = isPrem
+                      ? (isMonthly ? "PREMIUM_MONTHLY" : "PREMIUM_YEARLY")
+                      : (isMonthly ? "STUDENT_MONTHLY" : "STUDENT_YEARLY");
+                    const amount = isMonthly ? Number(plan.price) : Number(plan.yearlyPrice);
+                    setSelectedPlan({
+                      id: planId,
+                      name: `FinWise ${plan.name} (${isMonthly ? "Monthly" : "Yearly"})`,
+                      amount,
+                      period: isMonthly ? "month" : "year",
+                      features: plan.features,
+                      description: plan.description,
                     });
                   }}
                   style={{
@@ -317,6 +413,16 @@ export function Pricing({
           );
         })}
       </div>
+
+      {/* FinWise Checkout Modal */}
+      {selectedPlan && (
+        <PayUCheckoutModal
+          isOpen={!!selectedPlan}
+          onClose={() => setSelectedPlan(null)}
+          plan={selectedPlan}
+        />
+      )}
     </div>
   );
 }
+

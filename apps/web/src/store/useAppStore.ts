@@ -45,6 +45,11 @@ export interface User {
   riskScore: number;
   scamsAvoided: number;
   progression: UserProgression;
+  tier?: 'FOUNDATION' | 'STUDENT' | 'PREMIUM';
+  subscriptionStatus?: 'active' | 'inactive' | 'expired';
+  subscriptionPlan?: string;
+  subscriptionExpiresAt?: string | null;
+  purchasedItems?: string[];
 }
 
 export interface Goal {
@@ -157,6 +162,8 @@ export interface AppState {
   resetStore: () => void;
   seedDemoData: () => void;
   syncLegacyProgress: () => void;
+  syncEntitlements: () => Promise<void>;
+  setUserTier: (tier: 'FOUNDATION' | 'STUDENT' | 'PREMIUM', planId?: string, expiresAt?: string | null) => void;
   
   emotionContextReport?: string | null;
   setEmotionContextReport: (report: string | null) => void;
@@ -176,6 +183,11 @@ const INITIAL_USER: User = {
   savingScore: 92,
   riskScore: 80,
   scamsAvoided: 0,
+  tier: 'FOUNDATION',
+  subscriptionStatus: 'inactive',
+  subscriptionPlan: 'FOUNDATION',
+  subscriptionExpiresAt: null,
+  purchasedItems: [],
   progression: {
     streaks: {
       login: { current: 0, best: 0 },
@@ -212,8 +224,12 @@ const INITIAL_LESSONS: Lesson[] = [
   { id: 'lab2', title: 'Candlestick Analysis Lab', category: 'Live Trading Labs', duration: '20 min', difficulty: 'Medium', status: 'Locked', xp: 150 },
 ];
 
-// Helper to recalculate which lessons are locked
-const recalculateLocks = (lessons: Lesson[]): Lesson[] => {
+// Helper to recalculate which lessons are locked based on completion and subscription tier
+const recalculateLocks = (lessons: Lesson[], userTier: string = 'FOUNDATION', purchasedItems: string[] = []): Lesson[] => {
+  const isPremium = userTier === 'PREMIUM';
+  const isStudent = userTier === 'STUDENT';
+  const hasTradingPass = purchasedItems.includes('TRADING_LABS_PASS');
+
   const easyCompleted = lessons.filter(l => l.difficulty === 'Easy').every(l => l.status === 'Completed');
   const mediumCompleted = lessons.filter(l => l.difficulty === 'Medium').every(l => l.status === 'Completed');
 
@@ -229,12 +245,23 @@ const recalculateLocks = (lessons: Lesson[]): Lesson[] => {
     }
 
     if (lesson.difficulty === 'Hard') {
-      return { ...lesson, status: mediumCompleted ? 'In Progress' : 'Locked' };
+      if (isPremium || isStudent || purchasedItems.includes(lesson.id)) {
+        return { ...lesson, status: mediumCompleted ? 'In Progress' : 'Locked' };
+      }
+      return { ...lesson, status: 'Locked' };
+    }
+
+    if (lesson.category === 'Live Trading Labs') {
+      if (isPremium || hasTradingPass || purchasedItems.includes(lesson.id)) {
+        return { ...lesson, status: 'In Progress' };
+      }
+      return { ...lesson, status: 'Locked' };
     }
 
     return lesson;
   });
 };
+
 
 const INITIAL_MESSAGES: MentorMessage[] = [];
 
@@ -617,7 +644,7 @@ export const useAppStore = create<AppState>()(
         }
         
         return {
-          lessons: recalculateLocks(newLessons),
+          lessons: recalculateLocks(newLessons, state.user.tier, state.user.purchasedItems),
           user: { 
             ...state.user, 
             id: state.user.id || `user_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -935,7 +962,53 @@ export const useAppStore = create<AppState>()(
         });
       },
 
-      setEmotionContextReport: (report) => set({ emotionContextReport: report })
+      setEmotionContextReport: (report) => set({ emotionContextReport: report }),
+
+      syncEntitlements: async () => {
+        const currentUser = get().user;
+        const userId = currentUser.id || 'demo_user';
+        const email = currentUser.email || '';
+        try {
+          const res = await fetch(`/api/user/access?user_id=${encodeURIComponent(userId)}&email=${encodeURIComponent(email)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const ent = data.entitlement;
+            if (ent) {
+              const tier = (ent.tier as 'FOUNDATION' | 'STUDENT' | 'PREMIUM') || 'FOUNDATION';
+              const purchasedItems = ent.purchased_items || [];
+              set(state => ({
+                user: {
+                  ...state.user,
+                  tier: tier,
+                  subscriptionPlan: ent.plan_id || 'FOUNDATION',
+                  subscriptionStatus: ent.status || 'inactive',
+                  subscriptionExpiresAt: ent.expires_at || null,
+                  purchasedItems: purchasedItems
+                },
+                lessons: recalculateLocks(state.lessons, tier, purchasedItems)
+              }));
+            }
+          }
+        } catch (e) {
+          console.warn("Failed to sync entitlements:", e);
+        }
+      },
+
+      setUserTier: (tier, planId, expiresAt) => {
+        set(state => {
+          const purchasedItems = state.user.purchasedItems || [];
+          return {
+            user: {
+              ...state.user,
+              tier: tier,
+              subscriptionPlan: planId || tier,
+              subscriptionStatus: 'active',
+              subscriptionExpiresAt: expiresAt || null
+            },
+            lessons: recalculateLocks(state.lessons, tier, purchasedItems)
+          };
+        });
+      }
     }),
     {
       name: 'finwise-storage',
