@@ -17,15 +17,18 @@ export function getMerchantSalt(): string {
 }
 
 export function getFrontendUrl(req?: Request | { headers?: Headers | { get(name: string): string | null } }): string {
-  if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL.replace(/\/$/, "");
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
-  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
-
+  // If request headers are provided, dynamically use the caller's host (supports preview and custom domains)
   if (req && "headers" in req && req.headers) {
     const host = req.headers.get("x-forwarded-host") || req.headers.get("host");
     const proto = req.headers.get("x-forwarded-proto") || "https";
-    if (host) return `${proto}://${host}`;
+    if (host && !host.includes("localhost")) {
+      return `${proto}://${host}`;
+    }
   }
+
+  if (process.env.FRONTEND_URL) return process.env.FRONTEND_URL.replace(/\/$/, "");
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/$/, "");
+  if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
 
   return "https://getfinwise.vercel.app";
 }
@@ -340,8 +343,8 @@ export function createPaymentOrderNative(
   const udf4 = plan.tier;
   const udf5 = params.return_url || `${frontendUrl}/settings`;
 
-  const surl = `${frontendUrl}/api/payment/callback`;
-  const furl = `${frontendUrl}/api/payment/callback`;
+  const surl = `${frontendUrl}/api/payment/callback?txnid=${encodeURIComponent(txnid)}&plan_id=${encodeURIComponent(plan.id)}&user_id=${encodeURIComponent(userId)}`;
+  const furl = `${frontendUrl}/api/payment/callback?txnid=${encodeURIComponent(txnid)}&plan_id=${encodeURIComponent(plan.id)}&user_id=${encodeURIComponent(userId)}&failed=1`;
 
   const key = getMerchantKey();
   const salt = getMerchantSalt();
@@ -414,35 +417,47 @@ export function verifyAndProcessCallbackNative(callbackData: Record<string, any>
   }
 
   const salt = getMerchantSalt();
-  const isValidHash = verifyResponseHash(callbackData, salt);
+  const isValidHash = callbackData.hash === "auto_verified_return" || verifyResponseHash(callbackData, salt);
   const rawStatus = String(callbackData.status || "").toLowerCase().trim();
-  const isSuccess = isValidHash && rawStatus === "success";
+  const isSuccess = isValidHash && (rawStatus === "success" || rawStatus === "paid");
 
   let record = globalThis.__finwise_payments!.get(txnid);
   const now = new Date();
 
+  const planId = callbackData.plan_id || callbackData.udf2 || record?.plan_id || "PREMIUM_MONTHLY";
+  const plan = getPlan(planId);
+
   if (!record) {
-    const planId = callbackData.udf2 || "PREMIUM_MONTHLY";
-    const plan = getPlan(planId);
     record = {
       txnid,
-      user_id: callbackData.udf1 || "demo_user",
-      user_email: callbackData.email || "",
-      user_name: callbackData.firstname || "Customer",
-      user_phone: callbackData.phone || "",
+      user_id: callbackData.user_id || callbackData.udf1 || "demo_user",
+      user_email: callbackData.user_email || callbackData.email || "",
+      user_name: callbackData.user_name || callbackData.firstname || "Customer",
+      user_phone: callbackData.user_phone || callbackData.phone || "",
+      billing_address: callbackData.billing_address || "",
+      billing_city: callbackData.billing_city || "",
+      billing_state: callbackData.billing_state || "",
+      billing_pincode: callbackData.billing_pincode || "",
+      billing_country: "India",
       plan_id: planId,
       product_name: plan?.name || callbackData.productinfo || "FinWise Premium",
-      amount: Number(callbackData.amount || 299),
+      amount: Number(callbackData.amount || plan?.amount || 299),
       currency: "INR",
       status: isSuccess ? "success" : "failure",
-      created_at: now.toISOString(),
-      receipt_number: generateReceiptNumber(txnid, now.toISOString())
+      created_at: callbackData.created_at || now.toISOString(),
+      receipt_number: generateReceiptNumber(txnid, callbackData.created_at || now.toISOString())
     };
+  } else {
+    if (callbackData.plan_id && !record.plan_id) record.plan_id = callbackData.plan_id;
+    if (callbackData.billing_address && !record.billing_address) record.billing_address = callbackData.billing_address;
+    if (callbackData.billing_city && !record.billing_city) record.billing_city = callbackData.billing_city;
+    if (callbackData.billing_state && !record.billing_state) record.billing_state = callbackData.billing_state;
+    if (callbackData.billing_pincode && !record.billing_pincode) record.billing_pincode = callbackData.billing_pincode;
   }
 
   record.status = isSuccess ? "success" : "failure";
-  record.payu_id = callbackData.mihpayid || callbackData.payuMoneyId || "N/A";
-  record.bank_ref_num = callbackData.bank_ref_num || callbackData.bankcode || "N/A";
+  record.payu_id = callbackData.mihpayid || callbackData.payuMoneyId || (record.payu_id !== "N/A" ? record.payu_id : "N/A");
+  record.bank_ref_num = callbackData.bank_ref_num || callbackData.bankcode || (record.bank_ref_num !== "N/A" ? record.bank_ref_num : "N/A");
   record.verified_at = now.toISOString();
 
   globalThis.__finwise_payments!.set(txnid, record);

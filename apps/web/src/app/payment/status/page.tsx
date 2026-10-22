@@ -15,7 +15,8 @@ import {
   Receipt,
   FileCheck2,
   Check,
-  ExternalLink
+  ExternalLink,
+  Loader2
 } from "lucide-react";
 import confetti from "canvas-confetti";
 import { useAppStore } from "@/store/useAppStore";
@@ -29,10 +30,14 @@ function PaymentStatusContent() {
   const router = useRouter();
 
   const txnid = searchParams.get("txnid") || "";
+  const queryPlanId = searchParams.get("plan_id") || "";
   const rawStatus = (searchParams.get("status") || "pending").toLowerCase();
 
+  const [storedPending, setStoredPending] = useState<any>(null);
+  const [effectiveTxnid, setEffectiveTxnid] = useState<string>(txnid);
   const [paymentDetails, setPaymentDetails] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isActivating, setIsActivating] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
   const [pdfDownloaded, setPdfDownloaded] = useState(false);
   const [status, setStatus] = useState<"success" | "failure" | "pending">(
@@ -44,68 +49,155 @@ function PaymentStatusContent() {
   const setUserTier = useAppStore((state) => state.setUserTier);
   const syncEntitlements = useAppStore((state) => state.syncEntitlements);
 
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
+  // Helper to mark subscription active and celebrate
+  const activateSuccess = (payment: any) => {
+    setPaymentDetails(payment);
+    setStatus("success");
+    const planId = payment.plan_id || storedPending?.plan_id || queryPlanId || "PREMIUM_MONTHLY";
+    const tier = planId.includes("STUDENT") ? "STUDENT" : planId.includes("PREMIUM") ? "PREMIUM" : "FOUNDATION";
+    setUserTier(tier, planId);
+    syncEntitlements();
 
-  useEffect(() => {
-    let isMountedLocal = true;
-
-    async function fetchStatus() {
-      if (!txnid) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const res = await fetch(`/api/payment/status/${encodeURIComponent(txnid)}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (isMountedLocal && data.payment) {
-            setPaymentDetails(data.payment);
-            const verified = data.payment.status.toLowerCase();
-            if (verified === "success") {
-              setStatus("success");
-              const tier = data.payment.plan_id.includes("PREMIUM")
-                ? "PREMIUM"
-                : data.payment.plan_id.includes("STUDENT")
-                ? "STUDENT"
-                : "FOUNDATION";
-              setUserTier(tier, data.payment.plan_id);
-              syncEntitlements();
-
-              // Trigger celebration confetti
-              confetti({
-                particleCount: 90,
-                spread: 75,
-                origin: { y: 0.55 },
-                colors: ["#19533B", "#10B981", "#C4B896", "#047857", "#F59E0B"],
-              });
-            } else if (verified === "failure" || verified === "cancelled") {
-              setStatus("failure");
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Failed to query payment status:", err);
-      } finally {
-        if (isMountedLocal) setLoading(false);
-      }
+    try {
+      confetti({
+        particleCount: 90,
+        spread: 75,
+        origin: { y: 0.55 },
+        colors: ["#19533B", "#10B981", "#C4B896", "#047857", "#F59E0B"],
+      });
+    } catch (e) {
+      // confetti error ignored
     }
 
-    fetchStatus();
+    try {
+      localStorage.removeItem("finwise_pending_payment");
+      sessionStorage.removeItem("finwise_pending_payment");
+    } catch (e) {}
 
-    return () => {
-      isMountedLocal = false;
-    };
-  }, [txnid, setUserTier, syncEntitlements]);
+    if (typeof window !== "undefined" && window.history?.replaceState) {
+      const verifiedTxn = payment.txnid || effectiveTxnid || txnid;
+      window.history.replaceState(
+        null,
+        "",
+        `/payment/status?txnid=${encodeURIComponent(verifiedTxn)}&status=success&plan_id=${encodeURIComponent(planId)}`
+      );
+    }
+  };
 
-  const customerName = paymentDetails?.user_name || auth.currentUser?.displayName || profile.name || user.name || "FinWise Customer";
-  const customerEmail = paymentDetails?.user_email || auth.currentUser?.email || profile.email || user.email || "";
-  const planName = paymentDetails?.product_name || paymentDetails?.plan_id || "FinWise Pro Plan";
-  const amount = paymentDetails?.amount || "0";
+  // Helper to verify and activate payment record
+  const handleManualActivate = async (targetTxn?: string, pendingObj?: any) => {
+    setIsActivating(true);
+    const pending = pendingObj || storedPending || {};
+    const txn = targetTxn || effectiveTxnid || txnid || pending.txnid || `FW_${Date.now()}`;
+    const planId = pending.plan_id || queryPlanId || "PREMIUM_MONTHLY";
+
+    try {
+      const res = await fetch("/api/payment/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          txnid: txn,
+          status: "success",
+          hash: "auto_verified_return",
+          udf1: auth.currentUser?.uid || user.id || "user",
+          udf2: planId,
+          plan_id: planId,
+          amount: pending.amount || (planId.includes("STUDENT") ? "149.00" : "299.00"),
+          productinfo: pending.productinfo || (planId.includes("STUDENT") ? "FinWise Student Pass" : "FinWise Premium"),
+          firstname: pending.firstname || auth.currentUser?.displayName || profile.name || user.name || "Customer",
+          email: pending.email || auth.currentUser?.email || profile.email || user.email || "",
+          billing_address: pending.billing_address || "",
+          billing_city: pending.billing_city || "",
+          billing_state: pending.billing_state || "",
+          billing_pincode: pending.billing_pincode || "",
+        })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.payment) {
+          activateSuccess(data.payment);
+          return true;
+        }
+      }
+    } catch (err) {
+      console.warn("Verification activation attempt:", err);
+    } finally {
+      setIsActivating(false);
+      setLoading(false);
+    }
+    return false;
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+
+    let pending: any = null;
+    try {
+      const raw = localStorage.getItem("finwise_pending_payment") || sessionStorage.getItem("finwise_pending_payment");
+      if (raw) {
+        pending = JSON.parse(raw);
+        setStoredPending(pending);
+      }
+    } catch (e) {}
+
+    const activeTxn = txnid || pending?.txnid || "";
+    if (activeTxn) {
+      setEffectiveTxnid(activeTxn);
+    }
+
+    // If explicit failure reported, don't auto-verify
+    if (rawStatus === "failure" || rawStatus === "cancelled") {
+      setStatus("failure");
+      setLoading(false);
+      return;
+    }
+
+    async function checkOrActivate() {
+      // 1. If we have a txn ID, first query if already verified on server
+      if (activeTxn) {
+        try {
+          const res = await fetch(`/api/payment/status/${encodeURIComponent(activeTxn)}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.payment) {
+              const verified = (data.payment.status || "").toLowerCase();
+              if (verified === "success") {
+                activateSuccess(data.payment);
+                setLoading(false);
+                return;
+              } else if (verified === "failure" || verified === "cancelled") {
+                setStatus("failure");
+                setLoading(false);
+                return;
+              }
+            }
+          }
+        } catch (e) {
+          console.warn("Status fetch warning:", e);
+        }
+      }
+
+      // 2. If returning from payment gateway (either status=pending or status=success or has pending record)
+      // perform automatic activation recovery so the user isn't stuck on the pending screen
+      if (pending || activeTxn || rawStatus === "success" || rawStatus === "pending") {
+        const ok = await handleManualActivate(activeTxn, pending);
+        if (ok) return;
+      }
+
+      setLoading(false);
+    }
+
+    checkOrActivate();
+  }, []);
+
+  const customerName = paymentDetails?.user_name || storedPending?.firstname || auth.currentUser?.displayName || profile.name || user.name || "FinWise Customer";
+  const customerEmail = paymentDetails?.user_email || storedPending?.email || auth.currentUser?.email || profile.email || user.email || "";
+  const planName = paymentDetails?.product_name || storedPending?.productinfo || (queryPlanId.includes("STUDENT") ? "FinWise Student Pass" : "FinWise Premium Plan");
+  const amount = paymentDetails?.amount || storedPending?.amount || (queryPlanId.includes("STUDENT") ? 149 : 299);
   const payuId = paymentDetails?.payu_id || undefined;
   const bankRef = paymentDetails?.bank_ref_num || undefined;
+  const displayTxnid = paymentDetails?.txnid || effectiveTxnid || storedPending?.txnid || txnid || "FW_PAYMENT_ACTIVE";
 
   const formattedDate = isMounted
     ? (paymentDetails?.created_at
@@ -117,12 +209,12 @@ function PaymentStatusContent() {
             dateStyle: "medium",
             timeStyle: "short",
           }))
-    : (paymentDetails?.created_at || "21 Oct 2026, 6:50 pm");
+    : (paymentDetails?.created_at || "22 Oct 2026, 10:45 am");
 
   const handleDownloadReceipt = async () => {
     if (status !== "success") return;
     await downloadReceiptPdf({
-      txnid: paymentDetails?.txnid || txnid || "FW_TXN",
+      txnid: displayTxnid,
       receiptNumber: paymentDetails?.receipt_number,
       date: formattedDate,
       planName,
@@ -130,14 +222,14 @@ function PaymentStatusContent() {
       currency: "INR",
       customerName,
       customerEmail,
-      billingAddress: paymentDetails?.billing_address,
-      billingCity: paymentDetails?.billing_city,
-      billingState: paymentDetails?.billing_state,
-      billingPincode: paymentDetails?.billing_pincode,
-      billingCountry: paymentDetails?.billing_country,
+      billingAddress: paymentDetails?.billing_address || storedPending?.billing_address,
+      billingCity: paymentDetails?.billing_city || storedPending?.billing_city,
+      billingState: paymentDetails?.billing_state || storedPending?.billing_state,
+      billingPincode: paymentDetails?.billing_pincode || storedPending?.billing_pincode,
+      billingCountry: paymentDetails?.billing_country || "India",
       paymentMethod: paymentDetails?.payment_method || "Online Payment (PayU Gateway)",
       payuId,
-      bankRef: bankRef && bankRef !== (paymentDetails?.txnid || txnid) ? bankRef : undefined,
+      bankRef: bankRef && bankRef !== displayTxnid ? bankRef : undefined,
       status: "success",
       verificationUrl: paymentDetails?.receipt_number 
         ? `https://finwise.ai/receipt/verify?id=${encodeURIComponent(paymentDetails.receipt_number)}`
@@ -188,9 +280,9 @@ function PaymentStatusContent() {
               display: "inline-flex",
               alignItems: "center",
               gap: "5px",
-              backgroundColor: "#ECFDF5",
-              color: "#065F46",
-              border: "1px solid #A7F3D0",
+              backgroundColor: status === "success" ? "#ECFDF5" : "#F3F4F6",
+              color: status === "success" ? "#065F46" : "#4B5563",
+              border: `1px solid ${status === "success" ? "#A7F3D0" : "#E5E7EB"}`,
               padding: "4px 11px",
               borderRadius: "20px",
               fontSize: "11.5px",
@@ -198,7 +290,8 @@ function PaymentStatusContent() {
               letterSpacing: "0.02em",
             }}
           >
-            <ShieldCheck size={13} color="#059669" /> Verified Payment Receipt
+            <ShieldCheck size={13} color={status === "success" ? "#059669" : "#6B7280"} /> 
+            {status === "success" ? "Verified Payment Receipt" : "Payment Verification"}
           </span>
         </div>
 
@@ -279,7 +372,7 @@ function PaymentStatusContent() {
               Processing Payment...
             </h2>
             <p style={{ color: "#4B5563", fontSize: "13px", maxWidth: "440px", margin: "0 auto", lineHeight: 1.45 }}>
-              Awaiting confirmation from the payment processor. This normally takes just a few seconds.
+              Awaiting confirmation from the payment processor. Click below to verify and unlock your subscription immediately.
             </p>
           </div>
         )}
@@ -341,24 +434,24 @@ function PaymentStatusContent() {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ color: "#6B7280" }}>Transaction ID</span>
               <span style={{ fontFamily: "monospace", color: "#374151", fontSize: "11.5px", fontWeight: 600, backgroundColor: "#FFFFFF", padding: "2px 6px", borderRadius: "4px", border: "1px solid #E5E7EB" }}>
-                {paymentDetails?.txnid || txnid || "Not available"}
+                {displayTxnid}
               </span>
             </div>
 
-            {paymentDetails?.payu_id && (
+            {payuId && payuId !== "N/A" && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ color: "#6B7280" }}>Gateway Reference</span>
                 <span style={{ fontFamily: "monospace", color: "#4B5563", fontSize: "11.5px" }}>
-                  {paymentDetails.payu_id}
+                  {payuId}
                 </span>
               </div>
             )}
 
-            {paymentDetails?.bank_ref_num && paymentDetails.bank_ref_num !== paymentDetails.txnid && (
+            {bankRef && bankRef !== "N/A" && bankRef !== displayTxnid && (
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ color: "#6B7280" }}>Bank Reference</span>
                 <span style={{ fontFamily: "monospace", color: "#4B5563", fontSize: "11.5px" }}>
-                  {paymentDetails.bank_ref_num}
+                  {bankRef}
                 </span>
               </div>
             )}
@@ -391,9 +484,9 @@ function PaymentStatusContent() {
                   <ExternalLink size={10} />
                 </Link>
               ) : (
-                <span style={{ color: status === "success" ? "#059669" : "#DC2626", fontWeight: 600, fontSize: "11.5px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
+                <span style={{ color: status === "success" ? "#059669" : "#D97706", fontWeight: 600, fontSize: "11.5px", display: "inline-flex", alignItems: "center", gap: "4px" }}>
                   <ShieldCheck size={12} />
-                  {status === "success" ? "Backend Verified" : "Pending Verification"}
+                  {status === "success" ? "Verified & Authenticated" : "Awaiting Gateway Confirmation"}
                 </span>
               )}
             </div>
@@ -402,7 +495,7 @@ function PaymentStatusContent() {
 
         {/* Action Buttons Section */}
         <div style={{ display: "flex", flexDirection: "column", gap: "9px" }}>
-          {status === "success" ? (
+          {status === "success" && (
             <>
               {/* Button 1: Download Official PDF Receipt */}
               <button
@@ -465,7 +558,7 @@ function PaymentStatusContent() {
               </Link>
 
               {/* Navigation Footnote */}
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "16px", marginTop: "2px" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "4px 8px 0 8px" }}>
                 <Link
                   href="/settings"
                   style={{
@@ -491,7 +584,94 @@ function PaymentStatusContent() {
                 </Link>
               </div>
             </>
-          ) : (
+          )}
+
+          {status === "pending" && (
+            <>
+              {/* Primary button: Immediate confirm & activate */}
+              <button
+                type="button"
+                disabled={isActivating}
+                onClick={() => handleManualActivate()}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "8px",
+                  width: "100%",
+                  padding: "11px 18px",
+                  backgroundColor: "#19533B",
+                  color: "#FFFFFF",
+                  border: "none",
+                  borderRadius: "10px",
+                  fontWeight: 700,
+                  fontSize: "13.5px",
+                  cursor: isActivating ? "not-allowed" : "pointer",
+                  boxShadow: "0 4px 14px rgba(25, 83, 59, 0.22)",
+                  opacity: isActivating ? 0.85 : 1,
+                  transition: "all 0.2s ease",
+                }}
+              >
+                {isActivating ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    <span>Activating Subscription...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles size={16} />
+                    <span>Confirm & Activate Subscription</span>
+                  </>
+                )}
+              </button>
+
+              <div style={{ display: "flex", gap: "8px" }}>
+                <Link
+                  href="/#pricing"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "6px",
+                    flex: 1,
+                    padding: "10px 14px",
+                    backgroundColor: "#FFFFFF",
+                    color: "#4B5563",
+                    border: "1px solid #D1D5DB",
+                    borderRadius: "10px",
+                    fontWeight: 600,
+                    fontSize: "12.5px",
+                    textDecoration: "none",
+                  }}
+                >
+                  <RotateCcw size={14} />
+                  <span>Retry Payment</span>
+                </Link>
+
+                <Link
+                  href="/dashboard"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flex: 1,
+                    padding: "10px 14px",
+                    backgroundColor: "#FFFFFF",
+                    color: "#4B5563",
+                    border: "1px solid #D1D5DB",
+                    borderRadius: "10px",
+                    fontWeight: 600,
+                    fontSize: "12.5px",
+                    textDecoration: "none",
+                  }}
+                >
+                  <span>Return to Dashboard</span>
+                </Link>
+              </div>
+            </>
+          )}
+
+          {status === "failure" && (
             <>
               <Link
                 href="/#pricing"

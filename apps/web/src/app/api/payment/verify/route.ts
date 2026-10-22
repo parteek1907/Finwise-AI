@@ -28,7 +28,15 @@ export async function POST(req: NextRequest) {
 
     // 2. Native verification
     const result = verifyAndProcessCallbackNative(body);
-    return NextResponse.json(result, { status: 200 });
+    const response = NextResponse.json(result, { status: 200 });
+    if (result.payment) {
+      response.cookies.set("finwise_last_payment", JSON.stringify(result.payment), {
+        path: "/",
+        maxAge: 86400,
+        sameSite: "lax"
+      });
+    }
+    return response;
   } catch (error: any) {
     console.error("Error verifying payment:", error);
     return NextResponse.json(

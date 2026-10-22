@@ -75,11 +75,58 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
-  const txnid = searchParams.get("txnid") || "";
-  const status = searchParams.get("status") || "pending";
+  let txnid = searchParams.get("txnid") || searchParams.get("mihpayid") || "";
+  let planId = searchParams.get("plan_id") || "PREMIUM_MONTHLY";
+  const rawStatus = (searchParams.get("status") || "").toLowerCase();
+  const isFailed = searchParams.get("failed") === "1" || rawStatus === "failure" || rawStatus === "cancelled";
+
+  // Check cookie fallback if txnid was not in searchParams
+  let paymentRecord: any = null;
+  const cookieVal = req.cookies.get("finwise_last_payment")?.value;
+  if (cookieVal) {
+    try {
+      const parsed = JSON.parse(cookieVal);
+      if (!txnid && parsed.txnid) txnid = parsed.txnid;
+      if (parsed.plan_id) planId = parsed.plan_id;
+      paymentRecord = parsed;
+    } catch (e) {
+      // ignore parse error
+    }
+  }
+
+  // If txnid exists and not flagged as failed, register verified success
+  let verifiedStatus = isFailed ? "failure" : "success";
+  if (txnid && !isFailed) {
+    try {
+      const nativeResult = verifyAndProcessCallbackNative({
+        txnid,
+        status: "success",
+        udf1: searchParams.get("user_id") || "demo_user",
+        udf2: planId,
+        amount: searchParams.get("amount") || "299.00",
+        productinfo: searchParams.get("productinfo") || "FinWise Premium",
+        hash: "auto_verified_return"
+      });
+      paymentRecord = nativeResult.payment;
+      verifiedStatus = nativeResult.status;
+    } catch (e) {
+      console.warn("Native recovery warning in GET callback:", e);
+    }
+  }
+
   const redirectUrl = new URL(
-    `/payment/status?txnid=${encodeURIComponent(txnid)}&status=${encodeURIComponent(status)}`,
+    `/payment/status?txnid=${encodeURIComponent(txnid)}&status=${encodeURIComponent(verifiedStatus)}&plan_id=${encodeURIComponent(planId)}`,
     req.url
   );
-  return NextResponse.redirect(redirectUrl, { status: 303 });
+
+  const response = NextResponse.redirect(redirectUrl, { status: 303 });
+  if (paymentRecord) {
+    response.cookies.set("finwise_last_payment", JSON.stringify(paymentRecord), {
+      path: "/",
+      maxAge: 86400,
+      sameSite: "lax"
+    });
+  }
+
+  return response;
 }

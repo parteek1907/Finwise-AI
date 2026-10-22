@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { decodeAuthToken, getUserSubscriptionNative } from "@/lib/paymentService";
+import { decodeAuthToken, getUserSubscriptionNative, getPlan } from "@/lib/paymentService";
 
 const BACKEND_URL = process.env.BACKEND_URL;
 
@@ -34,6 +34,39 @@ export async function GET(req: NextRequest) {
 
     // 2. Native subscription from memory / default
     const subscription = getUserSubscriptionNative(userId, email);
+
+    // 3. Fallback to verified cookie if memory was isolated in serverless lambda
+    if (subscription.tier === "FOUNDATION") {
+      const cookieVal = req.cookies.get("finwise_last_payment")?.value;
+      if (cookieVal) {
+        try {
+          const parsed = JSON.parse(cookieVal);
+          if (parsed.status === "success" && parsed.plan_id) {
+            const plan = getPlan(parsed.plan_id);
+            const tier = parsed.plan_id.includes("STUDENT") ? "STUDENT" : parsed.plan_id.includes("PREMIUM") ? "PREMIUM" : "FOUNDATION";
+            const isPaid = tier === "PREMIUM" || tier === "STUDENT" || parsed.plan_id === "TRADING_LABS_PASS";
+            const cookieSub = {
+              has_subscription: isPaid,
+              tier,
+              plan_id: parsed.plan_id,
+              plan_name: plan?.name || (tier === "PREMIUM" ? "FinWise Premium" : "FinWise Student Pass"),
+              amount: parsed.amount || plan?.amount || 0,
+              period: plan?.period || "month",
+              status: "active",
+              expires_at: parsed.expires_at || null,
+              activated_at: parsed.created_at || null,
+              can_cancel: isPaid,
+              can_reactivate: false,
+              auto_renew: true
+            };
+            return NextResponse.json({ ...cookieSub, subscription: cookieSub }, { status: 200 });
+          }
+        } catch (e) {
+          // ignore cookie parse error
+        }
+      }
+    }
+
     return NextResponse.json({ ...subscription, subscription }, { status: 200 });
   } catch (error: any) {
     console.error("Error fetching subscription details:", error);

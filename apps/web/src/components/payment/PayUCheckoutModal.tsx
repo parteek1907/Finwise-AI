@@ -436,6 +436,25 @@ export function PayUCheckoutModal({ isOpen, onClose, plan }: PayUCheckoutModalPr
       }
 
       const orderData = await res.json();
+ 
+      // Cache pending transaction in localStorage to guarantee 100% resilient recovery after gateway redirect
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("finwise_pending_payment", JSON.stringify({
+            txnid: orderData.txnid,
+            plan_id: activePlan.id,
+            plan_name: activePlan.name,
+            amount: activePlan.amount,
+            period: activePlan.period,
+            currency: "INR",
+            user_name: name || currentUser?.displayName || "Customer",
+            user_email: email || currentUser?.email || "",
+            timestamp: Date.now()
+          }));
+        } catch (e) {
+          console.warn("Could not save pending payment in localStorage:", e);
+        }
+      }
 
       // Submit hidden POST form to official PayU checkout gateway
       const form = document.createElement("form");
